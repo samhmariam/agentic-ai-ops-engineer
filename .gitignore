@@ -19,6 +19,10 @@ build/
 dist/
 *.egg-info/
 
+# Generated Feast feature-pipeline data and local stores
+/src/agentic_ai_ops_engineer/02-build-feature-pipeline/data/*.parquet
+/src/agentic_ai_ops_engineer/02-build-feature-pipeline/data/*.db
+
 # Local environment files
 .env
 .env.*
