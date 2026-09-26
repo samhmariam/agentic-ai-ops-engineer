@@ -1,0 +1,26 @@
+model:
+  name: baptle/FinBERT_market_based
+  max_length: 128
+
+dataset:
+  name: baptle/financial_headlines_market_based
+  text_column: "Title"
+  label_column: "Global Sentiment"
+  num_samples: 400
+  val_split: 0.2
+  seed: 42
+
+training:
+  learning_rate: 2.0e-5
+  batch_size: 16
+  num_epochs: 3
+  max_steps: -1
+
+mlflow:
+  tracking_uri: http://127.0.0.1:5000
+  experiment_name: finbert-financial-sentiment
+  model_artifact_name: finbert-model
+  tags:
+    stage: dev
+    dataset: financial-headlines
+    model_base: FinBERT-market-based
