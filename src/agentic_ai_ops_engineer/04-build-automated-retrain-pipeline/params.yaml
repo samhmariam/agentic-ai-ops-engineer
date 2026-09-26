@@ -1,0 +1,22 @@
+dataset:
+  label_column: high_volume
+  val_split: 0.2
+  seed: 42
+
+training:
+  learning_rate: 1.0e-3
+  batch_size: 16
+  num_epochs: 20
+
+
+paths:
+  model_candidate: outputs/model_candidate.pt
+  model_output: outputs/model.pt
+
+mlflow:
+  tracking_uri: http://127.0.0.1:5000
+  experiment_name: sales-mlp-training
+  model_artifact_name: sales-mlp
+  tags:
+    stage: dev
+    dataset: sales
