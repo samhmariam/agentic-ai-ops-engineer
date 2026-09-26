@@ -1,0 +1,99 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python src/ingest.py
+    deps:
+    - path: data/source/sales_data.csv
+      hash: md5
+      md5: a53cf325d22d37b8b21dece547fb3452
+      size: 20552
+    - path: src/ingest.py
+      hash: md5
+      md5: 2a20baa4ac5997e88b48621dc5458bec
+      size: 988
+    params:
+      params.yaml:
+        ingest.random_state: 42
+        ingest.test_size: 0.2
+    outs:
+    - path: data/raw/test.csv
+      hash: md5
+      md5: 999380535491cf2d35ccc9dcec280ed0
+      size: 4159
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 6fead0628435b8c20818230cc0a1f37f
+      size: 16473
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+    - path: data/raw/test.csv
+      hash: md5
+      md5: 999380535491cf2d35ccc9dcec280ed0
+      size: 4159
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 6fead0628435b8c20818230cc0a1f37f
+      size: 16473
+    - path: src/preprocess.py
+      hash: md5
+      md5: 030975f8cab062708d4a32aefbaea898
+      size: 1630
+    params:
+      params.yaml:
+        preprocessing.categorical_columns:
+        - Product
+        - Purchase Type
+        - Payment Method
+        - City
+        preprocessing.drop_columns:
+        - Manager
+    outs:
+    - path: data/processed/test_clean.csv
+      hash: md5
+      md5: adbaa118104a7fc739f290169ed7d98c
+      size: 2287
+    - path: data/processed/train_clean.csv
+      hash: md5
+      md5: aaf6a3b845b64ba6b055f70950bdc583
+      size: 8818
+  validate:
+    cmd: python src/validate.py
+    deps:
+    - path: data/processed/train_clean.csv
+      hash: md5
+      md5: aaf6a3b845b64ba6b055f70950bdc583
+      size: 8818
+    - path: src/validate.py
+      hash: md5
+      md5: 03425ef9fac38831b6412614e82eb46c
+      size: 2185
+    params:
+      params.yaml:
+        validation.expected_columns:
+        - Order ID
+        - Date
+        - Product
+        - Price
+        - Quantity
+        - Purchase Type
+        - Payment Method
+        - City
+        - month
+        - day_of_week
+        validation.non_null_columns:
+        - Price
+        - Quantity
+        - Product
+        validation.value_ranges:
+          Price:
+            min: 1.0
+            max: 50.0
+          Quantity:
+            min: 100.0
+            max: 1000.0
+    outs:
+    - path: reports/validation_result.json
+      hash: md5
+      md5: 4a99745fee65e7ecedc0d7fb9da28194
+      size: 6582

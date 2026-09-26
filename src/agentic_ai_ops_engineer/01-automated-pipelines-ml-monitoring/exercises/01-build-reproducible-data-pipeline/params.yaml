@@ -1,0 +1,44 @@
+ingest:
+  test_size: 0.2
+  random_state: 42
+
+paths:
+  source: data/source/sales_data.csv
+  raw_train: data/raw/train.csv
+  raw_test: data/raw/test.csv
+  processed_train: data/processed/train_clean.csv
+  processed_test: data/processed/test_clean.csv
+  report: reports/validation_result.json
+
+preprocessing:
+  categorical_columns:
+    - Product
+    - Purchase Type
+    - Payment Method
+    - City
+  drop_columns:
+    - Manager
+
+validation:
+  expected_columns:
+    - Order ID
+    - Date
+    - Product
+    - Price
+    - Quantity
+    - Purchase Type
+    - Payment Method
+    - City
+    - month
+    - day_of_week
+  non_null_columns:
+    - Price
+    - Quantity
+    - Product
+  value_ranges:
+    Price:
+      min: 1.0
+      max: 50.0
+    Quantity:
+      min: 100.0
+      max: 1000.0

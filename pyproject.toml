@@ -1,0 +1,28 @@
+[project]
+name = "agentic-ai-ops-engineer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Samuel H.Mariam", email = "samhmariam@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "dvc>=3.0",
+    "great-expectations>=1.0",
+    "joblib>=1.3.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "pyarrow>=14.0.0",
+    "pyyaml>=6.0",
+    "requests>=2.31",
+    "scikit-learn>=1.9.1",
+    "scipy>=1.10.0",
+]
+
+[project.scripts]
+agentic-ai-ops-engineer = "agentic_ai_ops_engineer:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"

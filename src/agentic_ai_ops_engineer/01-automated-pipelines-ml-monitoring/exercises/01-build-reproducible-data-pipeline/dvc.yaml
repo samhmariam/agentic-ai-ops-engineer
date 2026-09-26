@@ -1,0 +1,37 @@
+stages:
+  ingest:
+    cmd: python src/ingest.py
+    deps:
+      - src/ingest.py
+      - ${paths.source}
+    params:
+      - ingest.test_size
+      - ingest.random_state
+    outs:
+      - ${paths.raw_train}
+      - ${paths.raw_test}
+
+  preprocess:
+    cmd: python src/preprocess.py
+    deps:
+      - src/preprocess.py
+      - ${paths.raw_train}
+      - ${paths.raw_test}
+    params:
+      - preprocessing.categorical_columns
+      - preprocessing.drop_columns
+    outs:
+      - ${paths.processed_train}
+      - ${paths.processed_test}
+
+  validate:
+    cmd: python src/validate.py
+    deps:
+      - src/validate.py
+      - ${paths.processed_train}
+    params:
+      - validation.expected_columns
+      - validation.non_null_columns
+      - validation.value_ranges
+    outs:
+      - ${paths.report}
