@@ -1,0 +1,29 @@
+model:
+  name: nateraw/vit-base-beans
+  task: image-classification
+
+dataset:
+  name: beans
+
+training:
+  learning_rate: 2.0e-4
+  batch_size: 16
+  num_epochs: 3
+
+mlflow:
+  tracking_uri: http://127.0.0.1:5000
+  experiment_name: beans-vit-classification
+  model_artifact_name: beans-vit
+  tags:
+    framework: transformers
+    task: image-classification
+    dataset: beans
+
+registry:
+  model_name: beans-disease-classifier
+  description: "ViT fine-tuned on the beans dataset for plant disease detection."
+  threshold: 0.90
+  tags:
+    framework: transformers
+    task: image-classification
+    dataset: beans
