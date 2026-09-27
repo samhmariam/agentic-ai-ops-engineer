@@ -1,0 +1,21 @@
+model:
+  name: nateraw/vit-base-beans
+  task: image-classification
+
+dataset:
+  name: beans
+  split: test
+
+mlflow:
+  tracking_uri: http://127.0.0.1:5000
+  experiment_name: beans-vit-classification
+  model_artifact_name: beans-vit
+
+registry:
+  model_name: beans-disease-classifier
+  description: "ViT fine-tuned on the beans dataset for plant disease detection (angular_leaf_spot, bean_rust, healthy)."
+  "threshold": 0.9
+  tags:
+    framework: transformers
+    task: image-classification
+    dataset: beans

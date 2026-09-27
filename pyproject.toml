@@ -9,7 +9,9 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.1.0",
+    "anywidget==0.11.0",
     "datasets>=2.14",
+    "deepchecks[vision]>=0.18.0",
     "dvc>=3.0",
     "feast>=0.40.0",
     "great-expectations>=1.0",
@@ -17,18 +19,20 @@ dependencies = [
     "mlflow>=2.10",
     "numpy>=1.24.0",
     "pandas>=2.0.0",
+    "pillow>=10.0.0",
     "prefect>=3.6.28",
     "pyarrow>=14.0.0",
+    "pytorch-ignite>=0.4.0",
     "pyyaml>=6.0",
     "requests>=2.31",
     "scikit-learn>=1.9.1",
     "scipy>=1.10.0",
+    "spacy>=3.7.0",
+    "torch>=2.0.0",
+    "torchvision>=0.26.0",
     "transformers>=4.36",
 ]
 
-[project.scripts]
-agentic-ai-ops-engineer = "agentic_ai_ops_engineer:main"
-
-[build-system]
-requires = ["uv_build>=0.12.10,<0.13.0"]
-build-backend = "uv_build"
+# No installable package: exercises are standalone scripts, not a src/ package.
+[tool.uv]
+package = false
