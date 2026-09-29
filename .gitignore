@@ -23,6 +23,9 @@ dist/
 /src/agentic_ai_ops_engineer/02-build-feature-pipeline/data/*.parquet
 /src/agentic_ai_ops_engineer/02-build-feature-pipeline/data/*.db
 
+# Data directories
+data/
+
 # Local environment files
 .env
 .env.*
