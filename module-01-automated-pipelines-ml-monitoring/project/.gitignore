@@ -31,3 +31,9 @@ mlartifacts/
 .DS_Store
 .idea/
 .vscode/
+__pycache__/
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3

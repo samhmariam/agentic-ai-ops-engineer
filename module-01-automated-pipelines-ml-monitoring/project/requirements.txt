@@ -3,9 +3,9 @@ pandas>=2.0.0
 pyyaml>=6.0
 
 # Model
-transformers>=4.40.2
-torch>=2.4.0
-torchvision>=0.19.0
+transformers>=4.40.2,<4.46  # 5.x rejects FinBERT config; mlflow 2.16 supports 4.x
+torch>=2.4.0,<2.6
+torchvision>=0.19.0,<0.21
 datasets==2.19.1
 scikit-learn>=1.3.0,<1.4.0
 setuptools>=69.0,<71.0
@@ -19,6 +19,7 @@ python-dotenv==1.0.1
 
 # MLflow
 mlflow==2.16.2
+sqlalchemy<2.1  # 2.1 removed FallbackAsyncAdaptedQueuePool used by mlflow 2.16 DB stores
 boto3==1.34.101
 
 # DVC
