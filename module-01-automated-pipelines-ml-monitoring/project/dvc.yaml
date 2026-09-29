@@ -1,0 +1,31 @@
+# Two-stage data pipeline.
+# Docs: https://doc.dvc.org/user-guide/pipelines/defining-pipelines
+# Paths are templated from params.yaml so they stay in sync with the scripts.
+stages:
+  # Download the financial phrase bank dataset from HuggingFace (dataset id is
+  # read from the HF_DATASET_ID env var) and split it into train/test sets.
+  prepare:
+    cmd: python scripts/load_data.py
+    deps:
+      - scripts/load_data.py
+    params:
+      - prepare.data_dir
+      - prepare.test_size
+      - prepare.random_seed
+    outs:
+      - ${prepare.data_dir}/train.csv
+      - ${prepare.data_dir}/test.csv
+
+  # Clean the raw social media posts (strip URLs/mentions/emojis, dedupe,
+  # filter by length and financial keywords) for FinBERT inference.
+  clean:
+    cmd: python scripts/clean_data.py
+    deps:
+      - scripts/clean_data.py
+      - ${clean.data_dir}/raw_stream.csv
+    params:
+      - clean.data_dir
+      - clean.min_words
+      - clean.max_words
+    outs:
+      - ${clean.data_dir}/stream.csv
