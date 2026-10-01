@@ -37,3 +37,13 @@ services:
       # Downloading and loading FinBERT from MLflow takes a couple of minutes.
       start_period: 300s
     restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api
+    restart: unless-stopped
