@@ -22,7 +22,8 @@ on:
 # 3. An ECS service named finbert-api-service running on that cluster
 # 4. An ECS task definition named finbert-api
 # Also add AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN,
-# AWS_REGION, and ECR_REGISTRY as GitHub repository secrets.
+# and AWS_REGION as GitHub repository secrets. The ECR registry URI is
+# resolved by the amazon-ecr-login step, so it is not stored as a secret.
 env:
   ECR_REPOSITORY: finbert-api
   TASK_DEFINITION: finbert-api
@@ -156,6 +157,12 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # Resolve the registry the same way the build job does, so the image
+      # URI rendered here matches the one that was pushed.
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
@@ -168,7 +175,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ needs.build.outputs.image_tag }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ needs.build.outputs.image_tag }}
 
       - name: Deploy to ECS Fargate
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
