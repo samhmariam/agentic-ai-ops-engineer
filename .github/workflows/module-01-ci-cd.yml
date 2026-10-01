@@ -1,20 +1,21 @@
-# CI/CD pipeline for the FinBERT sentiment API. Jobs:
-# 1. lint        — ruff check
-# 2. test        — pytest tests/ with MODEL_SOURCE=huggingface         (needs: lint)
-# 3. deepchecks  — scripts/run_deepchecks.py with MODEL_SOURCE=huggingface (needs: lint)
-# 4. build       — build the Docker image and push SHA + latest tags to ECR (needs: test, deepchecks)
-# 5. deploy      — render the ECS task definition with the new image and deploy to ECS Fargate
-#
-# GitHub only runs workflows from the repository root, so this pipeline is
-# mirrored in /.github/workflows/module-01-ci-cd.yml (run from this directory).
-# Keep the two files in sync.
+# Repo-root copy of module-01-automated-pipelines-ml-monitoring/project/.github/workflows/ci-cd.yml.
+# GitHub only runs workflows from /.github/workflows, so this file runs the
+# module-01 pipeline from the project directory. Keep the two files in sync;
+# the only differences are the paths filter, working directory and dependency path.
 # Documentation: https://docs.github.com/en/actions/writing-workflows
 
-name: test-and-deploy
+name: module-01-test-and-deploy
 
 on:
   push:
     branches: [main]
+    paths:
+      - "module-01-automated-pipelines-ml-monitoring/project/**"
+      - ".github/workflows/module-01-ci-cd.yml"
+
+defaults:
+  run:
+    working-directory: module-01-automated-pipelines-ml-monitoring/project
 
 # Prerequisites — this pipeline expects the following AWS resources:
 # 1. An ECR repository named finbert-api to store your Docker images
@@ -59,7 +60,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: module-01-automated-pipelines-ml-monitoring/project/requirements.txt
 
       - name: Cache HuggingFace model
         uses: actions/cache@v4
@@ -90,7 +91,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: module-01-automated-pipelines-ml-monitoring/project/requirements.txt
 
       - name: Cache HuggingFace model
         uses: actions/cache@v4
@@ -147,6 +148,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    # No checkout in this job, so run from the workspace root.
+    defaults:
+      run:
+        working-directory: .
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

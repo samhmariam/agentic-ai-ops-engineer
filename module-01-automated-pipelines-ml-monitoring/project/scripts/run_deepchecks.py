@@ -84,10 +84,7 @@ def main():
     test_predictions = run_predictions(classifier, test_texts)
     stream_predictions = run_predictions(classifier, stream_texts)
 
-    prediction_check = PredictionDrift().add_condition_drift_score_less_than(
-        max_allowed_drift_score=prediction_drift_threshold
-    )
-    prediction_result = prediction_check.run(
+    prediction_result = PredictionDrift().run(
         train_dataset=test_dataset,
         test_dataset=stream_dataset,
         train_predictions=test_predictions,
@@ -100,7 +97,7 @@ def main():
         f"({prediction_result.value['Method']})"
     )
 
-    if not prediction_result.passed_conditions():
+    if prediction_drift > prediction_drift_threshold:
         print(
             f"\n[FAIL] Prediction drift {prediction_drift:.4f} exceeds "
             f"threshold {prediction_drift_threshold}"

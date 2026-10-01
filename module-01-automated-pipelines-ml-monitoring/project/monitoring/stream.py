@@ -31,11 +31,15 @@ load_dotenv()
 _api_host = os.getenv("API_HOST", "localhost")
 if _api_host == "0.0.0.0":
     _api_host = "localhost"
-API_URL = f"http://{_api_host}:{os.getenv('API_PORT', 8000)}"
+API_URL = f"http://{_api_host}:{os.getenv('API_PORT', '8000')}"
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
-MLFLOW_EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "finbert-evaluation")
+# Separate from MLFLOW_EXPERIMENT_NAME (evaluation runs): scripts/promote.py
+# reads the latest run there and expects an f1_weighted metric.
+MONITORING_EXPERIMENT_NAME = os.getenv(
+    "MONITORING_EXPERIMENT_NAME", "finbert-production-monitoring"
+)
 WINDOW_SIZE = 50  # number of predictions per observation window
-SLEEP_MS = 100    # delay between requests to simulate real traffic (ms)
+SLEEP_MS = 100  # delay between requests to simulate real traffic (ms)
 SENTIMENTS = ("positive", "negative", "neutral")
 STREAM_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "data", "stream.csv"
@@ -50,6 +54,7 @@ def predict(text: str) -> dict:
     )
     response.raise_for_status()
     return response.json()
+
 
 def log_window(window: list[dict], window_idx: int) -> None:
     """Log aggregated metrics for one observation window to MLflow."""
@@ -80,7 +85,7 @@ def main():
     print(f"Loaded {len(headlines)} headlines from {STREAM_PATH}")
 
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+    mlflow.set_experiment(MONITORING_EXPERIMENT_NAME)
 
     with mlflow.start_run(run_name="production-monitoring"):
         mlflow.log_params(

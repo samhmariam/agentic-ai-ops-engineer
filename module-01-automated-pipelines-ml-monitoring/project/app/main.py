@@ -88,6 +88,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Sentiment Analysis API", lifespan=lifespan)
 
 
+def run_prediction(text: str | list[str]) -> tuple[list[dict], float]:
+    """Run the model on a text (or a batch of texts) in a single call.
+
+    Returns the raw model predictions and the measured latency in milliseconds.
+    """
+    start = time.perf_counter()
+    predictions = classifiers["sentiment"](text, truncation=True)
+    latency_ms = (time.perf_counter() - start) * 1000
+    return predictions, latency_ms
+
+
 def run_predictions(texts: list[str]) -> list[PredictionResult]:
     try:
         for i, text in enumerate(texts):
@@ -101,9 +112,7 @@ def run_predictions(texts: list[str]) -> list[PredictionResult]:
                     max_chars=MAX_TEXT_CHARS,
                 )
 
-        start = time.perf_counter()
-        outputs = classifiers["sentiment"](texts, truncation=True)
-        latency_ms = (time.perf_counter() - start) * 1000
+        outputs, latency_ms = run_prediction(texts)
 
         results = [
             PredictionResult(

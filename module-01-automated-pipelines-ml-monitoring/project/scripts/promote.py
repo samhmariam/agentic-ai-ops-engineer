@@ -1,7 +1,7 @@
 """
 Promote the latest version of the registered model to Production
-if the weighted F1 score from the most recent evaluation run exceeds
-the required threshold.
+if the weighted F1 score from the most recent evaluation run meets or
+exceeds the required threshold.
 
 Run:
     python scripts/promote.py
@@ -74,7 +74,9 @@ def main():
 
     threshold = load_params()["f1_threshold"]
     run_id, f1 = get_latest_f1(client, experiment_name)
-    print(f"Latest evaluation run {run_id}: f1_weighted={f1:.4f} (threshold {threshold})")
+    print(
+        f"Latest evaluation run {run_id}: f1_weighted={f1:.4f} (threshold {threshold})"
+    )
 
     if f1 >= threshold:
         promote(client, model_name)
