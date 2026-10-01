@@ -13,7 +13,7 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Response
@@ -31,7 +31,7 @@ logger = logging.getLogger("sentiment-api")
 def log(level: str, message: str, **kwargs) -> None:
     """Emit one structured JSON log line. Never pass raw input text here."""
     entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "level": level.upper(),
         "message": message,
         **kwargs,
@@ -136,7 +136,7 @@ def run_predictions(texts: list[str]) -> list[PredictionResult]:
             error=str(e),
             batch_size=len(texts),
         )
-        raise e
+        raise
 
 
 def ensure_model_loaded() -> None:
@@ -181,5 +181,5 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host=os.getenv("API_HOST", "0.0.0.0"),
-        port=int(os.getenv("API_PORT", 8000)),
+        port=int(os.getenv("API_PORT", "8000")),
     )

@@ -12,10 +12,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import pandas as pd
 import yaml
-from app.utils import load_classifier
+from deepchecks.nlp import TextData
+from deepchecks.nlp.checks import PredictionDrift, PropertyDrift
 from dotenv import load_dotenv
 
+from app.utils import load_classifier
+
 load_dotenv()
+
+PROPERTIES = ["Sentiment", "Subjectivity", "Text Length", "Average Word Length"]
 
 
 def load_params() -> dict:
@@ -43,21 +48,69 @@ def main():
     stream_texts = stream_df["text"].tolist()
     test_texts = test_df["text"].tolist()
 
-    # TODO: Create two TextData objects from the text lists above: one for stream_texts
-    # and one for test_texts. Use task_type="text_classification".
-    # Then call calculate_builtin_properties() on each to compute NLP properties.
-    # https://docs.deepchecks.com/stable/nlp/usage_guides/text_data_object.html#nlp-textdata-object
+    stream_dataset = TextData(
+        raw_text=stream_texts, task_type="text_classification", name="stream"
+    )
+    test_dataset = TextData(
+        raw_text=test_texts, task_type="text_classification", name="test"
+    )
+    # Fast TextBlob/statistics-based properties only; the default set also
+    # downloads extra transformer models (Toxicity, Fluency, Formality).
+    for dataset in (stream_dataset, test_dataset):
+        dataset.calculate_builtin_properties(include_properties=PROPERTIES)
 
-    # TODO: Compute NLP Property Drift between test_dataset (reference) and stream_dataset (current).
-    # Extract the "Sentiment" drift score from the result and compare it against
-    # property_drift_threshold.
-    # If it exceeds the threshold, print an error message and terminate with failure exit code
-    # https://docs.deepchecks.com/stable/nlp/auto_checks/train_test_validation/plot_property_drift.html#nlp-property-drift
+    # --- NLP property drift: test (reference) vs stream (current) ---
+    property_result = PropertyDrift().run(
+        train_dataset=test_dataset, test_dataset=stream_dataset
+    )
+    print("\nProperty drift scores:")
+    for name, values in property_result.value.items():
+        print(f"  {name}: {values['Drift score']:.4f} ({values['Method']})")
 
-    # TODO: Run predictions on both datasets with run_predictions(), then compute Prediction Drift.
-    # Add a condition to fail if drift score is above the prediction_drift_threshold
-    # If drift exceeds threshold, print an error message and terminate with failure exit code
-    # https://docs.deepchecks.com/stable/general/guides/drift_guide.html#text-nlp-checks
+    sentiment_drift = property_result.value["Sentiment"]["Drift score"]
+    if sentiment_drift > property_drift_threshold:
+        print(
+            f"\n[FAIL] Sentiment property drift {sentiment_drift:.4f} exceeds "
+            f"threshold {property_drift_threshold}"
+        )
+        sys.exit(1)
+    print(
+        f"[PASS] Sentiment property drift {sentiment_drift:.4f} <= "
+        f"threshold {property_drift_threshold}"
+    )
+
+    # --- Prediction drift ---
+    print("\nRunning predictions on test and stream data...")
+    test_predictions = run_predictions(classifier, test_texts)
+    stream_predictions = run_predictions(classifier, stream_texts)
+
+    prediction_check = PredictionDrift().add_condition_drift_score_less_than(
+        max_allowed_drift_score=prediction_drift_threshold
+    )
+    prediction_result = prediction_check.run(
+        train_dataset=test_dataset,
+        test_dataset=stream_dataset,
+        train_predictions=test_predictions,
+        test_predictions=stream_predictions,
+        model_classes=sorted(set(test_predictions) | set(stream_predictions)),
+    )
+    prediction_drift = prediction_result.value["Drift score"]
+    print(
+        f"Prediction drift score: {prediction_drift:.4f} "
+        f"({prediction_result.value['Method']})"
+    )
+
+    if not prediction_result.passed_conditions():
+        print(
+            f"\n[FAIL] Prediction drift {prediction_drift:.4f} exceeds "
+            f"threshold {prediction_drift_threshold}"
+        )
+        sys.exit(1)
+    print(
+        f"[PASS] Prediction drift {prediction_drift:.4f} <= "
+        f"threshold {prediction_drift_threshold}"
+    )
+    print("\nAll deepchecks drift checks passed.")
 
 
 if __name__ == "__main__":
