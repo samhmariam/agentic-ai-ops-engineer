@@ -10,8 +10,10 @@ requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.1.0",
     "anywidget==0.11.0",
+    "chromadb>=0.5,<1",
     "datasets>=2.14",
     "deepchecks[vision]>=0.18.0",
+    "docutils>=0.21,<1",
     "dvc>=3.0",
     "evidently>=0.4.0",
     "fairlearn>=0.10.0",
