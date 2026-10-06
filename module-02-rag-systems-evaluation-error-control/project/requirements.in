@@ -1,0 +1,46 @@
+# requirements.in — direct dependencies only (constraints, not pins)
+#
+# This file mirrors the top-level `dependencies` and `dependency-groups.dev`
+# sections of pyproject.toml — same version ranges, no transitive deps.
+# Useful when the Udacity tech team needs to re-resolve transitive
+# versions (e.g., for a CVE patch) without re-deriving the constraints
+# by hand from pyproject.toml.
+#
+# To re-resolve a fresh pinned `requirements.txt` from this file:
+#   pip install pip-tools
+#   pip-compile --output-file=requirements.txt requirements.in
+#
+# Or just use uv:
+#   uv export --no-hashes --no-emit-project --all-groups > requirements.txt
+
+# --- Runtime ---
+fastapi>=0.111,<1
+uvicorn[standard]>=0.30,<1
+pydantic>=2.7,<3
+pydantic-settings>=2.3,<3
+python-dotenv>=1.0,<2
+chromadb>=0.5,<1
+openai>=1.30,<3
+tiktoken>=0.7,<1
+ragas==0.4.3
+langchain-openai>=1.0,<2
+llm-guard>=0.3,<1
+# spaCy English NER model — Presidio's tokenization backbone. URL-pinned
+# wheel; bump alongside spaCy major versions (currently 3.x).
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+watchdog>=4.0,<7
+jinja2>=3.1,<4
+# Phoenix 14+ conflicts with llm-guard via cryptography (>=45 vs <44.1).
+# Phoenix 13.21 needs arize-phoenix-evals<3 — pin both together.
+arize-phoenix>=13.21,<14
+arize-phoenix-evals>=0.20,<3
+arize-phoenix-otel>=0.16,<1
+openinference-instrumentation-openai>=0.1,<1
+# arize-phoenix imports pytz in phoenix/datetime_utils.py without
+# declaring it — keep pinned until upstream fixes the metadata.
+pytz>=2026.1
+
+# --- Dev (required for `make test` to pass the rubric's ≥195-test floor) ---
+pytest>=8.2,<9
+pytest-asyncio>=0.23,<1
+httpx>=0.27,<1

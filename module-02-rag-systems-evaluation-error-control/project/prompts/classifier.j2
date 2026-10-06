@@ -1,0 +1,15 @@
+Classify the following customer query as either "simple" or "complex".
+
+- **simple**: A straightforward factual lookup about a single product or attribute (e.g., price, weight, material, availability, care instructions). These can be answered with a direct retrieval from product data.
+
+- **complex**: A query requiring comparison between products, a recommendation based on preferences or use case, multi-step reasoning, or synthesis across multiple product attributes or categories.
+
+## Query
+
+{{ query }}
+
+## Response Format
+
+Respond with a JSON object only, no additional text:
+
+{"classification": "simple" or "complex", "reasoning": "one-sentence explanation"}

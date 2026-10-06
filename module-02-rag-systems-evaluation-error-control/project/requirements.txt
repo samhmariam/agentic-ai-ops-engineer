@@ -1,0 +1,925 @@
+# requirements.txt — exact pinned versions for Vocareum Workspace provisioning
+#
+# Generated from project/pyproject.toml + uv.lock via:
+#   uv export --no-hashes --no-emit-project --all-groups
+#
+# Includes runtime + dev dependencies (the dev group ships pytest
+# because the rubric requires `make test` (≥195 tests) to pass.
+#
+# Install on Vocareum's Python 3.11 image with:
+#   pip install -r requirements.txt
+#
+# To regenerate after a dependency change, run from this directory:
+#   uv export --no-hashes --no-emit-project --all-groups > requirements.txt
+#
+# Notes:
+# - The `en-core-web-sm` line is a URL-pinned spaCy English NER wheel.
+#   Presidio (which llm-guard wraps) requires this language model.
+# - Linux-only `nvidia-*` and `cuda-*` wheels are conditional via
+#   environment markers; they will install on Vocareum's Linux Workspace
+#   but skip on Windows/macOS dev machines.
+# - Tested against Python 3.11; pyproject requires Python >=3.11,<3.14.
+
+aiohappyeyeballs==2.6.1
+    # via aiohttp
+aiohttp==3.13.5
+    # via
+    #   fsspec
+    #   instructor
+    #   langchain-community
+aioitertools==0.13.0
+    # via arize-phoenix
+aiosignal==1.4.0
+    # via aiohttp
+aiosqlite==0.22.1
+    # via arize-phoenix
+alembic==1.18.4
+    # via arize-phoenix
+annotated-doc==0.0.4
+    # via fastapi
+annotated-types==0.7.0
+    # via pydantic
+anyio==4.13.0
+    # via
+    #   httpx
+    #   openai
+    #   starlette
+    #   watchfiles
+appdirs==1.4.4
+    # via ragas
+arize-phoenix==13.21.0
+    # via llm-ops-project
+arize-phoenix-client==2.5.0
+    # via arize-phoenix
+arize-phoenix-evals==2.13.0
+    # via
+    #   arize-phoenix
+    #   llm-ops-project
+arize-phoenix-otel==0.16.0
+    # via
+    #   arize-phoenix
+    #   llm-ops-project
+asgiref==3.11.1
+    # via opentelemetry-instrumentation-asgi
+attrs==26.1.0
+    # via
+    #   aiohttp
+    #   fuzzysearch
+    #   jsonschema
+    #   referencing
+authlib==1.6.11
+    # via arize-phoenix
+backoff==2.2.1
+    # via posthog
+bc-detect-secrets==1.5.43
+    # via llm-guard
+bcrypt==5.0.0
+    # via chromadb
+blis==1.3.3
+    # via thinc
+build==1.4.4
+    # via chromadb
+cachetools==7.0.6
+    # via arize-phoenix
+catalogue==2.0.10
+    # via
+    #   spacy
+    #   srsly
+    #   thinc
+certifi==2026.4.22
+    # via
+    #   httpcore
+    #   httpx
+    #   kubernetes
+    #   requests
+cffi==2.0.0 ; platform_python_implementation != 'PyPy'
+    # via cryptography
+cfgv==3.5.0
+    # via pre-commit
+charset-normalizer==3.4.7
+    # via requests
+chroma-hnswlib==0.7.6
+    # via chromadb
+chromadb==0.6.3
+    # via llm-ops-project
+click==8.2.0
+    # via
+    #   nltk
+    #   typer
+    #   uvicorn
+cloudpathlib==0.23.0
+    # via weasel
+colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
+    # via
+    #   build
+    #   click
+    #   pytest
+    #   tqdm
+    #   uvicorn
+    #   wasabi
+confection==1.3.3
+    # via
+    #   spacy
+    #   thinc
+    #   weasel
+cross-web==0.6.0
+    # via lia-web
+cryptography==44.0.3
+    # via
+    #   authlib
+    #   presidio-anonymizer
+cuda-bindings==13.2.0 ; sys_platform == 'linux'
+    # via torch
+cuda-pathfinder==1.5.3 ; sys_platform == 'linux'
+    # via cuda-bindings
+cuda-toolkit==13.0.2 ; sys_platform == 'linux'
+    # via torch
+cymem==2.0.13
+    # via
+    #   preshed
+    #   spacy
+    #   thinc
+dataclasses-json==0.6.7
+    # via langchain-community
+datasets==4.8.4
+    # via ragas
+dill==0.4.1
+    # via
+    #   datasets
+    #   multiprocess
+diskcache==5.6.3
+    # via
+    #   instructor
+    #   ragas
+distlib==0.4.0
+    # via virtualenv
+distro==1.9.0
+    # via
+    #   openai
+    #   posthog
+dnspython==2.8.0
+    # via email-validator
+docstring-parser==0.18.0
+    # via instructor
+durationpy==0.10
+    # via kubernetes
+email-validator==2.3.0
+    # via arize-phoenix
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+    # via llm-ops-project
+faker==37.12.0
+    # via llm-guard
+fastapi==0.136.1
+    # via
+    #   arize-phoenix
+    #   chromadb
+    #   llm-ops-project
+filelock==3.29.0
+    # via
+    #   datasets
+    #   huggingface-hub
+    #   python-discovery
+    #   tldextract
+    #   torch
+    #   transformers
+    #   virtualenv
+flatbuffers==25.12.19
+    # via onnxruntime
+frozenlist==1.8.0
+    # via
+    #   aiohttp
+    #   aiosignal
+fsspec==2026.2.0
+    # via
+    #   datasets
+    #   huggingface-hub
+    #   torch
+fuzzysearch==0.8.1
+    # via llm-guard
+googleapis-common-protos==1.74.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+graphql-core==3.2.8
+    # via strawberry-graphql
+greenlet==3.4.0
+    # via sqlalchemy
+grpc-interceptor==0.15.4
+    # via arize-phoenix
+grpcio==1.80.0
+    # via
+    #   arize-phoenix
+    #   chromadb
+    #   grpc-interceptor
+    #   opentelemetry-exporter-otlp-proto-grpc
+h11==0.16.0
+    # via
+    #   httpcore
+    #   uvicorn
+hf-xet==1.4.3 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
+    # via huggingface-hub
+httpcore==1.0.9
+    # via httpx
+httptools==0.7.1
+    # via uvicorn
+httpx==0.28.1
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-client
+    #   chromadb
+    #   datasets
+    #   langgraph-sdk
+    #   langsmith
+    #   openai
+    #   weasel
+httpx-sse==0.4.3
+    # via langchain-community
+huggingface-hub==0.36.2
+    # via
+    #   datasets
+    #   tokenizers
+    #   transformers
+identify==2.6.19
+    # via pre-commit
+idna==3.13
+    # via
+    #   anyio
+    #   email-validator
+    #   httpx
+    #   requests
+    #   tldextract
+    #   yarl
+importlib-metadata==8.7.1
+    # via opentelemetry-api
+importlib-resources==7.1.0
+    # via chromadb
+iniconfig==2.3.0
+    # via pytest
+instructor==1.12.0
+    # via ragas
+jinja2==3.1.6
+    # via
+    #   arize-phoenix
+    #   instructor
+    #   llm-ops-project
+    #   spacy
+    #   torch
+jiter==0.10.0
+    # via
+    #   instructor
+    #   openai
+jmespath==1.1.0
+    # via arize-phoenix
+joblib==1.5.3
+    # via
+    #   nltk
+    #   scikit-learn
+json-repair==0.44.1
+    # via llm-guard
+jsonpatch==1.33
+    # via langchain-core
+jsonpath-ng==1.8.0
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-evals
+jsonpointer==3.1.1
+    # via jsonpatch
+jsonschema==4.26.0
+    # via arize-phoenix
+jsonschema-specifications==2025.9.1
+    # via jsonschema
+kubernetes==35.0.0
+    # via chromadb
+langchain==1.2.15
+    # via ragas
+langchain-classic==1.0.4
+    # via langchain-community
+langchain-community==0.4.1
+    # via ragas
+langchain-core==1.3.1
+    # via
+    #   langchain
+    #   langchain-classic
+    #   langchain-community
+    #   langchain-openai
+    #   langchain-text-splitters
+    #   langgraph
+    #   langgraph-checkpoint
+    #   langgraph-prebuilt
+    #   ragas
+langchain-openai==1.1.9
+    # via
+    #   llm-ops-project
+    #   ragas
+langchain-text-splitters==1.1.2
+    # via langchain-classic
+langgraph==1.1.9
+    # via langchain
+langgraph-checkpoint==4.0.2
+    # via
+    #   langgraph
+    #   langgraph-prebuilt
+langgraph-prebuilt==1.0.10
+    # via langgraph
+langgraph-sdk==0.3.13
+    # via langgraph
+langsmith==0.7.35
+    # via
+    #   langchain-classic
+    #   langchain-community
+    #   langchain-core
+ldap3==2.9.1
+    # via arize-phoenix
+lia-web==0.3.1
+    # via strawberry-graphql
+llm-guard==0.3.16
+    # via llm-ops-project
+mako==1.3.11
+    # via alembic
+markdown-it-py==4.0.0
+    # via rich
+markupsafe==3.0.3
+    # via
+    #   jinja2
+    #   mako
+marshmallow==3.26.2
+    # via dataclasses-json
+mdurl==0.1.2
+    # via markdown-it-py
+mmh3==5.2.1
+    # via chromadb
+mpmath==1.3.0
+    # via sympy
+multidict==6.7.1
+    # via
+    #   aiohttp
+    #   yarl
+multiprocess==0.70.19
+    # via datasets
+murmurhash==1.0.15
+    # via
+    #   preshed
+    #   spacy
+    #   thinc
+mypy-extensions==1.1.0
+    # via typing-inspect
+nest-asyncio==1.6.0
+    # via ragas
+networkx==3.6.1
+    # via
+    #   ragas
+    #   torch
+nltk==3.9.4
+    # via llm-guard
+nodeenv==1.10.0
+    # via pre-commit
+numpy==2.4.4
+    # via
+    #   arize-phoenix
+    #   blis
+    #   chroma-hnswlib
+    #   chromadb
+    #   datasets
+    #   langchain-community
+    #   onnxruntime
+    #   pandas
+    #   ragas
+    #   scikit-learn
+    #   scikit-network
+    #   scipy
+    #   spacy
+    #   thinc
+    #   transformers
+nvidia-cublas==13.1.0.3 ; sys_platform == 'linux'
+    # via
+    #   cuda-toolkit
+    #   nvidia-cudnn-cu13
+    #   nvidia-cusolver
+nvidia-cuda-cupti==13.0.85 ; sys_platform == 'linux'
+    # via cuda-toolkit
+nvidia-cuda-nvrtc==13.0.88 ; sys_platform == 'linux'
+    # via cuda-toolkit
+nvidia-cuda-runtime==13.0.96 ; sys_platform == 'linux'
+    # via cuda-toolkit
+nvidia-cudnn-cu13==9.19.0.56 ; sys_platform == 'linux'
+    # via torch
+nvidia-cufft==12.0.0.61 ; sys_platform == 'linux'
+    # via cuda-toolkit
+nvidia-cufile==1.15.1.6 ; sys_platform == 'linux'
+    # via cuda-toolkit
+nvidia-curand==10.4.0.35 ; sys_platform == 'linux'
+    # via cuda-toolkit
+nvidia-cusolver==12.0.4.66 ; sys_platform == 'linux'
+    # via cuda-toolkit
+nvidia-cusparse==12.6.3.3 ; sys_platform == 'linux'
+    # via
+    #   cuda-toolkit
+    #   nvidia-cusolver
+nvidia-cusparselt-cu13==0.8.0 ; sys_platform == 'linux'
+    # via torch
+nvidia-nccl-cu13==2.28.9 ; sys_platform == 'linux'
+    # via torch
+nvidia-nvjitlink==13.0.88 ; sys_platform == 'linux'
+    # via
+    #   cuda-toolkit
+    #   nvidia-cufft
+    #   nvidia-cusolver
+    #   nvidia-cusparse
+nvidia-nvshmem-cu13==3.4.5 ; sys_platform == 'linux'
+    # via torch
+nvidia-nvtx==13.0.85 ; sys_platform == 'linux'
+    # via cuda-toolkit
+oauthlib==3.3.1
+    # via requests-oauthlib
+onnxruntime==1.25.0
+    # via chromadb
+openai==1.109.1
+    # via
+    #   instructor
+    #   langchain-openai
+    #   llm-ops-project
+    #   ragas
+openinference-instrumentation==0.1.47
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-client
+    #   arize-phoenix-evals
+    #   arize-phoenix-otel
+    #   openinference-instrumentation-openai
+openinference-instrumentation-openai==0.1.45
+    # via
+    #   arize-phoenix
+    #   llm-ops-project
+openinference-semantic-conventions==0.1.29
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-client
+    #   arize-phoenix-evals
+    #   arize-phoenix-otel
+    #   openinference-instrumentation
+    #   openinference-instrumentation-openai
+opentelemetry-api==1.41.0
+    # via
+    #   arize-phoenix-evals
+    #   chromadb
+    #   openinference-instrumentation
+    #   openinference-instrumentation-openai
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-otlp==1.41.0
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-client
+    #   arize-phoenix-otel
+opentelemetry-exporter-otlp-proto-common==1.41.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-grpc==1.41.0
+    # via
+    #   chromadb
+    #   opentelemetry-exporter-otlp
+opentelemetry-exporter-otlp-proto-http==1.41.0
+    # via opentelemetry-exporter-otlp
+opentelemetry-instrumentation==0.62b0
+    # via
+    #   openinference-instrumentation-openai
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-asgi==0.62b0
+    # via opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-fastapi==0.62b0
+    # via chromadb
+opentelemetry-proto==1.41.0
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-otel
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-sdk==1.41.0
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-client
+    #   arize-phoenix-otel
+    #   chromadb
+    #   openinference-instrumentation
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-semantic-conventions==0.62b0
+    # via
+    #   arize-phoenix-otel
+    #   openinference-instrumentation-openai
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-sdk
+opentelemetry-util-http==0.62b0
+    # via
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+orjson==3.11.8
+    # via
+    #   arize-phoenix
+    #   chromadb
+    #   langgraph-sdk
+    #   langsmith
+ormsgpack==1.12.2
+    # via langgraph-checkpoint
+overrides==7.7.0
+    # via chromadb
+packaging==24.2
+    # via
+    #   build
+    #   datasets
+    #   huggingface-hub
+    #   langchain-core
+    #   langsmith
+    #   marshmallow
+    #   onnxruntime
+    #   opentelemetry-instrumentation
+    #   pytest
+    #   spacy
+    #   strawberry-graphql
+    #   thinc
+    #   transformers
+    #   weasel
+pandas==3.0.2
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-evals
+    #   datasets
+phonenumbers==8.13.55
+    # via presidio-analyzer
+pillow==12.2.0
+    # via ragas
+platformdirs==4.9.6
+    # via
+    #   python-discovery
+    #   virtualenv
+pluggy==1.6.0
+    # via pytest
+posthog==7.13.0
+    # via chromadb
+pre-commit==4.6.0
+    # via instructor
+preshed==3.0.13
+    # via
+    #   spacy
+    #   thinc
+presidio-analyzer==2.2.358
+    # via llm-guard
+presidio-anonymizer==2.2.358
+    # via llm-guard
+prometheus-client==0.25.0
+    # via arize-phoenix
+propcache==0.4.1
+    # via
+    #   aiohttp
+    #   yarl
+protobuf==5.29.6
+    # via
+    #   arize-phoenix
+    #   googleapis-common-protos
+    #   onnxruntime
+    #   opentelemetry-proto
+psutil==7.2.2
+    # via arize-phoenix
+pyarrow==24.0.0
+    # via
+    #   arize-phoenix
+    #   datasets
+pyasn1==0.6.3
+    # via ldap3
+pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
+    # via cffi
+pydantic==2.13.3
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-evals
+    #   chromadb
+    #   fastapi
+    #   instructor
+    #   langchain
+    #   langchain-classic
+    #   langchain-core
+    #   langgraph
+    #   langsmith
+    #   llm-ops-project
+    #   openai
+    #   pydantic-settings
+    #   ragas
+    #   spacy
+    #   thinc
+    #   weasel
+pydantic-core==2.46.3
+    # via
+    #   instructor
+    #   pydantic
+pydantic-settings==2.14.0
+    # via
+    #   langchain-community
+    #   llm-ops-project
+pygments==2.20.0
+    # via
+    #   pytest
+    #   rich
+pypika==0.51.1
+    # via chromadb
+pyproject-hooks==1.2.0
+    # via build
+pystache==0.6.8
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-evals
+pytest==8.4.2
+    # via pytest-asyncio
+pytest-asyncio==0.26.0
+python-dateutil==2.9.0.post0
+    # via
+    #   arize-phoenix
+    #   kubernetes
+    #   pandas
+    #   posthog
+    #   strawberry-graphql
+python-discovery==1.2.2
+    # via virtualenv
+python-dotenv==1.2.2
+    # via
+    #   llm-ops-project
+    #   pydantic-settings
+    #   uvicorn
+python-multipart==0.0.27
+    # via arize-phoenix
+pytz==2026.1.post1
+    # via llm-ops-project
+pyyaml==6.0.3
+    # via
+    #   arize-phoenix
+    #   bc-detect-secrets
+    #   chromadb
+    #   datasets
+    #   huggingface-hub
+    #   kubernetes
+    #   langchain-classic
+    #   langchain-community
+    #   langchain-core
+    #   pre-commit
+    #   presidio-analyzer
+    #   transformers
+    #   uvicorn
+ragas==0.4.3
+    # via llm-ops-project
+referencing==0.37.0
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+regex==2024.11.6
+    # via
+    #   llm-guard
+    #   nltk
+    #   presidio-analyzer
+    #   tiktoken
+    #   transformers
+requests==2.33.1
+    # via
+    #   bc-detect-secrets
+    #   datasets
+    #   huggingface-hub
+    #   instructor
+    #   kubernetes
+    #   langchain-classic
+    #   langchain-community
+    #   langsmith
+    #   opentelemetry-exporter-otlp-proto-http
+    #   posthog
+    #   requests-file
+    #   requests-oauthlib
+    #   requests-toolbelt
+    #   spacy
+    #   tiktoken
+    #   tldextract
+    #   transformers
+requests-file==3.0.1
+    # via tldextract
+requests-oauthlib==2.0.0
+    # via kubernetes
+requests-toolbelt==1.0.0
+    # via langsmith
+rich==13.9.4
+    # via
+    #   chromadb
+    #   instructor
+    #   ragas
+    #   typer
+rpds-py==0.30.0
+    # via
+    #   jsonschema
+    #   referencing
+safetensors==0.7.0
+    # via transformers
+scikit-learn==1.8.0
+    # via arize-phoenix
+scikit-network==0.33.5
+    # via ragas
+scipy==1.17.1
+    # via
+    #   arize-phoenix
+    #   scikit-learn
+    #   scikit-network
+setuptools==81.0.0
+    # via
+    #   spacy
+    #   thinc
+    #   torch
+shellingham==1.5.4
+    # via typer
+six==1.17.0
+    # via
+    #   kubernetes
+    #   python-dateutil
+smart-open==7.6.0
+    # via weasel
+sniffio==1.3.1
+    # via openai
+spacy==3.8.14
+    # via presidio-analyzer
+spacy-legacy==3.0.12
+    # via spacy
+spacy-loggers==1.0.5
+    # via spacy
+sqlalchemy==2.0.49
+    # via
+    #   alembic
+    #   arize-phoenix
+    #   langchain-classic
+    #   langchain-community
+sqlean-py==3.49.1 ; sys_platform == 'win32'
+    # via arize-phoenix
+sqlean-py==3.50.4.5 ; sys_platform != 'win32'
+    # via arize-phoenix
+srsly==2.5.3
+    # via
+    #   spacy
+    #   thinc
+    #   weasel
+starlette==1.0.0
+    # via
+    #   arize-phoenix
+    #   fastapi
+strawberry-graphql==0.287.3
+    # via arize-phoenix
+structlog==25.5.0
+    # via llm-guard
+sympy==1.14.0
+    # via torch
+tenacity==9.1.4
+    # via
+    #   chromadb
+    #   instructor
+    #   langchain-community
+    #   langchain-core
+thinc==8.3.13
+    # via spacy
+threadpoolctl==3.6.0
+    # via scikit-learn
+tiktoken==0.12.0
+    # via
+    #   langchain-openai
+    #   llm-guard
+    #   llm-ops-project
+    #   ragas
+tldextract==5.3.1
+    # via presidio-analyzer
+tokenizers==0.21.4
+    # via
+    #   chromadb
+    #   transformers
+torch==2.11.0
+    # via llm-guard
+tqdm==4.67.3
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-client
+    #   arize-phoenix-evals
+    #   chromadb
+    #   datasets
+    #   huggingface-hub
+    #   nltk
+    #   openai
+    #   ragas
+    #   spacy
+    #   transformers
+transformers==4.51.3
+    # via llm-guard
+triton==3.6.0 ; sys_platform == 'linux'
+    # via torch
+typer==0.19.2
+    # via
+    #   chromadb
+    #   instructor
+    #   ragas
+    #   spacy
+    #   weasel
+typing-extensions==4.15.0
+    # via
+    #   aiosignal
+    #   alembic
+    #   anyio
+    #   arize-phoenix
+    #   arize-phoenix-client
+    #   arize-phoenix-evals
+    #   arize-phoenix-otel
+    #   chromadb
+    #   cross-web
+    #   fastapi
+    #   grpcio
+    #   huggingface-hub
+    #   langchain-core
+    #   openai
+    #   openinference-instrumentation-openai
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+    #   posthog
+    #   pydantic
+    #   pydantic-core
+    #   referencing
+    #   sqlalchemy
+    #   starlette
+    #   strawberry-graphql
+    #   torch
+    #   typer
+    #   typing-inspect
+    #   typing-inspection
+typing-inspect==0.9.0
+    # via dataclasses-json
+typing-inspection==0.4.2
+    # via
+    #   fastapi
+    #   pydantic
+    #   pydantic-settings
+tzdata==2026.1
+    # via
+    #   faker
+    #   pandas
+unidiff==0.7.5
+    # via bc-detect-secrets
+urllib3==2.6.3
+    # via
+    #   kubernetes
+    #   requests
+uuid-utils==0.14.1
+    # via
+    #   langchain-core
+    #   langsmith
+uvicorn==0.46.0
+    # via
+    #   arize-phoenix
+    #   chromadb
+    #   llm-ops-project
+uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
+    # via uvicorn
+virtualenv==21.2.4
+    # via pre-commit
+wasabi==1.1.3
+    # via
+    #   spacy
+    #   thinc
+    #   weasel
+watchdog==4.0.2
+    # via llm-ops-project
+watchfiles==1.1.1
+    # via uvicorn
+weasel==1.0.0
+    # via spacy
+websocket-client==1.9.0
+    # via kubernetes
+websockets==16.0
+    # via uvicorn
+wrapt==1.17.3
+    # via
+    #   arize-phoenix
+    #   arize-phoenix-otel
+    #   openinference-instrumentation
+    #   openinference-instrumentation-openai
+    #   opentelemetry-instrumentation
+    #   smart-open
+xxhash==3.6.0
+    # via
+    #   datasets
+    #   langgraph
+    #   langsmith
+yarl==1.23.0
+    # via aiohttp
+zipp==3.23.1
+    # via importlib-metadata
+zstandard==0.25.0
+    # via langsmith
