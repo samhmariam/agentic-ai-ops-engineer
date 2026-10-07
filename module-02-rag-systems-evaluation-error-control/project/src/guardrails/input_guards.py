@@ -37,6 +37,36 @@ INJECTION_PATTERNS: list[re.Pattern] = [
         r"\b(jailbreak\s+mode|DAN\s+mode|developer\s+mode|do\s+anything\s+now)\b",
         re.IGNORECASE,
     ),
+    # Instruction reset with verbs the ignore/disregard patterns miss. The
+    # object must be the assistant's own instructions ("your", "previous",
+    # "system" ...), so "I forget the instructions for the net" passes.
+    re.compile(
+        r"\b(forget|discard|erase|drop|abandon)\s+(all\s+(of\s+)?)?"
+        r"((your|previous|prior|earlier|above|system)\s+){1,2}"
+        r"(instructions?|guidelines|directives|rules|prompt)\b"
+        r"|\bforget\s+everything\s+(above|before|you\s+(were|have\s+been|'ve\s+been)\s+(told|given))\b",
+        re.IGNORECASE,
+    ),
+    # Delimiter / chat-template spoofing: our own context markers from
+    # prompts/rag_system.j2, Llama-style [INST] / <<SYS>> tokens, and
+    # pseudo-XML role tags. No product question contains these.
+    re.compile(
+        r"<{2,}\s*/?\s*(BEGIN|END)_CONTEXT\s*>{2,}"
+        r"|\[\s*/?\s*INST\s*\]"
+        r"|<<\s*/?\s*SYS\s*>>"
+        r"|<\s*/?\s*(system|assistant|instructions?)\s*>",
+        re.IGNORECASE,
+    ),
+    # System-prompt exfiltration phrased as a question or summary, or as an
+    # echo of "everything above" — forms the reveal/show pattern misses.
+    re.compile(
+        r"\b(what\s+(is|are|was|were)|summari[sz]e|describe|translate|paste|output)\s+"
+        r"(your|the)\s+(system\s+prompt|(initial|original|hidden|secret|system)\s+"
+        r"(instructions?|rules|message|prompt))\b"
+        r"|\b(repeat|print|output|paste)\s+(everything|all\s+(of\s+)?the\s+text)\s+"
+        r"(above|before\s+this)\b",
+        re.IGNORECASE,
+    ),
 ]
 
 PII_PATTERNS: dict[str, re.Pattern] = {
