@@ -863,6 +863,23 @@ All hallucinations were caught. ✓
   estimate. No request in Deliverables 3 or 6 was rewritten by the output
   guard.
 
+### Verbatim re-capture for the rubric (2026-10-07, about 13:05Z)
+
+The first live run logged only a truncated prefix of pattern 12's
+`blocked_by`. All seven paired calls were re-run against the committed code
+and the exact `blocked_by` was saved for each. WRITEUP §6 shows them as
+`jq .blocked_by` output.
+
+- **Exact match on every attack.** Each "should fire" value was checked in
+  code to equal `"prompt_injection: matched pattern " +
+  repr(INJECTION_PATTERNS[n-1].pattern)` for its intended pattern (12, 13,
+  14). All three matched, with `model: ""`, so the LLM was never called.
+- **Legitimate questions pass.** Each of the four legitimate questions
+  returned `blocked_by: null` with `cached: false`: the PBPro net setup
+  question, "What is the PBPro Portable Net System?", the club-summary
+  question, and "What paddle is good for beginners?". Their trace IDs are
+  `ff141916…`, `8a7158d3…`, `9eb22f3c…` and `3e126508…`.
+
 ---
 
 ## Deliverable 7 — Distributed Tracing
