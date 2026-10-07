@@ -402,3 +402,32 @@ Deviations from the Linux/Vocareum instructions that were needed to run locally:
 - **`hf_xet` installed manually.** `requirements.txt` gates it on
   `platform_machine == 'amd64'`, but Windows reports `AMD64`, so it was skipped
   and the LLM Guard model download stalled.
+
+---
+
+## Deliverable — Automated Data Ingestion
+
+With the FastAPI server running on port 8080, the in-process inbox watcher
+processed three valid product JSON files placed in `data/inbox/`:
+
+| File | Product ID | Verification query |
+|---|---|---|
+| `northstar-comet-16.json` | `prod_inbox_northstar_comet_16` | What is the face material and core of the Northstar Comet 16 pickleball paddle? |
+| `solstice-court-shoe.json` | `prod_inbox_solstice_court_shoe` | What kind of outsole and midsole does the Solstice Rally Court Shoe use? |
+| `trailmark-outdoor-balls.json` | `prod_inbox_trailmark_outdoor_balls` | What is the hole count and color of Trailmark 40 Outdoor Pickleballs? |
+
+Each `POST /query` returned the matching new product as its top source, with
+the expected product details in the retrieved chunk. The API health endpoint
+returned `{"status":"ok"}` during verification.
+
+A fourth, valid-JSON file, `data/inbox/broken-no-price.json`, deliberately
+omitted the required `price` field. The watcher moved it to
+`data/inbox/failed/broken-no-price.json` and created the sibling
+`data/inbox/failed/broken-no-price.json.error.txt`, containing:
+
+```text
+missing required fields: ['price']
+```
+
+Successfully ingested files remain in `data/inbox/`; invalid files are
+quarantined with a reason file.
