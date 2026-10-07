@@ -630,88 +630,132 @@ question really are 8.0 in wide.
 
 ## Deliverable 7 — Distributed Tracing
 
-I traced **18 distinct `POST /query` requests**: 8 distinct from
-`make seed-traces` (its 2 repeats were cache hits) plus 10 more covering all
-three tiers. Within the traced RAG span, **generation is the slowest step
-(77–79% of `rag_query`)**. Across the whole request, the slowest step is the
-untraced `BanTopics` off-topic output guard, at **26.6% of request
-latency**.
+I traced **18 distinct `POST /query` requests**: 8 from `make seed-traces`
+(its 2 repeats were cache hits) plus a batch of 10 covering all three routing
+tiers. This section follows **one** of those requests, trace **`8777c504`**,
+through the `make show-traces` markdown. For that trace, **generation is the
+slowest traced step: 2,751.8 ms, 79% of the traced `rag_query` span and
+20.8% of the request's total 13,215 ms latency**. The untraced `BanTopics`
+off-topic guard is slower still, at 4,186 ms (31.7%).
 
-`make show-traces` / `make seed-traces` markdown (Phoenix port 6006 wasn't
-browser-reachable from this environment):
+### `make show-traces` markdown for the trace
+
+Phoenix port 6006 wasn't reachable from a browser in this environment, so
+this is rubric option (b). Run straight after the 10-query batch:
+
+```text
+$ uv run python scripts/show_traces.py --last 10      # make show-traces
+# Phoenix Trace Export
+
+112 trace(s) captured. Showing the most recent 10.
+```
 
 | # | Trace ID | Question | Model | Latency (ms) | Prompt tok | Compl. tok | Slowest child | Slowest (ms) |
 |---|---|---|---|---|---|---|---|---|
-| 1 | `422c625a` | Compare the moisture-wicking and durability properties of the apparel options yo | gpt-4o | 4759.7 | 1223 | 293 | ChatCompletion | 4062.8 |
-| 2 | `991d0bea` | What material are the Engage Court Shorts made of? | gpt-4.1-nano | 2000.5 | 1228 | 32 | ChatCompletion | 1386.9 |
-| 3 | `ca02b075` | How many paddles can the JOOLA Tour Elite Pro Duffel hold? | gpt-4.1-nano | 2187.9 | 1368 | 21 | ChatCompletion | 1397.1 |
-| 4 | `eb315089` | How much does the Franklin Sling Bag cost? | gpt-4.1-nano | 1841.2 | 1165 | 14 | ChatCompletion | 1161.7 |
-| 5 | `47e1fe0b` | Which ball is best for outdoor play in windy conditions? | gpt-4o | 3630.9 | 1147 | 204 | ChatCompletion | 2904.8 |
-| 6 | `80eb5d15` | What is the difference between indoor and outdoor balls? | gpt-4o | 4545.0 | 1177 | 346 | ChatCompletion | 3886.2 |
-| 7 | `c742a035` | Compare the Selkirk Vanguard Power Air and JOOLA Hyperion CFS 16 paddles for tou | gpt-4o | 6620.6 | 1545 | 441 | ChatCompletion | 5930.9 |
-| 8 | `7fe0f61b` | What is the weight of the Selkirk AMPED S2? | gpt-4.1-nano | 2006.9 | 1528 | 15 | ChatCompletion | 1350.6 |
-| 9 | `09d1cdc9` | What should I summarize for my club about indoor versus outdoor balls? | gpt-4o | 7094.9 | 1180 | 383 | ChatCompletion | 5645.8 |
-| 10 | `fc67056c` | What is the PBPro Portable Net System? | gpt-4o-mini | 3955.4 | 1597 | 200 | ChatCompletion | 3305.6 |
+| 1 | `90845b71` | {"input": ["Is the Bread & Butter The Filth 16mm a good paddle for a doubles pla | — | 0.0 | 0 | 0 | CreateEmbeddings | 945.2 |
+| 2 | `a47a8b9d` | {"messages": [{"role": "user", "content": "You are a fact-checking judge for a c | — | 0.0 | 0 | 0 | ChatCompletion | 1483.3 |
+| 3 | `8777c504` | Is the Bread & Butter The Filth 16mm a good paddle for a doubles player at the k | gpt-4o | 3467.2 | 1599 | 189 | ChatCompletion | 2751.8 |
+| 4 | `6cfd8cd6` | {"messages": [{"role": "user", "content": "Classify the following customer query | — | 0.0 | 0 | 0 | ChatCompletion | 1507.7 |
+| 5 | `199b9972` | {"input": ["Is the Bread & Butter The Filth 16mm a good paddle for a doubles pla | — | 0.0 | 0 | 0 | CreateEmbeddings | 672.5 |
+| 6 | `47fb4788` | {"input": ["What outfit would you recommend for playing outdoors in hot weather? | — | 0.0 | 0 | 0 | CreateEmbeddings | 959.3 |
+| 7 | `10b5a2b1` | {"messages": [{"role": "user", "content": "You are a fact-checking judge for a c | — | 0.0 | 0 | 0 | ChatCompletion | 1314.1 |
+| 8 | `94d42cfc` | What outfit would you recommend for playing outdoors in hot weather? | gpt-4o | 4006.3 | 1213 | 263 | ChatCompletion | 3285.7 |
+| 9 | `dcb9685a` | {"messages": [{"role": "user", "content": "Classify the following customer query | — | 0.0 | 0 | 0 | ChatCompletion | 1474.1 |
+| 10 | `644b62ae` | {"input": ["What outfit would you recommend for playing outdoors in hot weather? | — | 0.0 | 0 | 0 | CreateEmbeddings | 652.7 |
 
-```text
-Slowest step across 12 traces: ChatCompletion (avg 2939ms, 79% of total request latency)
-```
+**Rows 1–5 are all one request:** *"Is the Bread & Butter The Filth 16mm a
+good paddle for a doubles player at the kitchen line?"*, classified `complex`
+and answered by `gpt-4o`. The starter only wraps retrieval and generation in
+the `rag_query` root span (row 3). The OpenAI auto-instrumentor records the
+classifier, judge and cache-embedding calls as separate root traces, which
+is why their `Latency` column shows 0.0. Their own span durations appear in
+`Slowest (ms)`. Rows 6–10 are the previous request, which follows the same
+5-trace pattern.
 
-**One trace expanded.** `bfa62a99…` is *"Compare the Onix Pure 2 and the
-Franklin X-26 for indoor league play."* (`complex` → `gpt-4o`), with a
-client wall time of 17,603 ms. These are all spans in its request window:
+### Per-step latency for this trace (retrieval, classification and generation labelled)
 
-| Span | Trace | Duration (ms) | Step |
-|---|---|---|---|
-| *(untraced)* DeBERTa + Presidio | — | ~523 | input guards |
-| `CreateEmbeddings` | own root | 639.8 | cache lookup |
-| `ChatCompletion` | own root | 1,516.2 | **classification** (`gpt-4o-mini`) |
-| **`rag_query`** | root `bfa62a99…` | **4,520.4** | traced pipeline |
-| ↳ `CreateEmbeddings` | child | 591.4 | **retrieval**: embed query |
-| ↳ *(gap)* | — | 61.7 | **retrieval**: Chroma search + prompt build |
-| ↳ `ChatCompletion` | child | **3,867.1** | **generation** (`gpt-4o`) |
-| ↳ `rag_generation` | child | 0.0 | metadata-only span |
-| `ChatCompletion` | own root | 1,404.5 | hallucination judge |
-| *(untraced)* `BanTopics` zero-shot | — | ~6,998 | off-topic output guard |
-| `CreateEmbeddings` | own root | 1,205.2 | cache store (re-embeds question) |
+The `Duration` column comes from the Phoenix span dataframe
+(`phoenix.Client().get_spans_dataframe(project_name="llm-ops-capstone")`)
+and matches the `Slowest (ms)` column above to 0.1 ms. The untraced guards
+were timed in-process on this request's own question and answer. **Total
+request latency is 13,215.0 ms**, the client wall-clock time for the
+`POST /query`.
 
-Mean per-step latency over the 10-request batch (117,874 ms of total wall
-time). Traced steps come from Phoenix spans; untraced guards were timed
-in-process on the same inputs.
+| Order | Span (show-traces row) | Duration (ms) | Pipeline step | Share of 13,215 ms |
+|---|---|---|---|---|
+| 1 | *(untraced)* DeBERTa `PromptInjection` + Presidio `Anonymize` | 547.0 | input guards | 4.1% |
+| 2 | `CreateEmbeddings` (row 5, `199b9972`) | 672.5 | semantic-cache lookup | 5.1% |
+| 3 | `ChatCompletion` (row 4, `6cfd8cd6`) | 1,507.7 | **classification** (`gpt-4o-mini` → `complex`) | 11.4% |
+| 4 | **`rag_query`** (row 3, `8777c504`) | 3,483.7 | traced RAG pipeline (show-traces `rag.latency_ms`: 3,467.2) | 26.4% |
+| 4.1 | ↳ `CreateEmbeddings` | 656.3 | **retrieval**: embed query | 5.0% |
+| 4.2 | ↳ *(time between child spans)* | 75.6 | **retrieval**: Chroma top-5 search + prompt render | 0.6% |
+| 4.3 | ↳ **`ChatCompletion`** | **2,751.8** | **generation** (`gpt-4o`; 1,599 prompt / 189 completion tokens) | **20.8%** |
+| 4.4 | ↳ `rag_generation` | 0.0 | metadata-only span (tokens, cost) | — |
+| 5 | `ChatCompletion` (row 2, `a47a8b9d`) | 1,483.3 | output guard: LLM hallucination judge | 11.2% |
+| 6 | *(untraced)* LLM Guard `BanTopics` zero-shot RoBERTa | 4,186.0 | output guard: off-topic | 31.7% |
+| 7 | `CreateEmbeddings` (row 1, `90845b71`) | 945.2 | `cache_store` (re-embeds the question) | 7.2% |
+| — | residual (HTTP, threadpool) | 389.6 | — | 2.9% |
+
+- **Slowest pipeline step for this trace:**
+  - **Step name:** **generation**, the `ChatCompletion` child of `rag_query`
+    (`gpt-4o`). It is the slowest of retrieval, classification and
+    generation, and the `Slowest child` show-traces reports for this trace.
+  - **Latency:** **2,751.8 ms**.
+  - **Fraction of total request latency:** **20.8%** of the request's
+    13,215 ms end-to-end latency. As a share of the traced `rag_query` span
+    it is 79% (2,751.8 / 3,467.2 ms using show-traces' latency column). It
+    takes 1.8× the classification step (1,507.7 ms, 11.4%) and 3.8× the
+    whole retrieval step (731.9 ms, 5.5%).
+  - **Why:** it is the only call that generates a long answer on the
+    largest model, `gpt-4o`: 189 completion tokens over a 1,599-token
+    prompt. Retrieval is one embedding plus a 38-chunk Chroma search, and
+    classification returns about 30 tokens from `gpt-4o-mini`.
+- **The real end-to-end bottleneck sits outside the traced spans.** The
+  `BanTopics` off-topic output guard runs a zero-shot RoBERTa model on CPU
+  over the generated answer. It took **4,186 ms (31.7%)** on this request's
+  913-character answer, which is more than generation. Because it isn't
+  instrumented, Phoenix can't show it.
+
+### Across all 10 requests in the batch
+
+Total wall time was 117,874 ms. Traced steps come from Phoenix spans;
+untraced guards were timed in-process on the same inputs. The pattern holds
+on every request: generation is the slowest traced step, at 77% of
+`rag_query` time in aggregate. `BanTopics` scales with answer length, from
+0.9 s (12%) on one-line `gpt-4.1-nano` answers to 7.0 s (40%) on a
+1,547-character `gpt-4o` comparison.
 
 | Step | Mean (ms) | Share of request latency |
 |---|---|---|
 | Input guards (DeBERTa + Presidio) | 478 | 4.1% |
 | Cache lookup embed | 666 | 5.7% |
-| Classification (`gpt-4o-mini`) | 1,555 | 13.2% |
-| Retrieval: embed query | 634 | 5.4% |
-| Retrieval: Chroma search | 69 | 0.6% |
-| **Generation (tiered LLM)** | **2,362** | **20.0%** |
+| **Classification** (`gpt-4o-mini`) | 1,555 | 13.2% |
+| **Retrieval**: embed query | 634 | 5.4% |
+| **Retrieval**: Chroma search | 69 | 0.6% |
+| **Generation** (tiered LLM) | **2,362** | **20.0%** |
 | Hallucination judge | 1,524 | 12.9% |
-| **`BanTopics` off-topic guard** | **3,135** | **26.6%** |
+| `BanTopics` off-topic guard | 3,135 | 26.6% |
 | Cache store embed | 905 | 7.7% |
 | Residual | 460 | 3.9% |
 
-- **Slowest step in my traces:**
-  - **Step name:** generation (`ChatCompletion` inside `rag_query`). It is
-    the slowest *traced* step and the slowest step in every
-    `make show-traces` row.
-  - **Latency:** mean **2,362 ms** (3,867 ms in the expanded `gpt-4o`
-    trace).
-  - **Fraction of total request latency:** **77% of the traced `rag_query`
-    span** (seed-traces: 79%), but only **20.0% of end-to-end request
-    latency**. The untraced `BanTopics` guard is larger, at **26.6%**
-    (3,135 ms).
-  - **Why:** generation is the only call that streams hundreds of output
-    tokens from a large model (`gpt-4o` answers run up to 441 completion
-    tokens). `BanTopics` runs a zero-shot RoBERTa on CPU over that same
-    answer, so its cost grows with answer length: 0.9 s (12%) for a one-line
-    answer and 7.0 s (40%) for a 1,547-character comparison.
-- **Other findings:**
-  - Phoenix only sees 26% of a request: the classifier, judge and cache
-    calls land as separate root traces, and about 35% of latency is
-    untraced.
-  - The question is embedded three times per request (18.8% of latency).
+`make seed-traces` reports the same pattern from the traced spans alone.
+Its "total request latency" is the `rag_query` span, not the full request:
+
+```text
+Slowest step across 12 traces: ChatCompletion (avg 2939ms, 79% of total request latency)
+```
+
+**What the traces show about the instrumentation:**
+
+- **Phoenix sees only 26% of a request.** The classifier, judge and cache
+  calls land as separate root traces, and about 35% of latency is untraced
+  (the guards).
+- **The question is embedded three times per request:** for the cache
+  lookup, for retrieval, and again for the cache store. That costs 18.8% of
+  latency.
+- **Fix:** wrap the `/query` handler in one root span with explicit
+  `classification`, `retrieval` and `generation` child spans. Each request
+  would then appear as a single labelled trace in the Phoenix UI.
 
 ## Deliverable 8 — Cost Monitoring, Per-Tier Summary, and Savings
 
@@ -721,9 +765,17 @@ used. The report shows **68.9% savings vs a `gpt-4o` baseline**. Like for
 like (judge on `gpt-4o-mini` in both scenarios, classifier calls included),
 savings are about **47%**.
 
+**All of Part A, B and C come from the same log.** The excerpt, the
+`/cost-dashboard` screenshot ("Total requests 72") and the
+`scripts/cost_report.py` output ("Records: 72") were captured back to back
+on 2026-10-07, at about 11:39Z. At that point the log held 72 entries, the
+last at `11:22:21Z`, and no queries ran between the three captures. The
+later evidence curls for §1, §3, §4 and §6 appended more rows: `wc -l` now
+reads 98. Those rows are not part of this analysis.
+
 ### Part A — Cost log + dashboard
 
-- Total entries: `wc -l data/cost_log.jsonl` → **72**
+- Total entries: `wc -l data/cost_log.jsonl` → **72** at capture time (≥ 50)
 - 5-line excerpt (lines 11–15; all tiers and all four `query_type`s):
 
 ```json
