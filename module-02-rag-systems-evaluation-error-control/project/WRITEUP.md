@@ -11,9 +11,12 @@ is in [`EVIDENCE.md`](EVIDENCE.md).
 
 - **Python:** `uv run python --version` → `Python 3.12.11` (uv venv,
   Windows 11).
-- **Branch / commit:** `main`. The last commit at the time of writing is
-  `2b655be` (`git rev-parse --short HEAD`). The final commit hash should
-  replace it once this WRITEUP is committed.
+- **Branch / commit:** clone the tip of `main`. The last commit that changed
+  code or data is `f29a718` ("Fix test crash and ship project data"): the
+  `tests/conftest.py` fix, the `.gitignore` re-include and the 35 products
+  and test sets. Every later commit touches only `WRITEUP.md` and
+  `EVIDENCE.md`, so the test and verify results below apply to the tip of
+  `main`. They were re-run there: 242 passed, 0 failed.
 - **Test suite:** `make test` → `242 passed, 26 warnings in 8.09s` (see §9).
 - **Verify:** `make verify` → `Automated: 4 passed, 0 failed` (see §9).
 - **Windows notes.** There is no GNU `make` on this machine, so each target
@@ -900,6 +903,13 @@ other two were not separately exercised:
   Two stricter checks over every tracked or committable file both matched
   nothing: a search for the real key's characters taken from `.env`, and a
   search for full key shapes (`voc-` + 16 chars, `sk-` + 32 chars).
+- **Whole git history is clean**, not just the current tree.
+  - `git log --all -- .env` lists **no commits**, so `.env` was never
+    committed.
+  - `git log --all -p | grep -cF <16-char fragment of the real key>` → **0**.
+  - Key-shaped strings among added lines in every commit → **0**.
+  - These checks were re-run at the tip of `main` together with the final
+    `make test` and `make verify`.
 
 ---
 
