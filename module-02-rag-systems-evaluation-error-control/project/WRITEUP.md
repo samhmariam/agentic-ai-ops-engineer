@@ -130,41 +130,72 @@ curl -s -X POST http://localhost:8080/query \
 
 ## Deliverable 2 — RAG Pipeline With Structured Output + Top-k Sweep
 
-`POST /query` returns a fully populated `QueryResponse`. The answer is
-grounded in a newly added product (`prod_035`), and a Phoenix `trace_id` is
-attached. A five-point RAGAS sweep picks `top_k = 5`, because it gives the
-highest faithfulness without the grounding loss seen at 10.
+`POST /query` returns a fully populated `QueryResponse`: all nine fields,
+with every `sources[]` element carrying `doc_id`, `chunk_text` and
+`similarity_score`. The answer is grounded in a newly added product
+(`prod_035`). A RAGAS sweep over `top_k` = 3, 5 and 10 picks **`top_k = 5`**.
+It has the highest faithfulness, and moving to 10 trades 0.054 faithfulness
+for 0.089 recall.
 
 ### Part A — Structured-output curl
 
+```bash
+curl -s -X POST http://localhost:8080/query \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"What are the care instructions for the JOOLA Essentials Court Polo?"}'
+```
+
 ```json
 {
-  "answer": "The JOOLA Essentials Court Polo has a UPF rating of UPF 40. The fabric is made from 88% recycled polyester and 12% spandex.",
+  "answer": "The care instructions for the JOOLA Essentials Court Polo are as follows:\n\n- Machine wash cold with like colors.\n- Tumble dry low.\n- Do not use fabric softener, as it clogs the moisture-wicking fibers.\n- Do not iron the logo.",
   "sources": [
     {
       "doc_id": "prod_035",
-      "chunk_text": "JOOLA Essentials Court Polo\n\nThe JOOLA Essentials Court Polo is a collared performance shirt for players who need club or league dress-code compliance without giving up comfort. … UPF 40 sun protection … \n\nPrice: $44.99 USD\n\nSpecifications:\n  garment_type: polo\n  material: 88% recycled polyester, 12% spandex\n  … upf_rating: UPF 40\n\nCare instructions: Machine wash cold …",
-      "similarity_score": 0.7553135639418345
+      "chunk_text": "JOOLA Essentials Court Polo\n\nThe JOOLA Essentials Court Polo is a collared performance shirt for players who need club or league dress-code compliance without giving up comfort. The recycled polyester knit wicks sweat and dries quickly, UPF 40 sun protection shields the shoulders during outdoor play, and a stretch side panel allows a full overhead swing without the hem riding up.\n\nPrice: $44.99 USD\n\nSpecifications:\n  garment_type: polo\n  material: 88% recycled polyester, 12% spandex\n  fit: athletic\n  size_range: S-XXL\n  color_options: ['Navy', 'White', 'Charcoal']\n  moisture_wicking: True\n  upf_rating: UPF 40\n\nCare instructions: Machine wash cold with like colors and tumble dry low. Do not use fabric softener, which clogs the moisture-wicking fibers. Do not iron the logo.",
+      "similarity_score": 0.7141048127524534
     },
-    { "doc_id": "prod_014", "chunk_text": "JOOLA Tour Elite Pro Duffel …", "similarity_score": 0.4579472423668436 },
-    { "doc_id": "prod_027", "chunk_text": "JOOLA Ben Johns Perseus 3S 16mm …", "similarity_score": 0.43449189213333206 },
-    { "doc_id": "prod_015", "chunk_text": "Diadem Warrior Performance Tee …", "similarity_score": 0.43194354214876407 },
-    { "doc_id": "prod_016", "chunk_text": "Lija Rally Skort …", "similarity_score": 0.4280843748950913 }
+    {
+      "doc_id": "prod_014",
+      "chunk_text": "JOOLA Tour Elite Pro Duffel\n\nThe JOOLA Tour Elite Pro Duffel is built for the serious competitor who ...",
+      "similarity_score": 0.4448819160461426
+    },
+    {
+      "doc_id": "prod_027",
+      "chunk_text": "JOOLA Ben Johns Perseus 3S 16mm\n\nThe JOOLA Ben Johns Perseus 3S 16mm is the 16 mm control variant of ...",
+      "similarity_score": 0.41560912132263184
+    },
+    {
+      "doc_id": "prod_inbox_solstice_court_shoe",
+      "chunk_text": "Solstice Rally Court Shoe\n\nThe Solstice Rally Court Shoe is a stable indoor court shoe designed for  ...",
+      "similarity_score": 0.4141169786453247
+    },
+    {
+      "doc_id": "prod_015",
+      "chunk_text": "Diadem Warrior Performance Tee\n\nThe Diadem Warrior Performance Tee uses moisture-wicking polyester b ...",
+      "similarity_score": 0.40368330478668213
+    }
   ],
-  "confidence": 0.501556123097173,
+  "confidence": 0.47847922671064697,
   "model": "gpt-4o-mini",
-  "tokens": { "prompt_tokens": 1358, "completion_tokens": 34 },
-  "cost_usd": 0.0002241,
+  "tokens": {
+    "prompt_tokens": 1329,
+    "completion_tokens": 53
+  },
+  "cost_usd": 0.00023114999999999998,
   "cached": false,
-  "trace_id": "35a9bbcbcbaaeb612a90b5e00d2c48b0",
+  "trace_id": "10f9f0ac15913148eb74eea894d38a75",
   "blocked_by": null
 }
 ```
 
-(Chunk texts are abbreviated with `…`. The full response is in
-`EVIDENCE.md`.) `blocked_by` is `null` because no guard fired. An injection
-attempt shows the field populated:
-`"blocked_by": "prompt_injection: matched pattern '\\bignore\\s+(all\\s+)?(previous|prior|above)\\s+instructions?\\b'"`.
+The top source's `chunk_text` is complete. Sources 2–5 are truncated with
+`...`, and every other field is verbatim. Captured 2026-10-07T12:51Z.
+
+- **All nine fields present:** `answer`, `sources`, `confidence`, `model`,
+  `tokens`, `cost_usd`, `cached`, `trace_id`, `blocked_by`.
+- **`blocked_by` is `null`** because no guard fired. An injection attempt
+  shows it populated:
+  `"blocked_by": "prompt_injection: matched pattern '\\bignore\\s+(all\\s+)?(previous|prior|above)\\s+instructions?\\b'"`.
 
 ### Part B — Top-k sweep
 
@@ -198,43 +229,125 @@ Output of `make eval-topk-sweep`: 30 golden questions, run serially
 
 ## Deliverable 3 — Tiered Model Routing
 
-The `gpt-4o-mini` classifier sends single-fact lookups to the cheap tier and
-comparisons or recommendations to `gpt-4o`. When I re-sent the classifier
-prompt directly (3 runs per question), it gave the same label 18/18 times.
+The gateway classifies each question with `gpt-4o-mini`, then routes it to
+the model configured for that tier in `.env`. Four fresh `POST /query`
+calls on the submitted 3-tier code landed on three different models:
 
-| Query | classification | model |
-|-------|---------------|-------|
-| What is the weight of the Selkirk AMPED S2? (simple) | `simple` | `gpt-4o-mini` |
-| Compare the Selkirk Vanguard Power Air and the JOOLA Hyperion CFS 16 for a player with arm fatigue who wants tournament-grade power. (complex) | `complex` | `gpt-4o` |
-| Is the Engage Pursuit MX a forgiving choice for someone who plays casually on weekends? (borderline) | `complex` | `gpt-4o` |
+- a single-value lookup → `gpt-4.1-nano`
+- a descriptive single-product question → `gpt-4o-mini`
+- a multi-product comparison → `gpt-4o`
+- the borderline suitability question → `gpt-4o`
+
+Sending the classifier prompt directly, 3 times per question, gave the same
+label 27/27 times.
+
+**Tier mapping configured in `.env`** (model lines only;
+`src/gateway/router.py::select_model` maps `budget` → `MODEL_BUDGET`,
+`simple` → `MODEL_SIMPLE` and everything else → `MODEL_COMPLEX`):
+
+```dotenv
+MODEL_COMPLEX=gpt-4o
+MODEL_SIMPLE=gpt-4o-mini
+MODEL_BUDGET=gpt-4.1-nano
+```
+
+**Classification per query.** Each query's classification is the
+`query_type` written to `data/cost_log.jsonl` by `route_query`.
+
+| # | Query | Type | classification | `model` |
+|---|-------|------|---------------|-------|
+| 1 | What is the weight of the Selkirk AMPED S2? | simple fact (single value) | `budget` | `gpt-4.1-nano` |
+| 2 | What are the care instructions for the JOOLA Essentials Court Polo? | simple fact (descriptive) | `simple` | `gpt-4o-mini` |
+| 3 | Compare the Selkirk Vanguard Power Air and the JOOLA Hyperion CFS 16 for a player with arm fatigue who wants tournament-grade power. | complex, multi-product | `complex` | `gpt-4o` |
+| 4 | Is the Engage Pursuit MX a forgiving choice for someone who plays casually on weekends? | borderline | `complex` | `gpt-4o` |
+
+**`POST /query` outputs** (captured 2026-10-07T12:51–12:52Z;
+`sources` shown as `doc_id (similarity_score)`, all other fields verbatim):
 
 ```bash
 curl -s -X POST http://localhost:8080/query -H 'Content-Type: application/json' \
-  -d '{"question":"What is the weight of the Selkirk AMPED S2?"}' | jq .model          # "gpt-4o-mini"
-curl -s -X POST http://localhost:8080/query -H 'Content-Type: application/json' \
-  -d '{"question":"Compare the Selkirk Vanguard Power Air and the JOOLA Hyperion CFS 16 for a player with arm fatigue who wants tournament-grade power."}' | jq .model   # "gpt-4o"
-curl -s -X POST http://localhost:8080/query -H 'Content-Type: application/json' \
-  -d '{"question":"Is the Engage Pursuit MX a forgiving choice for someone who plays casually on weekends?"}' | jq .model   # "gpt-4o"
+  -d '{"question":"What is the weight of the Selkirk AMPED S2?"}'
 ```
-
-Matching `data/cost_log.jsonl` lines (classification = `query_type`):
 
 ```json
-{"timestamp": "2026-10-07T08:18:58.014156+00:00", "model": "gpt-4o-mini", "prompt_tokens": 1528, "completion_tokens": 18, "cost_usd": 0.00024, "query_type": "simple"}
-{"timestamp": "2026-10-07T08:19:11.944874+00:00", "model": "gpt-4o", "prompt_tokens": 1552, "completion_tokens": 401, "cost_usd": 0.00789, "query_type": "complex"}
-{"timestamp": "2026-10-07T08:19:23.581465+00:00", "model": "gpt-4o", "prompt_tokens": 1380, "completion_tokens": 127, "cost_usd": 0.00472, "query_type": "complex"}
+{"answer": "The Selkirk AMPED S2 weighs 7.8 oz.",
+ "sources": ["prod_001 (0.622)", "prod_007 (0.423)", "prod_012 (0.414)", "prod_029 (0.333)", "prod_026 (0.330)"],
+ "confidence": 0.4243870973587036, "model": "gpt-4.1-nano",
+ "tokens": {"prompt_tokens": 1528, "completion_tokens": 15}, "cost_usd": 0.0001588,
+ "cached": false, "trace_id": "9a0a61c4efc6b46a961010da78b635a5", "blocked_by": null}
 ```
 
-**Borderline → `complex`.** The question names a single product, which
-signals `simple`. However, "forgiving" and "plays casually on weekends" ask
-for a fit-for-purpose judgement that no spec field holds. The model has to
-infer forgiveness from core, face and weight, then match that to a player
-profile. That fits the prompt's "recommendation based on preferences or use
-case" criterion, and the answer used that reasoning: it concluded the
-Pursuit MX suits control players and suggested the Paddletek Bantam TS-5
-instead. No response was rewritten by the hallucination guard (all
-`blocked_by: null`). The complex answers cost 20–33× the simple one
-($0.0047–$0.0079 vs $0.00024).
+```bash
+curl -s -X POST http://localhost:8080/query -H 'Content-Type: application/json' \
+  -d '{"question":"What are the care instructions for the JOOLA Essentials Court Polo?"}'
+```
+
+```json
+{"answer": "The care instructions for the JOOLA Essentials Court Polo are as follows:\n\n- Machine wash cold with like colors.\n- Tumble dry low.\n- Do not use fabric softener, as it clogs the moisture-wicking fibers.\n- Do not iron the logo.",
+ "sources": ["prod_035 (0.714)", "prod_014 (0.445)", "prod_027 (0.416)", "prod_inbox_solstice_court_shoe (0.414)", "prod_015 (0.404)"],
+ "confidence": 0.47847922671064697, "model": "gpt-4o-mini",
+ "tokens": {"prompt_tokens": 1329, "completion_tokens": 53}, "cost_usd": 0.00023114999999999998,
+ "cached": false, "trace_id": "10f9f0ac15913148eb74eea894d38a75", "blocked_by": null}
+```
+
+```bash
+curl -s -X POST http://localhost:8080/query -H 'Content-Type: application/json' \
+  -d '{"question":"Compare the Selkirk Vanguard Power Air and the JOOLA Hyperion CFS 16 for a player with arm fatigue who wants tournament-grade power."}'
+```
+
+```json
+{"answer": "Here is a comparison between the Selkirk Vanguard Power Air and the JOOLA Hyperion CFS 16, focusing on their suitability for a player with arm fatigue seeking tournament-grade power:\n\n**Selkirk Vanguard Power Air**:\n- **Weight**: 8.4 oz\n- **Face Material**: QuadFlex 4-layer carbon fiber\n- **Core**: Air-injected polypropylene\n- **Shape**: Elongated\n- **Length**: 16.5 in\n- **Width**: 7.375 in ... (385 completion tokens; truncated here)",
+ "sources": ["prod_007 (0.646)", "prod_002 (0.589)", "prod_001 (0.510)", "prod_027 (0.486)", "prod_026 (0.478)"],
+ "confidence": 0.5417875051498413, "model": "gpt-4o",
+ "tokens": {"prompt_tokens": 1552, "completion_tokens": 385}, "cost_usd": 0.00773,
+ "cached": false, "trace_id": "0ab7bb2bb757164c40ad54d2ca579ba5", "blocked_by": null}
+```
+
+```bash
+curl -s -X POST http://localhost:8080/query -H 'Content-Type: application/json' \
+  -d '{"question":"Is the Engage Pursuit MX a forgiving choice for someone who plays casually on weekends?"}'
+```
+
+```json
+{"answer": "The Engage Pursuit MX paddle features a ControlPro polymer core that is designed for touch and feel, making it suitable for players who prioritize finesse in their game. However, it might not be considered as forgiving as other options specifically designed for casual or beginner players. ... (139 completion tokens; truncated here)",
+ "sources": ["prod_003 (0.612)", "prod_006 (0.383)", "prod_026 (0.375)", "prod_001 (0.373)", "prod_018 (0.359)"],
+ "confidence": 0.42055037021636965, "model": "gpt-4o",
+ "tokens": {"prompt_tokens": 1380, "completion_tokens": 139}, "cost_usd": 0.00484,
+ "cached": false, "trace_id": "9bef14368f0c318c2f2f9acd53fd4128", "blocked_by": null}
+```
+
+Matching `data/cost_log.jsonl` answer rows (the source of the
+classification column):
+
+```json
+{"timestamp": "2026-10-07T12:51:44.451653+00:00", "model": "gpt-4.1-nano", "prompt_tokens": 1528, "completion_tokens": 15, "cost_usd": 0.0001588, "query_type": "budget"}
+{"timestamp": "2026-10-07T12:51:53.253845+00:00", "model": "gpt-4o-mini", "prompt_tokens": 1329, "completion_tokens": 53, "cost_usd": 0.00023114999999999998, "query_type": "simple"}
+{"timestamp": "2026-10-07T12:52:03.147449+00:00", "model": "gpt-4o", "prompt_tokens": 1552, "completion_tokens": 385, "cost_usd": 0.00773, "query_type": "complex"}
+{"timestamp": "2026-10-07T12:52:13.389116+00:00", "model": "gpt-4o", "prompt_tokens": 1380, "completion_tokens": 139, "cost_usd": 0.00484, "query_type": "complex"}
+```
+
+**Are the decisions sensible?**
+
+- **Simple facts go to the cheap tiers.** A single value copied from the
+  product data (weight) goes to `budget`; a few sentences of description
+  (care instructions) go to `simple`. Both answers match their top source
+  exactly (`prod_001`: 7.8 oz; `prod_035`: care text).
+- **Comparisons and recommendations go to `gpt-4o`.**
+- **Borderline → `complex`.** The question names one product, which would
+  signal `simple`. However, "forgiving" and "plays casually on weekends" ask
+  for a fit-for-purpose judgement that no spec field holds. The model has to
+  infer forgiveness from core, face and weight and weigh it against a player
+  profile. That is the prompt's "judgement about whether a product suits a
+  particular player" criterion, and the answer does that reasoning.
+- **Cost.** The two `gpt-4o` answers cost **30–49×** the `gpt-4.1-nano`
+  lookup ($0.00484–$0.00773 vs $0.000159).
+- **Guards.** All four have `blocked_by: null`; no response was rewritten by
+  the hallucination guard.
+
+**History.** The stock 2-tier classifier, captured before the budget tier
+was added, routed the same Selkirk weight question to `simple` →
+`gpt-4o-mini`, and questions 3–4 to `gpt-4o`. See `EVIDENCE.md` →
+Deliverable 3, Part 1.
 
 ## Deliverable 4 — Automated Data Ingestion + Quarantine
 

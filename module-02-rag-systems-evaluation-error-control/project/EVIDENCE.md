@@ -424,6 +424,29 @@ per question. All 27 calls agreed with each other:
   This is why the per-tier queries above use questions that were not already
   cached.
 
+### Re-capture on the submitted code (2026-10-07T12:51Z)
+
+The rubric asks for outputs that match "the tier mapping configured in
+`.env`". Two things needed fixing for that:
+
+- **`.env` was missing the budget tier.** It only set `MODEL_COMPLEX` and
+  `MODEL_SIMPLE`, and the budget tier worked through the `config.py` default.
+  `MODEL_BUDGET=gpt-4.1-nano` was added to the local `.env`. The value is
+  identical, so behaviour is unchanged, and `.env` stays gitignored.
+- **Part 1 predates the third tier.** Re-running its Selkirk question on the
+  committed code now returns `gpt-4.1-nano`, not `gpt-4o-mini`. WRITEUP §3
+  therefore uses this fresh 4-query capture:
+
+| Query | classification (`query_type`) | `model` | cost_usd | cached | blocked_by | trace_id |
+|---|---|---|---|---|---|---|
+| What is the weight of the Selkirk AMPED S2? | `budget` | `gpt-4.1-nano` | 0.0001588 | false | null | `9a0a61c4…` |
+| What are the care instructions for the JOOLA Essentials Court Polo? | `simple` | `gpt-4o-mini` | 0.00023115 | false | null | `10f9f0ac…` |
+| Compare the Selkirk Vanguard Power Air and the JOOLA Hyperion CFS 16 … arm fatigue … tournament-grade power. | `complex` | `gpt-4o` | 0.00773 | false | null | `0ab7bb2b…` |
+| Is the Engage Pursuit MX a forgiving choice … casually on weekends? | `complex` | `gpt-4o` | 0.00484 | false | null | `9bef1436…` |
+
+The care-instructions response (full JSON, all nine fields) also replaces the
+older PowerShell capture as WRITEUP §2 Part A, now shown as a `curl`.
+
 ---
 
 ## Environment notes (Windows)
