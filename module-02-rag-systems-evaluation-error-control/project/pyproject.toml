@@ -40,6 +40,7 @@ dependencies = [
     # arize-phoenix imports pytz in phoenix/datetime_utils.py without
     # declaring it — keep pinned until upstream fixes the metadata.
     "pytz>=2026.1",
+    "hf-xet>=1.4.3",
 ]
 
 [dependency-groups]

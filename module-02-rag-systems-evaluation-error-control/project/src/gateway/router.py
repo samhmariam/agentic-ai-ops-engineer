@@ -1,4 +1,4 @@
-"""Tiered model routing — classify, dispatch to mini or 4o, log cost.
+"""Tiered model routing — classify, dispatch to nano, mini or 4o, log cost.
 
 This is the integration hub: classify → choose model → run traced
 pipeline → log per-request cost. Deliverable #3 of the project proposal
@@ -14,7 +14,10 @@ from src.tracing import traced_pipeline
 
 def select_model(query_type: QueryType) -> str:
     """Map a query type to the configured model name."""
-    return settings.model_simple if query_type == "simple" else settings.model_complex
+    return {
+        "budget": settings.model_budget,
+        "simple": settings.model_simple,
+    }.get(query_type, settings.model_complex)
 
 
 def route_query(question: str, top_k: int = 5) -> QueryResponse:

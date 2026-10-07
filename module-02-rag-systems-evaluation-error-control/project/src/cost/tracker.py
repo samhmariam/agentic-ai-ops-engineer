@@ -9,7 +9,7 @@ from src.config import settings
 from src.models import TokenUsage
 from src.pricing import compute_cost  # re-exported for callers that prefer this entry point
 
-QueryType = Literal["simple", "complex", "hallucination_check"]
+QueryType = Literal["budget", "simple", "complex", "hallucination_check"]
 
 
 def _resolve_path(path: str | Path | None) -> Path:

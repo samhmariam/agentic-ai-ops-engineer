@@ -25,6 +25,17 @@ def test_classify_returns_simple_for_simple_label():
     assert result == "simple"
 
 
+def test_classify_returns_budget_for_budget_label():
+    with patch("src.gateway.classifier._client") as client:
+        client.chat.completions.create.return_value = _completion(
+            '{"classification": "budget", "reasoning": "single-value lookup"}'
+        )
+
+        result = classify("What does the Selkirk cost?")
+
+    assert result == "budget"
+
+
 def test_classify_returns_complex_for_complex_label():
     with patch("src.gateway.classifier._client") as client:
         client.chat.completions.create.return_value = _completion(

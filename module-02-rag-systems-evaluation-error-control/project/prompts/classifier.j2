@@ -1,8 +1,12 @@
-Classify the following customer query as either "simple" or "complex".
+Classify the following customer query as "budget", "simple", or "complex".
 
-- **simple**: A straightforward factual lookup about a single product or attribute (e.g., price, weight, material, availability, care instructions). These can be answered with a direct retrieval from product data.
+- **budget**: A single-value lookup about one named product — the answer is one number or short value copied straight from the product data (e.g., price, weight, thickness, core material, grip size, color options, size range). No explanation is needed.
 
-- **complex**: A query requiring comparison between products, a recommendation based on preferences or use case, multi-step reasoning, or synthesis across multiple product attributes or categories.
+- **simple**: A factual question about a single product or attribute whose answer needs a few sentences of description or instructions drawn from product data, but no judgement (e.g., care instructions, what a product is designed for, what features it has, what is included).
+
+- **complex**: A query requiring comparison between products, a recommendation based on preferences or use case, a judgement about whether a product suits a particular player or situation, multi-step reasoning, or synthesis across multiple product attributes or categories.
+
+If a query is between two tiers, choose the higher one (budget < simple < complex).
 
 ## Query
 
@@ -12,4 +16,4 @@ Classify the following customer query as either "simple" or "complex".
 
 Respond with a JSON object only, no additional text:
 
-{"classification": "simple" or "complex", "reasoning": "one-sentence explanation"}
+{"classification": "budget" or "simple" or "complex", "reasoning": "one-sentence explanation"}

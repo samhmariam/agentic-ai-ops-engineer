@@ -21,14 +21,15 @@ def _make_response(model: str, cost: float = 0.001) -> QueryResponse:
     )
 
 
-def test_select_model_maps_simple_to_mini_and_complex_to_full():
+def test_select_model_maps_each_tier_to_its_model():
+    assert select_model("budget") == settings.model_budget
     assert select_model("simple") == settings.model_simple
     assert select_model("complex") == settings.model_complex
 
 
 @pytest.mark.parametrize(
     "query_type,expected_model",
-    [("simple", "gpt-4o-mini"), ("complex", "gpt-4o")],
+    [("budget", "gpt-4.1-nano"), ("simple", "gpt-4o-mini"), ("complex", "gpt-4o")],
 )
 def test_route_query_dispatches_to_correct_model(query_type, expected_model):
     response = _make_response(expected_model)

@@ -1,4 +1,4 @@
-"""Classify a customer query as ``simple`` or ``complex`` using gpt-4o-mini.
+"""Classify a customer query as ``budget``, ``simple`` or ``complex`` using gpt-4o-mini.
 
 A small LLM self-classification beats keyword heuristics because it
 generalises to unseen phrasings. Cost is ~$0.0001 per call, which is
@@ -12,14 +12,14 @@ capable, more expensive) route.
 
 import json
 from pathlib import Path
-from typing import Literal
+from typing import Literal, get_args
 
 from jinja2 import Environment, FileSystemLoader
 from openai import OpenAI
 
 from src.config import settings
 
-QueryType = Literal["simple", "complex"]
+QueryType = Literal["budget", "simple", "complex"]
 
 _PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 # Prompts are plaintext, not HTML; explicit autoescape=False signals the
@@ -37,7 +37,7 @@ _client = OpenAI(
 
 
 def classify(question: str) -> QueryType:
-    """Return ``"simple"`` or ``"complex"`` for a customer question.
+    """Return ``"budget"``, ``"simple"`` or ``"complex"`` for a customer question.
 
     Falls back to ``"complex"`` (the safer/more expensive route) if the
     classifier returns malformed JSON or an unexpected label — better to
@@ -56,6 +56,6 @@ def classify(question: str) -> QueryType:
     except json.JSONDecodeError:
         label = None
 
-    if label not in ("simple", "complex"):
+    if label not in get_args(QueryType):
         return "complex"
     return label

@@ -11,7 +11,8 @@ git-tracked so changes are reviewed alongside code.
   Rendered by `src/rag/generator.py::render_system_prompt`.
 
 - `classifier.j2` — Query classifier that routes questions to the appropriate
-  model (`simple` → `gpt-4o-mini`, `complex` → `gpt-4o`). Returns a JSON
+  model (`budget` → `gpt-4.1-nano`, `simple` → `gpt-4o-mini`,
+  `complex` → `gpt-4o`). Returns a JSON
   object so the result is parseable. Rendered by
   `src/gateway/classifier.py::classify`.
 

@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     # Models
     model_complex: str = "gpt-4o"
     model_simple: str = "gpt-4o-mini"
+    model_budget: str = "gpt-4.1-nano"
     embedding_model: str = "text-embedding-3-small"
 
     # Application
