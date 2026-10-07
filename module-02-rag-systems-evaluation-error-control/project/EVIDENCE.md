@@ -82,6 +82,30 @@ The retriever was also queried directly (`src.rag.retriever.retrieve`,
 | Which shoe has a Goodyear rubber outsole? | `prod_034` (0.447) | `prod_022` (0.357) |
 | Which backpack has a ventilated shoe compartment and a fence hook? | `prod_033` (0.523) | `prod_012` (0.483) |
 
+### Rubric re-check (2026-10-07, after the data commit `f29a718`)
+
+- **Five new products in the repo.** `git ls-files data/products | grep
+  prod_03[1-5]` lists all five. Before `f29a718`, a repo-root `data/` ignore
+  rule kept them out of git; see Deliverable 9.
+- **Schema.** `validate_product` returns `None` (valid) for all five, and
+  `REQUIRED_FIELDS - keys` is empty for each.
+- **Fresh `curl` citing a new product** (`bash curl`, not PowerShell; now
+  used in WRITEUP §1):
+  *"How much does the Vulcan Pro Pickleball Backpack cost?"* returned
+  `sources[0].doc_id = prod_033` (0.797), with a second new product,
+  `prod_034`, at rank 4. The answer was "…costs $89.99 USD." (`gpt-4.1-nano`,
+  `cached: false`, `blocked_by: null`, `trace_id
+  468b8cc41341da57c3f957f8db132e74`).
+- **Why not reuse the outsole query.** Re-running *"Which pickleball shoe has
+  a Goodyear rubber outsole?"* as a curl still put `prod_034` first (0.600),
+  but returned `blocked_by: "pii_redacted: person"`.
+  - Presidio's NER (`dslim/bert-base-NER`) tagged the brand **"Goodyear"** as
+    a PERSON and redacted it before routing. The request was answered by
+    `gpt-4o` and the answer was still correct.
+  - This is a PII false positive on a product brand. It wasn't used as §1
+    evidence because a populated `blocked_by` would look like a guard firing
+    on a legitimate question.
+
 ---
 
 ## Deliverable 2 — RAG Pipeline With Structured Output

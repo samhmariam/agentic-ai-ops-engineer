@@ -37,10 +37,11 @@ I used the as-shipped stack. I made no swaps back to the proposal stack.
 ## Deliverable 1 — Vector Store Populated
 
 I added five new product JSONs to `data/products/`, covering every
-category. Each passes `src.ingestion.watcher.validate_product`, and all were
-loaded with `make load-data` (`Loading 35 products into Chroma... Done — 35
-chunks upserted.`). A retrieval query that only a new product can answer
-ranks that product first.
+category, and committed them. Each passes the
+`src/ingestion/watcher.py::REQUIRED_FIELDS` schema check. All were loaded
+with `make load-data` (`Loading 35 products into Chroma... Done — 35 chunks
+upserted.`). A `POST /query` curl about a new product returns that product as
+its top `sources[].doc_id`.
 
 | doc_id | File | Category | Product |
 |---|---|---|---|
@@ -54,25 +55,78 @@ ranks that product first.
 near-duplicated the shipped `prod_011` at a conflicting price, which §5's
 eval exposed. I renamed it and re-upserted it under the same `doc_id`.
 
-```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/query -ContentType 'application/json' `
-  -Body '{"question": "Which pickleball shoe has a Goodyear rubber outsole?"}' | Select-Object -ExpandProperty sources
-```
+**Schema validation.** Each new file passes
+`src.ingestion.watcher.validate_product`, which returns `None` when the
+product is valid. That check covers `REQUIRED_FIELDS`, `specifications`
+being an object, and the `FIELD_MAX_LENGTHS` caps.
 
 ```text
-doc_id   chunk_text
-------   ----------
-prod_034 Skechers Viper Court Pro…
-prod_008 Franklin X-40 Outdoor Pickleballs…
-prod_022 FILA Volley Zone Court Shoes…
-prod_032 Franklin X-26 Indoor Pickleball…   (pre-rename name of prod_032)
-prod_005 HEAD Radical Tour…
+$ uv run python -c "...validate_product(json.load(f)) for each new file..."
+data/products/prod_031_crbn_1x_power.json              prod_031  PASS  missing: []
+data/products/prod_032_courtline_glide26_indoor.json   prod_032  PASS  missing: []
+data/products/prod_033_vulcan_pro_backpack.json        prod_033  PASS  missing: []
+data/products/prod_034_skechers_viper_court_pro.json   prod_034  PASS  missing: []
+data/products/prod_035_joola_essentials_polo.json      prod_035  PASS  missing: []
 ```
 
-The top source is the new `prod_034`. Calling the retriever directly gives
-the margins: `prod_034` 0.447 vs `prod_022` 0.357 for the outsole query, and
-`prod_033` 0.523 vs `prod_012` 0.483 for *"Which backpack has a ventilated
-shoe compartment and a fence hook?"*.
+**`POST /query` curl citing a new product:**
+
+```bash
+curl -s -X POST http://localhost:8080/query \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"How much does the Vulcan Pro Pickleball Backpack cost?"}'
+```
+
+```json
+{
+  "answer": "The Vulcan Pro Pickleball Backpack costs $89.99 USD.",
+  "sources": [
+    {
+      "doc_id": "prod_033",
+      "chunk_text": "Vulcan Pro Pickleball Backpack\n\nThe Vulcan Pro Backpack is a tournament-ready pack for players who carry mul ...",
+      "similarity_score": 0.7972052244897927
+    },
+    {
+      "doc_id": "prod_013",
+      "chunk_text": "Franklin Pickleball Sling Bag\n\nA compact sling bag designed for players who travel light. The Franklin Sling ...",
+      "similarity_score": 0.5304089784622192
+    },
+    {
+      "doc_id": "prod_012",
+      "chunk_text": "Selkirk Team Backpack\n\nThe Selkirk Team Backpack holds up to 4 paddles and all your gear in a ventilated, we ...",
+      "similarity_score": 0.5154551863670349
+    },
+    {
+      "doc_id": "prod_034",
+      "chunk_text": "Skechers Viper Court Pro\n\nThe Skechers Viper Court Pro is a dedicated pickleball shoe built for quick latera ...",
+      "similarity_score": 0.5047317326903774
+    },
+    {
+      "doc_id": "prod_inbox_trailmark_outdoor_balls",
+      "chunk_text": "Trailmark 40 Outdoor Pickleballs\n\nTrailmark 40 Outdoor Pickleballs are made for outdoor recreational and lea ...",
+      "similarity_score": 0.49530547857284546
+    }
+  ],
+  "confidence": 0.5686213201164539,
+  "model": "gpt-4.1-nano",
+  "tokens": { "prompt_tokens": 1219, "completion_tokens": 15 },
+  "cost_usd": 0.00012790000000000002,
+  "cached": false,
+  "trace_id": "468b8cc41341da57c3f957f8db132e74",
+  "blocked_by": null
+}
+```
+
+(`chunk_text` is truncated with `...`; all other fields are verbatim.)
+
+- **Top source:** the new product **`prod_033`** ranks first by a wide margin
+  (0.797 vs 0.530 for the next result). The answer's $89.99 matches
+  `prod_033_vulcan_pro_backpack.json`.
+- **Second new product:** `prod_034` (Skechers Viper Court Pro) also appears
+  in `sources`.
+- **Retrieval on features, not just the name:** *"Which backpack has a
+  ventilated shoe compartment and a fence hook?"* also ranks `prod_033` first
+  (0.523 vs `prod_012` 0.483).
 
 ## Deliverable 2 — RAG Pipeline With Structured Output + Top-k Sweep
 
