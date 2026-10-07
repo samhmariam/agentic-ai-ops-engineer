@@ -815,3 +815,330 @@ All hallucinations were caught. ✓
   about $0.00017–$0.00027 each, which is in line with the brief's ~$0.0002
   estimate. No request in Deliverables 3 or 6 was rewritten by the output
   guard.
+
+---
+
+## Deliverable 7 — Distributed Tracing
+
+### Queries run
+
+Phoenix UI port 6006 was not available as a browser session from this
+environment, so the evidence uses the `make show-traces` / `make seed-traces`
+markdown fallback plus the raw Phoenix span data (project
+`llm-ops-capstone`).
+
+**18 distinct questions** were traced against the live `make serve` instance
+on 2026-10-07, in two batches:
+
+1. **`make seed-traces`**: the 10-question pack, of which 8 are distinct.
+   The two repeats were cache hits and produced no trace.
+2. **10 further distinct questions**, chosen to cover all three routing tiers
+   (3 × `gpt-4.1-nano`, 3 × `gpt-4o-mini`, 4 × `gpt-4o`). Each was posted to
+   `http://127.0.0.1:8080/query` with client-side wall-clock timing. Using
+   `127.0.0.1` avoids the Windows `localhost` IPv6 fallback delay noted in
+   Deliverable 6.
+
+All 18 were cache misses with `blocked_by: null`.
+
+### `make seed-traces` output
+
+```text
+Running 10 traced queries against http://localhost:8080/query ...
+  [ 1/10] MISS What is the weight of the Selkirk AMPED S2?
+  [ 2/10] HIT  What is the weight of the Selkirk AMPED S2?
+  [ 3/10] MISS Compare the Selkirk Vanguard Power Air and JOOLA Hyperion CFS 16 paddl
+  [ 4/10] MISS What is the difference between indoor and outdoor balls?
+  [ 5/10] MISS Which ball is best for outdoor play in windy conditions?
+  [ 6/10] MISS How much does the Franklin Sling Bag cost?
+  [ 7/10] HIT  How much does the Franklin Sling Bag cost?
+  [ 8/10] MISS How many paddles can the JOOLA Tour Elite Pro Duffel hold?
+  [ 9/10] MISS What material are the Engage Court Shorts made of?
+  [10/10] MISS Compare the moisture-wicking and durability properties of the apparel
+```
+
+| # | Trace ID | Question | Model | Latency (ms) | Prompt tok | Compl. tok | Slowest child | Slowest (ms) |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `422c625a` | Compare the moisture-wicking and durability properties of the apparel options yo | gpt-4o | 4759.7 | 1223 | 293 | ChatCompletion | 4062.8 |
+| 2 | `991d0bea` | What material are the Engage Court Shorts made of? | gpt-4.1-nano | 2000.5 | 1228 | 32 | ChatCompletion | 1386.9 |
+| 3 | `ca02b075` | How many paddles can the JOOLA Tour Elite Pro Duffel hold? | gpt-4.1-nano | 2187.9 | 1368 | 21 | ChatCompletion | 1397.1 |
+| 4 | `eb315089` | How much does the Franklin Sling Bag cost? | gpt-4.1-nano | 1841.2 | 1165 | 14 | ChatCompletion | 1161.7 |
+| 5 | `47e1fe0b` | Which ball is best for outdoor play in windy conditions? | gpt-4o | 3630.9 | 1147 | 204 | ChatCompletion | 2904.8 |
+| 6 | `80eb5d15` | What is the difference between indoor and outdoor balls? | gpt-4o | 4545.0 | 1177 | 346 | ChatCompletion | 3886.2 |
+| 7 | `c742a035` | Compare the Selkirk Vanguard Power Air and JOOLA Hyperion CFS 16 paddles for tou | gpt-4o | 6620.6 | 1545 | 441 | ChatCompletion | 5930.9 |
+| 8 | `7fe0f61b` | What is the weight of the Selkirk AMPED S2? | gpt-4.1-nano | 2006.9 | 1528 | 15 | ChatCompletion | 1350.6 |
+| 9 | `09d1cdc9` | What should I summarize for my club about indoor versus outdoor balls? | gpt-4o | 7094.9 | 1180 | 383 | ChatCompletion | 5645.8 |
+| 10 | `fc67056c` | What is the PBPro Portable Net System? | gpt-4o-mini | 3955.4 | 1597 | 200 | ChatCompletion | 3305.6 |
+
+```text
+Slowest step across 12 traces: ChatCompletion (avg 2939ms, 79% of total request latency)
+```
+
+Rows 9–10 are Deliverable 6's legitimate-question checks, still within the
+script's 12 most recent `rag_query` traces.
+
+### One trace expanded
+
+The trace is `bfa62a997506dece546aa301004a66ce`: *"Compare the Onix Pure 2 and
+the Franklin X-26 for indoor league play."*, routed `complex` → `gpt-4o`, with
+a client wall time of **17,603 ms**.
+
+Each LLM and embedding call is auto-instrumented by `OpenAIInstrumentor`, but
+only retrieval and generation sit inside the `rag_query` root span. Everything
+else in the request lands as a separate root trace. The rows below are all the
+spans Phoenix recorded inside this request's time window, in start order:
+
+| Order | Span | Trace | Duration (ms) | Pipeline step |
+|---|---|---|---|---|
+| — | *(untraced)* DeBERTa `PromptInjection` + Presidio `Anonymize` | — | ~523 (measured in-process) | input guards |
+| 1 | `CreateEmbeddings` | own root | 639.8 | semantic-cache lookup (`cache_lookup`) |
+| 2 | `ChatCompletion` | own root | 1,516.2 | classifier (`gpt-4o-mini`, `classifier.j2`) |
+| 3 | **`rag_query`** | `bfa62a99…` (root) | **4,520.4** | `traced_pipeline` |
+| 3.1 | ↳ `CreateEmbeddings` | child | 591.4 | retrieval: embed query |
+| 3.2 | ↳ *(gap, no span)* | — | 61.7 | retrieval: Chroma vector search + prompt rendering |
+| 3.3 | ↳ `ChatCompletion` | child | **3,867.1** | generation (`gpt-4o`, 189 completion tokens shown in show-traces) |
+| 3.4 | ↳ `rag_generation` | child | 0.0 | metadata-only span, opened *after* the pipeline returns |
+| 4 | `ChatCompletion` | own root | 1,404.5 | output guard: LLM hallucination judge |
+| — | *(untraced)* LLM Guard `BanTopics` zero-shot RoBERTa on the answer | — | ~6,998 (measured in-process) | output guard: off-topic |
+| 5 | `CreateEmbeddings` | own root | 1,205.2 | `cache_store`: embeds the question again |
+
+`make show-traces --last 10`, run straight after this batch, shows the same
+fragmentation. The classifier, judge and cache-embedding spans appear as
+separate traces with `Latency 0.0`, because they have no `rag_query` root:
+
+| # | Trace ID | Question | Model | Latency (ms) | Prompt tok | Compl. tok | Slowest child | Slowest (ms) |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `90845b71` | {"input": ["Is the Bread & Butter The Filth 16mm a good paddle for a doubles pla | — | 0.0 | 0 | 0 | CreateEmbeddings | 945.2 |
+| 2 | `a47a8b9d` | {"messages": [{"role": "user", "content": "You are a fact-checking judge for a c | — | 0.0 | 0 | 0 | ChatCompletion | 1483.3 |
+| 3 | `8777c504` | Is the Bread & Butter The Filth 16mm a good paddle for a doubles player at the k | gpt-4o | 3467.2 | 1599 | 189 | ChatCompletion | 2751.8 |
+| 4 | `6cfd8cd6` | {"messages": [{"role": "user", "content": "Classify the following customer query | — | 0.0 | 0 | 0 | ChatCompletion | 1507.7 |
+| 5 | `199b9972` | {"input": ["Is the Bread & Butter The Filth 16mm a good paddle for a doubles pla | — | 0.0 | 0 | 0 | CreateEmbeddings | 672.5 |
+| 6 | `47fb4788` | {"input": ["What outfit would you recommend for playing outdoors in hot weather? | — | 0.0 | 0 | 0 | CreateEmbeddings | 959.3 |
+| 7 | `10b5a2b1` | {"messages": [{"role": "user", "content": "You are a fact-checking judge for a c | — | 0.0 | 0 | 0 | ChatCompletion | 1314.1 |
+| 8 | `94d42cfc` | What outfit would you recommend for playing outdoors in hot weather? | gpt-4o | 4006.3 | 1213 | 263 | ChatCompletion | 3285.7 |
+| 9 | `dcb9685a` | {"messages": [{"role": "user", "content": "Classify the following customer query | — | 0.0 | 0 | 0 | ChatCompletion | 1474.1 |
+| 10 | `644b62ae` | {"input": ["What outfit would you recommend for playing outdoors in hot weather? | — | 0.0 | 0 | 0 | CreateEmbeddings | 652.7 |
+
+### Per-step latency across the 10-question batch
+
+Method:
+
+- **Traced steps:** span durations come from
+  `phoenix.Client().get_spans_dataframe(project_name="llm-ops-capstone")`.
+  Each span is assigned to a request by its start and end time falling inside
+  that request's client wall-clock window. Requests ran sequentially, so the
+  windows do not overlap.
+- **Untraced guards:** these were timed in-process, on the same question and
+  the answer text taken from the `rag_query` span's `output.value`. That is
+  `PromptInjection.scan`, `detect_pii` (regex + Presidio) and `is_off_topic`
+  (`BanTopics`).
+- **Residual:** wall time minus everything above.
+
+Total wall time over the 10 requests was 117,874 ms (mean 11,787 ms, median
+12,137 ms).
+
+| Step | How measured | Mean (ms) | Share of total request latency |
+|---|---|---|---|
+| Input guards: DeBERTa + Presidio | untraced, in-process | 478 | 4.1% |
+| Cache lookup: embed question | `CreateEmbeddings` root | 666 | 5.7% |
+| Classification: `gpt-4o-mini` | `ChatCompletion` root | 1,555 | 13.2% |
+| Retrieval: embed query | `CreateEmbeddings` in `rag_query` | 634 | 5.4% |
+| Retrieval: Chroma search + prompt build | `rag_query` minus children | 69 | 0.6% |
+| **Generation: tiered answer LLM** | `ChatCompletion` in `rag_query` | **2,362** | **20.0%** |
+| Output guard: LLM hallucination judge | `ChatCompletion` root | 1,524 | 12.9% |
+| **Output guard: `BanTopics` off-topic** | untraced, in-process | **3,135** | **26.6%** |
+| Cache store: re-embed question | `CreateEmbeddings` root | 905 | 7.7% |
+| Residual (HTTP, threadpool, unattributed) | wall − all of the above | 460 | 3.9% |
+
+Per request, ordered by answer tier:
+
+| Model | Wall (ms) | `rag_query` (ms) | Generation (ms, % of wall) | `BanTopics` (ms, % of wall) | Answer length (chars) |
+|---|---|---|---|---|---|
+| gpt-4.1-nano | 8,747 | 2,100 | 1,450 (17%) | 1,221 (14%) | 58 |
+| gpt-4.1-nano | 7,838 | 1,892 | 1,261 (16%) | 966 (12%) | 81 |
+| gpt-4.1-nano | 7,846 | 1,991 | 1,322 (17%) | 903 (12%) | 73 |
+| gpt-4o-mini | 9,601 | 2,716 | 2,026 (21%) | 1,709 (18%) | 229 |
+| gpt-4o-mini | 11,195 | 3,013 | 2,374 (21%) | 2,636 (24%) | 455 |
+| gpt-4o-mini | 13,502 | 3,838 | 2,965 (22%) | 3,518 (26%) | 684 |
+| gpt-4o | 13,079 | 3,069 | 2,315 (18%) | 3,940 (30%) | 828 |
+| gpt-4o | 17,603 | 4,520 | 3,867 (22%) | 6,998 (40%) | 1,547 |
+| gpt-4o | 15,247 | 4,030 | 3,286 (22%) | 5,271 (35%) | 1,287 |
+| gpt-4o | 13,215 | 3,484 | 2,752 (21%) | 4,186 (32%) | 913 |
+
+### Slowest step and bottleneck
+
+**Within the traced RAG pipeline, generation is the bottleneck.** The
+`ChatCompletion` child takes **77%** of `rag_query` time in this batch:
+23,618 ms of 30,653 ms summed. `make seed-traces` reports 79% across its 12
+traces. Retrieval is cheap: the query embedding is about 0.63 s, and the
+Chroma search over 38 chunks takes **69 ms (0.6%)**.
+
+**Across the whole request, the slowest single step is the `BanTopics`
+off-topic output guard, at 26.6% of request latency (mean 3.1 s).**
+Generation is second at 20.0%.
+
+- **Phoenix doesn't show the real bottleneck.** `rag_query` covers only 26%
+  of wall time, so its "79% of total request latency" line is a share of the
+  traced pipeline, not of the request.
+- **Why `BanTopics` is slow.** It is a zero-shot RoBERTa classifier running on
+  CPU over the generated answer, so its cost grows with answer length. It
+  takes 0.9–1.2 s (12–14% of wall time) for one-line budget-tier answers, and
+  **7.0 s (40%)** for the 1,547-character `gpt-4o` comparison. On every
+  `gpt-4o` request it outweighs generation.
+- **LLM round trips.** The three LLM calls (classifier, generation, judge)
+  together take **46%** of latency. On budget-tier requests the classifier
+  (about 1.5 s) costs more than the `gpt-4.1-nano` answer it routes to
+  (1.3–1.5 s).
+- **The question is embedded three times.** It is embedded for the cache
+  lookup, for retrieval, and again for `cache_store`. Together that is
+  **18.8%** of latency (2.2 s per request) for one 1536-dim vector.
+- **`rag_generation` is misleading.** It always shows **0.0 ms**, because the
+  wrapper in `src/tracing/phoenix_backend.py` opens it after `run_pipeline`
+  returns, only to attach token and cost attributes. The real generation
+  time is on its `ChatCompletion` sibling.
+
+**What would reduce latency, by impact:**
+
+1. Run `BanTopics` on a truncated answer, on a GPU, or concurrently with the
+   hallucination judge. Alternatively, fold the off-topic check into the judge
+   prompt, since that call already runs on every request.
+2. Embed the question once and pass the vector to the cache lookup, the
+   retriever and `cache_store`. That saves about 1.5 s per request.
+3. Run the classifier concurrently with the cache lookup, or skip it with a
+   cheap heuristic for obvious single-value lookups.
+4. Add spans for the guard steps and wrap the whole `/query` handler in a
+   root span. Phoenix would then show the full request as one trace, rather
+   than five disconnected traces with about 35% of the time invisible (input
+   guards 4.1% + `BanTopics` 26.6% + residual 3.9%).
+
+---
+
+## Deliverable 8 — Cost Monitoring, Per-Tier Summary, and Savings
+
+### Log volume: 72 real entries, not seeded
+
+```text
+$ wc -l data/cost_log.jsonl
+72 data/cost_log.jsonl
+```
+
+Every entry is **real traffic**, written by live `POST /query` calls between
+2026-10-06T20:20Z and 2026-10-07T11:22Z: Deliverables 1–3, 6 and 7, plus
+`make seed-traces`. `make seed-cost-log` was **not** run. With 72 rows (≥50)
+it would no-op anyway, and real rows give an honest tier mix.
+
+- **36 answered requests,** each writing an answer row (`budget`, `simple` or
+  `complex`) followed by a `hallucination_check` row: 36 + 36 = 72.
+- **What is not in the log:** blocked prompts and cache hits never reach the
+  router, so they write nothing. The RAGAS / LLM-judge evaluation scripts
+  deliberately don't log.
+
+### Part A: dashboard and log excerpt
+
+`GET http://127.0.0.1:8080/cost-dashboard` returned HTTP 200. I took the
+screenshot with headless Edge (`msedge --headless=new
+--screenshot=screenshots/cost_dashboard.png --window-size=900,520
+http://127.0.0.1:8080/cost-dashboard`):
+
+![Cost dashboard: 72 requests, $0.0908 total, per-model breakdown](screenshots/cost_dashboard.png)
+
+| Dashboard field | Value |
+|---|---|
+| Total requests | 72 |
+| Total cost (USD) | $0.0908 |
+| gpt-4.1-nano | 11 requests, $0.0016, avg $0.000141 |
+| gpt-4o | 13 requests, $0.0788, avg $0.006065 |
+| gpt-4o-mini | 48 requests, $0.0105, avg $0.000218 |
+
+**5-line excerpt** (`data/cost_log.jsonl` lines 11–15). It covers all three
+tiers and all four `query_type` values, and shows each answer row followed by
+its `hallucination_check` row:
+
+```json
+{"timestamp": "2026-10-07T08:19:23.581465+00:00", "model": "gpt-4o", "prompt_tokens": 1380, "completion_tokens": 127, "cost_usd": 0.00472, "query_type": "complex"}
+{"timestamp": "2026-10-07T08:19:28.147553+00:00", "model": "gpt-4o-mini", "prompt_tokens": 1293, "completion_tokens": 38, "cost_usd": 0.00021675, "query_type": "hallucination_check"}
+{"timestamp": "2026-10-07T08:32:12.938397+00:00", "model": "gpt-4.1-nano", "prompt_tokens": 1176, "completion_tokens": 16, "cost_usd": 0.000124, "query_type": "budget"}
+{"timestamp": "2026-10-07T08:32:14.616613+00:00", "model": "gpt-4o-mini", "prompt_tokens": 981, "completion_tokens": 30, "cost_usd": 0.00016515, "query_type": "hallucination_check"}
+{"timestamp": "2026-10-07T08:32:23.567372+00:00", "model": "gpt-4o-mini", "prompt_tokens": 1348, "completion_tokens": 53, "cost_usd": 0.000234, "query_type": "simple"}
+```
+
+Entry shape: `timestamp` (UTC ISO-8601), `model`, `prompt_tokens`,
+`completion_tokens`, `cost_usd` (computed by `src.pricing.compute_cost`) and
+`query_type` (`budget` | `simple` | `complex` | `hallucination_check`).
+
+### Part B: per-tier summary and Part C: savings (`make cost-report`)
+
+```powershell
+$env:PYTHONUTF8="1"; $env:PYTHONPATH="."; uv run python scripts/cost_report.py
+```
+
+```text
+Records:           72
+Actual cost:       $0.0908
+Baseline (gpt-4o): $0.2919
+Savings:           $0.2011 (68.9%)
+
+Per-tier summary:
+  gpt-4o        N=  13  avg=$0.0061/query  total=$0.0788
+  gpt-4o-mini   N=  48  avg=$0.0002/query  total=$0.0105
+  gpt-4.1-nano  N=  11  avg=$0.0001/query  total=$0.0016
+```
+
+**Per-tier summary.** This covers every model tier present in the log. The
+first three columns are verbatim from `make cost-report`. The unrounded
+average is from the dashboard.
+
+| Model tier | Query count | Avg cost / query (USD) | Unrounded avg (dashboard) | Total (USD) |
+|---|---|---|---|---|
+| gpt-4o | 13 | $0.0061 | $0.006065 | $0.0788 |
+| gpt-4o-mini | 48 | $0.0002 | $0.000218 | $0.0105 |
+| gpt-4.1-nano | 11 | $0.0001 | $0.000141 | $0.0016 |
+
+`cost_report.py` groups by `model`, so its `gpt-4o-mini` row mixes two kinds
+of call. Split by `query_type`:
+
+| query_type | Model | N | Avg cost / query (USD) | Total (USD) |
+|---|---|---|---|---|
+| complex | gpt-4o | 13 | 0.006065 | 0.0788 |
+| hallucination_check | gpt-4o-mini | 36 | 0.000208 | 0.0075 |
+| simple | gpt-4o-mini | 12 | 0.000247 | 0.0030 |
+| budget | gpt-4.1-nano | 11 | 0.000141 | 0.0016 |
+
+**Savings vs baseline (verbatim):**
+`Baseline (gpt-4o): $0.2919` → `Savings: $0.2011 (68.9%)`.
+
+- **Baseline model:** `gpt-4o`, the report's default (`--baseline gpt-4o`).
+- **Absolute savings:** **$0.2011** across 72 logged calls. Actual cost was
+  $0.0908, against $0.2919 if every logged call had been priced at `gpt-4o`.
+- **Percentage savings:** **68.9%**.
+
+### How robust is the 68.9%? Sensitivity check
+
+The report reprices **every** row at `gpt-4o`, including the 36
+`hallucination_check` calls. It also ignores the classifier calls, which are
+never written to the log. The table below adjusts for both. I measured the
+classifier's cost with three live calls to `prompts/classifier.j2` on
+`gpt-4o-mini`: 255–260 prompt tokens and 24–32 completion tokens, so
+**$0.0000557 per call** on average.
+
+| Scenario | Tiered actual | gpt-4o baseline | Savings | % |
+|---|---|---|---|---|
+| A. `make cost-report` as shipped (judge rows repriced at 4o) | $0.0908 | $0.2919 | $0.2011 | **68.9%** |
+| B. Judge stays on `gpt-4o-mini` in the baseline too (it would run either way) | $0.0908 | $0.1746 | $0.0837 | 48.0% |
+| C. B + the 36 unlogged classifier calls charged to tiered | $0.0929 | $0.1746 | $0.0817 | **46.8%** |
+| Answer rows only (routing effect in isolation) | $0.0834 | $0.1671 | $0.0837 | 50.1% |
+
+- **The 68.9% headline overstates the routing effect.** About 21 points of it
+  come from pretending the fact-check judge would have run on `gpt-4o`.
+- **Like-for-like savings are about 47%.** That is $0.00258 against $0.00485
+  per answered request.
+- **The classifier is cheap.** It costs about $0.00006 per request, roughly
+  2.2% of the tiered spend.
+
+**Why the savings aren't higher: tier mix.** This log's routed traffic is
+36% `complex` (13 of 36), because the earlier deliverables deliberately
+included many comparison and recommendation questions. Those 13 `gpt-4o`
+answers are **87% of all spend** ($0.0788 of $0.0908). Each `complex` answer
+costs about 43× a `budget` answer and 25× a `simple` one. Savings therefore
+depend almost entirely on how much traffic avoids `gpt-4o`. The seed script's
+assumed mix of 70% `simple` and 20% `complex` would show much larger savings
+than this deliberately complex-heavy sample.
