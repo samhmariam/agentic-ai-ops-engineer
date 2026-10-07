@@ -35,13 +35,29 @@ Five new product JSONs in `data/products/`, covering all four categories:
 | doc_id | File | Category | Product |
 |---|---|---|---|
 | `prod_031` | `prod_031_crbn_1x_power.json` | paddles | CRBN 1X Power Series 16mm |
-| `prod_032` | `prod_032_franklin_x26_indoor.json` | balls | Franklin X-26 Indoor Pickleball |
+| `prod_032` | `prod_032_courtline_glide26_indoor.json` | balls | Courtline Glide 26 Indoor Pickleballs (originally "Franklin X-26 Indoor Pickleball"; renamed 2026-10-07, see note below) |
 | `prod_033` | `prod_033_vulcan_pro_backpack.json` | accessories (bag) | Vulcan Pro Pickleball Backpack |
 | `prod_034` | `prod_034_skechers_viper_court_pro.json` | accessories (shoes) | Skechers Viper Court Pro |
 | `prod_035` | `prod_035_joola_essentials_polo.json` | apparel | JOOLA Essentials Court Polo |
 
 All five pass `src.ingestion.watcher.validate_product` (schema:
 `REQUIRED_FIELDS` plus the per-field length caps).
+
+**Rename (2026-10-07).** `prod_032` was first added as "Franklin X-26 Indoor
+Pickleball" ($14.99, 3-pack). That near-duplicates the shipped `prod_011`
+"Franklin X-26 Indoor Pickleballs" ($7.99) with a conflicting price; the
+Deliverable 5 eval found both chunks taking top-5 slots. The product was
+renamed to **Courtline Glide 26 Indoor Pickleballs** (brand `Courtline`). Its
+description no longer mentions the X-26 or X-40. `product_id`, specs and
+price are unchanged, and the file is now `prod_032_courtline_glide26_indoor.json`.
+`make load-data` upserted it in place: the store still holds 38 chunks, with
+exactly one "Franklin X-26" chunk. The `POST /query` output above predates the
+rename. Checks against the live server after the rename:
+
+| Query | Top sources | Answer |
+|---|---|---|
+| How much do the Franklin X-26 Indoor Pickleballs cost? | `prod_011` (Franklin X-26), `prod_032` (Courtline Glide 26), `prod_008` | "…cost $7.99 USD for a pack of 3." |
+| Which indoor pickleballs come in a 3-pack for $14.99? | `prod_011`, `prod_009`, `prod_010`, … (`prod_032` in top 5) | "…is the Courtline Glide 26 Indoor Pickleballs." |
 
 ### Ingestion (`make load-data`)
 
@@ -431,3 +447,185 @@ missing required fields: ['price']
 
 Successfully ingested files remain in `data/inbox/`; invalid files are
 quarantined with a reason file.
+
+---
+
+## Deliverable 5 — Automated Evaluation Suite
+
+### Run (`make eval`)
+
+```powershell
+$env:PYTHONUTF8="1"; $env:PYTHONPATH="."; uv run python scripts/run_eval.py --max-workers=1 --output data/eval/eval_results_2026-10-07.json
+```
+
+This is the `make eval` recipe (`EVAL_MAX_WORKERS ?= 1`) plus `--output`, so
+the per-question scores are saved for the distribution statistics below. The
+per-row JSON is at `data/eval/eval_results_2026-10-07.json`.
+
+- **Run:** 2026-10-07, 30 golden questions, 120 metric evaluations,
+  23 min 35 s wall clock, exit code 0, no `nan` cells.
+- **What is measured:** `src.evaluation` calls `run_pipeline` directly with
+  `top_k=5` and the default answer model `gpt-4o`. It bypasses the
+  classifier, cache and guardrails, so the scores measure retrieval plus
+  generation only.
+- **Judge:** RAGAS uses `gpt-4o-mini`.
+- **Vector store at eval time:** 38 product chunks: the 30 shipped products,
+  the 5 added in Deliverable 1, and 3 ingested from the inbox in Task 4.
+
+```text
+Evaluating 30 questions...
+Evaluating: 100%|██████████| 120/120 [23:35<00:00, 11.79s/it]
+
+Aggregate metrics:
+  faithfulness: 0.868
+  answer_relevancy: 0.826
+  context_recall: 0.844
+  context_precision: 0.726
+```
+
+### Aggregate metrics and per-question distribution
+
+| metric | **aggregate (mean)** | median | p25 | p10 | range (min–max) | # questions = 1.0 | # questions < 0.5 |
+|---|---|---|---|---|---|---|---|
+| faithfulness | **0.868** | 1.000 | 0.771 | 0.650 | 0.00–1.00 | 18 / 30 | 1 / 30 |
+| answer_relevancy | **0.826** | 0.849 | 0.781 | 0.585 | 0.00–1.00 | 3 / 30 | 1 / 30 |
+| context_recall | **0.844** | 1.000 | 1.000 | 0.000 | 0.00–1.00 | 24 / 30 | 4 / 30 |
+| context_precision | **0.726** | 1.000 | 0.500 | 0.000 | 0.00–1.00 | 18 / 30 | 9 / 30 |
+
+Percentiles use numpy's default linear interpolation over the 30 per-question
+scores.
+
+**Run-to-run reference.** The `top_k` sweep in Deliverable 2 (2026-10-06)
+used the same pipeline and golden set. At `top_k=5` it scored
+faithfulness 0.925, answer_relevancy 0.818, context_recall 0.844 and
+context_precision 0.726. Across `top_k` = 3 / 5 / 10, context_precision
+stayed between 0.726 and 0.740.
+
+### Lowest-scoring metric: `context_precision` = 0.726
+
+It is the lowest of the four in this run, and it was also the lowest at every
+`top_k` in the Deliverable 2 sweep. Per question it is **bimodal**: 18
+questions score 1.0, 6 score 0.0, and only 6 fall in between.
+
+Every question scoring below 1.0 falls into one of three groups:
+
+| # | Question | context_precision | context_recall | Expected product(s) in top-5? |
+|---|---|---|---|---|
+| 3 | Which paddle is lighter, the Selkirk AMPED S2 or the JOOLA Hyperion CFS 16? | 0.00 | 1.00 | **yes, ranks 1 and 2** |
+| 22 | Compare the Selkirk Team Backpack and Franklin Sling Bag. | 0.00 | 1.00 | **yes, ranks 1 and 2** |
+| 6 | What shoes do you carry? | 0.00 | 1.00 | yes, ranks 1, 4 and 5 (all 5 retrieved chunks are shoes) |
+| 20 | What paddle would you recommend for someone who plays singles? | 0.00 | 0.00 | no, Franklin Ben Johns Signature missing |
+| 27 | Which paddle has the widest body? | 0.00 | 0.00 | no, Engage Pursuit MX missing |
+| 29 | What is the cheapest product you sell? | 0.00 | 0.00 | no, Tourna Lead Tape Roll missing |
+| 7 | Which paddles have a fiberglass face? | 0.25 | 0.00 | partly: 2 of 3 retrieved (ranks 1 and 4), Selkirk AMPED S2 missing |
+| 9 | What is the difference between indoor and outdoor balls? | 0.50 | 1.00 | yes (Onix Pure 2 at rank 2, Franklin X-40 at rank 3), but the non-reference Dura Fast 40 ranks 1st |
+| 11 | What is the most expensive paddle you sell? | 0.50 | 1.00 | yes, but at rank 2 (Enhance Gen 4.5 at rank 1) |
+| 1 | What is the weight of the Selkirk AMPED S2? | 0.75 | 1.00 | yes, rank 1 |
+| 30 | What paddle features are best for spin? | 0.83 | 0.67 | partly |
+| 8 | How do I clean my paddle? | 0.95 | 0.67 | partly |
+
+### Plausible causes (grounded in the pipeline and dataset)
+
+1. **Retrieval coverage on catalog-wide and superlative questions (primary
+   cause).**
+   - **The problem.** "Cheapest", "widest", "most expensive", "which paddles
+     have a fiberglass face" and "best for singles" are answered by a spec
+     value (price, `width`, `face_material`) compared across the whole
+     catalog.
+   - **Why retrieval misses.** The retriever ranks by embedding similarity
+     between the question and a whole-product chunk, then keeps only the top
+     5 of 38. A numeric value like `$6.99` or `8.125 in` carries almost no
+     semantic signal, so the chunk holding the extreme value is not
+     preferred. For example, "cheapest product" has no topical overlap with
+     a lead-tape roll.
+   - **Evidence.** All three genuine misses come from this group (rows 20,
+     27, 29: precision 0, recall 0), and so do both rank-2 penalties (rows 9
+     and 11, 0.50 each).
+   - **Why `top_k` doesn't fix it.** Raising `top_k` only partly helps, which
+     matches the flat 0.726–0.740 precision across the Deliverable 2 sweep. A
+     real fix needs metadata filtering or sorting (price is already stored in
+     chunk metadata) or a structured-query path for superlatives.
+2. **Chunking granularity versus how the metric judges.**
+   `src/vectordb/chunker.py` emits exactly one chunk per product. RAGAS
+   `context_precision` asks the judge, chunk by chunk, whether that chunk was
+   useful for reaching the reference answer. For a two-product comparison, no
+   single chunk contains the answer, and the judge marked both correct chunks
+   "not useful". Rows 3 and 22 therefore score 0.00 even though retrieval was
+   perfect (both products at ranks 1–2, recall 1.0). This is partly a
+   measurement artifact.
+3. **Golden-set drift after ingestion.** The golden set was written for the
+   original 30 products, but the store now holds 38.
+   - Row 6's reference still lists **three** shoes. The pipeline correctly
+     returned **five**, including the Skechers Viper Court Pro (Deliverable 1)
+     and the Solstice Rally Court Shoe (Task 4 inbox). The judge then scored
+     the extra shoes as irrelevant.
+   - Deliverable 1's `prod_032` "Franklin X-26 Indoor Pickleball" ($14.99,
+     3-pack) duplicated the shipped `prod_011` "Franklin X-26 Indoor
+     Pickleballs" ($7.99) with a conflicting price. Both appeared in the top 5
+     for rows 10, 18, 28 and 29, wasting a slot each time. **Fixed after this
+     run:** `prod_032` was renamed to "Courtline Glide 26 Indoor Pickleballs"
+     (see Deliverable 1). The scores above were collected before the rename.
+
+Rows 3, 6 and 22 alone cost 3 × 1.0 / 30 = **0.100** of the aggregate. Scored
+as 1.0, the aggregate would be (21.78 + 3) / 30 = 0.826. That gap separates
+the real retrieval problem (cause 1) from the scoring artifacts (causes 2 and
+3).
+
+### Proposed regression threshold
+
+**We propose context_precision (aggregate mean) ≥ 0.66 as the regression
+threshold for `make eval`.**
+
+- **Why the mean, not a percentile.** In this run the per-question median was
+  1.00, p25 0.50, p10 0.00 and the range 0.00–1.00. The distribution is
+  bimodal (18/30 at 1.0, 6/30 at 0.0). The median and p10 sit at the two
+  modes, so they barely move: the median would not drop until about half the
+  set failed, and p10 is already 0. The mean is the statistic that moves.
+- **The mean is stable between runs.** It was exactly 0.726 in both
+  independent runs at `top_k=5` (2026-10-06 and 2026-10-07). Across
+  `top_k` 3–10 it ranged only 0.726–0.740 (spread 0.014).
+- **Where 0.66 comes from.** One question flipping from 1.0 to 0.0 moves the
+  mean by 1/30 = 0.033. So 0.66 = 0.726 − 2 × 0.033: two more questions that
+  lose their relevant chunk entirely.
+- **What it tolerates and what it catches.** It absorbs one question of
+  judge noise and the observed run-to-run spread (0.014, about 5× smaller
+  than the margin). It fails on any change that knocks two or more golden
+  questions' answers out of the top 5, which is a real retrieval regression.
+- **Why not higher.** A threshold at 0.70 would sit within one noisy
+  question of today's score and would cause false alarms.
+
+**Secondary threshold: faithfulness (aggregate mean) ≥ 0.80.**
+
+- The two runs gave 0.868 and 0.925, a spread of 0.057. The per-question
+  median is 1.00 and p10 is 0.65.
+- 0.80 sits 0.068 below the lowest observed mean, outside the observed
+  run-to-run spread.
+- Per-question faithfulness is too noisy to gate on: row 15 scored **0.00**
+  although its answer is copied verbatim from the retrieved chunk ("lasts
+  approximately 10-15 hours of play"). This is why the threshold is on the
+  aggregate, not on a tail percentile.
+
+### Action on violation
+
+1. **Re-run `make eval` once, unchanged.** The RAGAS judge is stochastic
+   (row 15 shows per-question false negatives), so one breach can be noise.
+   A run costs about 24 minutes.
+2. **If it still fails, block the merge or deploy**, then diff the per-row
+   JSON against the baseline `data/eval/eval_results_2026-10-07.json` to find
+   which questions dropped from 1.0.
+3. **For a context_precision breach,** investigate the most recent retrieval
+   change first:
+   - catalog changes (new `data/products/*.json` or inbox ingestions; check
+     for near-duplicates like `prod_032`)
+   - `src/vectordb/chunker.py`
+   - `EMBEDDING_MODEL`
+   - the retriever or `top_k`
+
+   Then rebuild the store from scratch (`make load-data`), and revert the
+   change if the score does not recover.
+4. **For a faithfulness breach,** bisect recent changes to
+   `prompts/rag_system.j2` and the answer-model settings (`MODEL_*` in
+   `.env`).
+5. **If the breach comes from new products changing the correct answer** (as
+   in row 6), update the golden set's ground truth in the same PR. Do not
+   lower the threshold.
