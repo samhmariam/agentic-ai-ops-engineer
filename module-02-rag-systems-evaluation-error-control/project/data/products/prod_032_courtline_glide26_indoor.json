@@ -1,0 +1,17 @@
+{
+  "product_id": "prod_032",
+  "name": "Courtline Glide 26 Indoor Pickleballs",
+  "category": "balls",
+  "brand": "Courtline",
+  "price": 14.99,
+  "description": "The Courtline Glide 26 is a premium indoor ball designed for gym floors and indoor courts. Its 26 larger holes and softer one-piece seamless construction slow the ball down and produce a quieter, more controllable bounce on smooth wooden or synthetic surfaces. The bright optic yellow color stays visible under gymnasium lighting.",
+  "specifications": {
+    "hole_count": 26,
+    "weight": "0.85 oz",
+    "material": "Seamless rotational-molded soft polymer",
+    "color": "Optic yellow",
+    "pack_size": 3,
+    "intended_surface": "indoor"
+  },
+  "care_instructions": "Store at room temperature away from direct sunlight. Indoor balls soften and lose bounce over time; replace when the ball feels mushy or no longer bounces consistently."
+}

@@ -1,0 +1,19 @@
+{
+  "product_id": "prod_026",
+  "name": "11SIX24 Monarch All Court 16mm",
+  "category": "paddles",
+  "brand": "11SIX24",
+  "price": 99.99,
+  "description": "The 11SIX24 Monarch All Court is the brand's mid-mass widebody designed for players who want a forgiving, balanced feel without sacrificing pop. The 11SIX24 CFC Surface stacks three layers — two outer sheets of raw Toray T700 carbon fiber sandwiching a fiberglass middle — to combine the bite of a raw-carbon face with the energy return of a fiberglass underlayer. A 16 mm polypropylene polymer core widens the sweet spot relative to thinner 14 mm builds and softens the feel on resets and dinks.",
+  "specifications": {
+    "weight": "8.0-8.3 oz",
+    "grip_size": "4.125 in",
+    "face_material": "11SIX24 CFC Surface (raw Toray T700 carbon fiber + fiberglass + raw Toray T700 carbon fiber)",
+    "core": "16 mm polypropylene polymer honeycomb",
+    "shape": "widebody",
+    "length": "16.0 in",
+    "width": "8.0 in",
+    "handle_length": "5.75 in"
+  },
+  "care_instructions": "Wipe the raw carbon face with a damp microfiber after each session — abrasive cleaners sand down the surface texture that gives the paddle its spin character. Avoid leaving the paddle in direct sunlight or hot vehicles, which can soften the polymer core. Store in a paddle cover when not in use."
+}

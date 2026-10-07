@@ -1,0 +1,21 @@
+{
+  "product_id": "prod_028",
+  "name": "Bread & Butter The Filth 16mm Elongated",
+  "category": "paddles",
+  "brand": "Bread & Butter",
+  "price": 159.99,
+  "description": "The Bread & Butter Filth 16mm Elongated is a thermoformed unibody paddle from the brand's signature high-spin line. The T700 raw carbon fiber face holds aggressive peel-ply texture for tournament-grade topspin, and the 16 mm high-density polypropylene core provides plush dwell time on resets without losing the trademark Filth pop on drives. The elongated 16.5 in profile extends reach for two-handed backhands and overheads, and the octagon handle with vibration-dampening wrap reduces transfer to the wrist on off-center hits. USAP approved.",
+  "specifications": {
+    "weight": "7.6-8.0 oz",
+    "grip_size": "4.25 in",
+    "face_material": "T700 raw carbon fiber, thermoformed unibody",
+    "core": "16 mm high-density polypropylene honeycomb",
+    "shape": "elongated",
+    "length": "16.5 in",
+    "width": "7.375 in",
+    "handle_length": "5.5 in",
+    "swing_weight": "121",
+    "twist_weight": "6.20"
+  },
+  "care_instructions": "Wipe the raw carbon face with a microfiber after each session to preserve the peel-ply texture that drives spin. Skip abrasive cleaners and solvent-based wipes — they polish away the surface tooth. The thermoformed edge wall is impact-tolerant but not impact-proof; do not drop the paddle on hard courts. Store flat in a paddle cover; avoid hot vehicles."
+}

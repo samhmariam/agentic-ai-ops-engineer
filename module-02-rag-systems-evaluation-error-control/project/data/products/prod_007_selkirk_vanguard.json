@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_007",
+  "name": "Selkirk Vanguard Power Air",
+  "category": "paddles",
+  "brand": "Selkirk",
+  "price": 249.99,
+  "description": "The Selkirk Vanguard Power Air represents the pinnacle of paddle engineering. Featuring a proprietary air-injected polypropylene core and a carbon fiber face with QuadFlex 4-layer construction, it delivers unmatched power without sacrificing spin or control. Built for tournament-level play.",
+  "specifications": {
+    "weight": "8.4 oz",
+    "grip_size": "4.25 in",
+    "face_material": "QuadFlex 4-layer carbon fiber",
+    "core": "Air-injected polypropylene",
+    "shape": "elongated",
+    "length": "16.5 in",
+    "width": "7.375 in"
+  },
+  "care_instructions": "Clean with a microfiber cloth dampened with water. Avoid chemical cleaners that may degrade the carbon fiber surface. The edge guard is replaceable — contact Selkirk for parts."
+}

@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_025",
+  "name": "Gamma Hi-Rise Ball Hopper",
+  "category": "accessories",
+  "brand": "Gamma",
+  "price": 34.99,
+  "description": "The Gamma Hi-Rise Ball Hopper holds up to 75 balls and doubles as a convenient ball dispenser during drills and practice sessions. The hi-rise design means no bending to pick up balls — just press the basket over a ball to scoop it. Folds flat for easy storage.",
+  "specifications": {
+    "material": "Powder-coated steel wire",
+    "dimensions": "19 x 16 x 33 in (standing), folds to 4 in flat",
+    "features": ["Holds 75 balls", "Press-to-pick-up design", "Rubber feet prevent scratching", "Folds flat"]
+  },
+  "care_instructions": "Wipe with a dry cloth to prevent rust. Store indoors to protect the powder coating from weather damage. The rubber feet are replaceable if they wear down."
+}

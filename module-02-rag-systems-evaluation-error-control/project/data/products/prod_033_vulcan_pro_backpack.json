@@ -1,0 +1,17 @@
+{
+  "product_id": "prod_033",
+  "name": "Vulcan Pro Pickleball Backpack",
+  "category": "accessories",
+  "brand": "Vulcan",
+  "price": 89.99,
+  "description": "The Vulcan Pro Backpack is a tournament-ready pack for players who carry multiple paddles and a full change of gear. A fleece-lined paddle sleeve protects up to four paddles, a ventilated bottom shoe compartment keeps sweaty shoes separate from clean clothes, and an insulated side pocket holds a water bottle cold through long sessions. A rear fence hook lets you hang the bag courtside.",
+  "specifications": {
+    "type": "backpack",
+    "paddle_capacity": 4,
+    "compartments": 5,
+    "material": "Water-resistant 600D polyester",
+    "dimensions": "19 x 12 x 7 in",
+    "features": "Ventilated shoe compartment, insulated bottle pocket, fence hook"
+  },
+  "care_instructions": "Spot clean with mild soap and a damp cloth. Empty the shoe compartment after every session and leave it unzipped to air out. Do not machine wash."
+}

@@ -1,0 +1,16 @@
+{
+  "product_id": "prod_008",
+  "name": "Franklin X-40 Outdoor Pickleballs",
+  "category": "balls",
+  "brand": "Franklin",
+  "price": 12.99,
+  "description": "The Franklin X-40 is the official ball of USA Pickleball and the most widely used outdoor tournament ball. Precision-drilled 40-hole design ensures consistent flight and bounce in wind. Made from durable seamless construction that resists cracking in temperature extremes.",
+  "specifications": {
+    "diameter": "2.87 in",
+    "weight": "0.92 oz",
+    "hole_count": 40,
+    "material": "Seamless high-density polyethylene",
+    "indoor_outdoor": "outdoor"
+  },
+  "care_instructions": "Store in a cool, dry place. Outdoor balls will eventually crack with heavy use — this is normal wear. Rotate balls during play to extend their life. Discard balls that show visible cracks or have lost their round shape."
+}

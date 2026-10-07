@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_002",
+  "name": "JOOLA Hyperion CFS 16",
+  "category": "paddles",
+  "brand": "JOOLA",
+  "price": 199.99,
+  "description": "The JOOLA Hyperion CFS 16 is a premium carbon fiber paddle designed for competitive players who demand maximum spin and power. Its Carbon Friction Surface technology creates exceptional ball grip for aggressive topspin shots, while the reactive honeycomb polymer core ensures a solid, responsive feel at the net.",
+  "specifications": {
+    "weight": "8.2 oz",
+    "grip_size": "4.0 in",
+    "face_material": "Carbon Friction Surface (CFS)",
+    "core": "Reactive honeycomb polymer",
+    "shape": "elongated",
+    "length": "16.5 in",
+    "width": "7.5 in"
+  },
+  "care_instructions": "Clean the carbon fiber face with a microfiber cloth and mild soap solution. Do not use abrasive cleaners. Store in the included neoprene cover to protect the face texture."
+}

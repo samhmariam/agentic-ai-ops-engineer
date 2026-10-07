@@ -1,0 +1,16 @@
+{
+  "product_id": "prod_010",
+  "name": "Dura Fast 40 Outdoor Pickleballs",
+  "category": "balls",
+  "brand": "Dura",
+  "price": 29.99,
+  "description": "The Dura Fast 40 is a tournament-grade outdoor ball trusted by competitive players for its true bounce and predictable flight. Pack of 12 balls. The seamless one-piece rotationally molded construction delivers uniform wall thickness and exceptional roundness for consistent play.",
+  "specifications": {
+    "diameter": "2.87 in",
+    "weight": "0.92 oz",
+    "hole_count": 40,
+    "material": "Rotationally molded seamless plastic",
+    "indoor_outdoor": "outdoor"
+  },
+  "care_instructions": "Outdoor balls wear faster in extreme heat or cold. Store indoors between sessions. This is a 12-pack — keep spares on hand during competitive play."
+}

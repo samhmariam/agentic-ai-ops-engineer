@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_005",
+  "name": "HEAD Radical Tour",
+  "category": "paddles",
+  "brand": "HEAD",
+  "price": 149.99,
+  "description": "The HEAD Radical Tour brings tennis engineering expertise to the court. Featuring an Extreme Spin Texture (EST) face and an Optimized Tubular Construction (OTC) frame, this paddle delivers consistent power from edge to edge with a generous sweet spot suited to all-court players.",
+  "specifications": {
+    "weight": "8.1 oz",
+    "grip_size": "4.25 in",
+    "face_material": "Extreme Spin Texture (EST) composite",
+    "core": "Polypropylene honeycomb",
+    "shape": "standard",
+    "length": "15.875 in",
+    "width": "7.875 in"
+  },
+  "care_instructions": "Wipe with a clean damp cloth. Inspect the edge guard periodically for cracks and replace if damaged to protect the core. Store away from moisture."
+}

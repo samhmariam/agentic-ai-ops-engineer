@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_035",
+  "name": "JOOLA Essentials Court Polo",
+  "category": "apparel",
+  "brand": "JOOLA",
+  "price": 44.99,
+  "description": "The JOOLA Essentials Court Polo is a collared performance shirt for players who need club or league dress-code compliance without giving up comfort. The recycled polyester knit wicks sweat and dries quickly, UPF 40 sun protection shields the shoulders during outdoor play, and a stretch side panel allows a full overhead swing without the hem riding up.",
+  "specifications": {
+    "garment_type": "polo",
+    "material": "88% recycled polyester, 12% spandex",
+    "fit": "athletic",
+    "size_range": "S-XXL",
+    "color_options": ["Navy", "White", "Charcoal"],
+    "moisture_wicking": true,
+    "upf_rating": "UPF 40"
+  },
+  "care_instructions": "Machine wash cold with like colors and tumble dry low. Do not use fabric softener, which clogs the moisture-wicking fibers. Do not iron the logo."
+}

@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_001",
+  "name": "Selkirk AMPED S2",
+  "category": "paddles",
+  "brand": "Selkirk",
+  "price": 129.99,
+  "description": "The Selkirk AMPED S2 delivers a balanced blend of power and control, making it an excellent choice for intermediate players looking to elevate their game. Its FiberFlex fiberglass face provides a responsive feel with consistent ball placement, while the X5 polypropylene honeycomb core absorbs vibration for comfortable extended play.",
+  "specifications": {
+    "weight": "7.8 oz",
+    "grip_size": "4.25 in",
+    "face_material": "FiberFlex fiberglass",
+    "core": "X5 polypropylene honeycomb",
+    "shape": "widebody",
+    "length": "15.75 in",
+    "width": "8.0 in"
+  },
+  "care_instructions": "Wipe the paddle face with a damp cloth after play to remove ball residue. Avoid leaving the paddle in direct sunlight or extreme heat, as this can warp the core. Store in a paddle cover when not in use."
+}

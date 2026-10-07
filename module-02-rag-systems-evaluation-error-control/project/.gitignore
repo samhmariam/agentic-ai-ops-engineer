@@ -8,6 +8,12 @@ __pycache__/
 .venv/
 .pytest_cache/
 
+# The repo-root .gitignore ignores every `data/` directory. This project's
+# data/ holds required inputs (products, golden + negative test sets,
+# inbox templates), so re-include it and ignore only the runtime parts
+# below.
+!data/
+
 # Local on-disk data stores written by the starter at runtime
 data/chroma/
 data/phoenix/

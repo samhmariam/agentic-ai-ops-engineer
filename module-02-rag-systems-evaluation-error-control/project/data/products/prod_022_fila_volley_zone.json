@@ -1,0 +1,15 @@
+{
+  "product_id": "prod_022",
+  "name": "FILA Volley Zone Court Shoes",
+  "category": "shoes",
+  "brand": "FILA",
+  "price": 79.99,
+  "description": "The FILA Volley Zone is a purpose-built court shoe for players who need stable lateral support and cushioned comfort. The herringbone tread pattern provides excellent grip on hard court surfaces, while the EVA midsole absorbs impact during quick direction changes.",
+  "specifications": {
+    "weight": "12.5 oz (men's size 10)",
+    "sole_type": "Non-marking herringbone rubber",
+    "closure": "Traditional lace-up",
+    "cushioning": "EVA midsole with memory foam insole"
+  },
+  "care_instructions": "Wipe the outsoles with a damp cloth after play to maintain grip. Remove insoles to air dry after sweaty sessions. Do not machine wash — spot clean the upper with mild soap and water."
+}

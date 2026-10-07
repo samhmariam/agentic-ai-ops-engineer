@@ -1142,3 +1142,89 @@ costs about 43× a `budget` answer and 25× a `simple` one. Savings therefore
 depend almost entirely on how much traffic avoids `gpt-4o`. The seed script's
 assumed mix of 70% `simple` and 20% `complex` would show much larger savings
 than this deliberately complex-heavy sample.
+
+---
+
+## Deliverable 9 — Documented, Reproducible Submission
+
+`WRITEUP.md` now exists at the project root. It has a section for each of
+Deliverables 1–9 in numeric order, each with a summary paragraph and its
+evidence, plus the setup snapshot, substitutions, stand-outs and lessons.
+About 5,400 words.
+
+### Fix 1: Windows access violation in `make test`
+
+`uv run pytest tests/ -q` crashed the interpreter (`Windows fatal exception:
+access violation`) while collecting `tests/evaluation`. That crash also
+failed `make verify`'s first check, which runs the same suite.
+
+- **Where it crashed:** the stack ended in `pyarrow/dataset.py`, imported
+  through `src/evaluation/run_eval.py` → `datasets`.
+- **Cause:** a native-library load-order conflict. `tests/conftest.py`
+  imports `llm_guard` (onnxruntime) first:
+
+| Import order | Result |
+|---|---|
+| `import llm_guard.input_scanners; import pyarrow.dataset` | **crash** |
+| `import pyarrow.dataset; import llm_guard…; import datasets, ragas` | OK |
+| `import torch; import pyarrow.dataset` | OK, so torch is not the conflicting library |
+
+- **Fix:** `tests/conftest.py` now runs `import pyarrow.dataset` before the
+  LLM Guard imports, with an explanatory comment. It is a test-harness change
+  only, because production code never loads both stacks. It also cleared the
+  earlier `tests/tracing` failure.
+
+### Fix 2: required data was gitignored
+
+The repo-root `.gitignore` (line 27, `data/`, added for an earlier exercise)
+ignored every `data/` directory. As a result, `git ls-files data/products`
+returned **0 files**: the 30 shipped products, the 5 added in Deliverable 1,
+`golden_test_set.csv`, `negative_test_set.csv` and the inbox templates were
+not in the repo, so a clone could not run `make load-data` or `make eval`.
+
+- **Fix:** the project `.gitignore` now starts its data section with
+  `!data/`. A subdirectory `.gitignore` takes precedence over the root one.
+- **Runtime files stay ignored** through the project's existing rules: Chroma
+  store, Phoenix, `cost_log.jsonl`, inbox drops and quarantine. This was
+  verified with `git check-ignore -v`.
+- **Newly committable:** 35 product JSONs, both test sets, the inbox
+  templates, `products-template.md`, `data/inbox/.gitkeep`, and the §5
+  baseline `data/eval/eval_results_2026-10-07.json`.
+
+### Test and verify tails
+
+```text
+$ uv run pytest tests/ -q          # make test
+242 passed, 26 warnings in 8.09s
+
+$ uv run python scripts/verify_capstone.py   # make verify
+[+] unit-tests-pass                 Unit tests: 242 passed, 26 warnings in 8.31s
+[+] dependency-graph-forward-only   Forward-dependency graph: 4 passed in 0.09s
+[+] query-response-schema-complete  QueryResponse schema: 5 passed in 0.51s
+[+] end-to-end-wiring               Cross-package end-to-end: 6 passed in 0.54s
+Automated: 4 passed, 0 failed
+Manual: 12 items to verify in a real environment
+```
+
+### Secrets
+
+- `git ls-files | grep -E '(^|/)\.env$'` → empty (exit 1). `.env` is ignored
+  by the project `.gitignore:2` and the root `.gitignore`.
+- `git grep -nE 'voc-[A-Za-z0-9]|sk-[A-Za-z0-9]' -- .` returns only
+  non-secrets: the `.env.example` placeholder `sk-your-openai-api-key`, and
+  "ta**sk-**N" anchor links in `INSTRUCTIONS.md`.
+- **Stricter checks.** These ran over every tracked or committable file in
+  the project, including the newly un-ignored `data/` files, `WRITEUP.md` and
+  `EVIDENCE.md`. A 16-character fragment of the real key from `.env` (never
+  printed) appears in **no** file. The key-shape regexes `voc-[A-Za-z0-9]{16,}`
+  and `sk-(proj-)?[A-Za-z0-9]{32,}` match **nothing**.
+
+### Live §4 evidence added for the WRITEUP
+
+`POST /query` *"What is the face material and core of the Northstar Comet 16
+pickleball paddle?"* returned `prod_inbox_northstar_comet_16` as the top
+source (similarity 0.764). The answer was "Aramid-textured composite" and
+"CarbonFlex polymer", from `gpt-4o-mini` with
+`trace_id 4054da3dff0dc4c7c7e52508f8de0f7c`. The dropped JSON files and the
+quarantine `.error.txt` are pasted into WRITEUP §4 because `data/inbox/` is
+gitignored runtime state.

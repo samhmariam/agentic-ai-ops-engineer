@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_017",
+  "name": "HEAD Performance Visor",
+  "category": "apparel",
+  "brand": "HEAD",
+  "price": 24.99,
+  "description": "The HEAD Performance Visor keeps the sun out of your eyes without trapping heat. Features a moisture-absorbing terrycloth sweatband, adjustable hook-and-loop closure for a custom fit, and a pre-curved brim that won't interfere with your serve motion.",
+  "specifications": {
+    "material": "100% polyester with terrycloth sweatband",
+    "sizes_available": ["One size fits most"],
+    "color_options": ["White", "Black", "Navy", "Red"]
+  },
+  "care_instructions": "Hand wash with mild detergent and air dry. The terrycloth sweatband can be spot-cleaned between washes. Do not machine wash or the brim may lose its shape."
+}

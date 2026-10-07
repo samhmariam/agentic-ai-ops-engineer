@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_004",
+  "name": "Franklin Ben Johns Signature",
+  "category": "paddles",
+  "brand": "Franklin",
+  "price": 179.99,
+  "description": "Designed in collaboration with pro player Ben Johns, the Franklin Signature paddle combines a MaxGrit textured surface with a polypropylene honeycomb core for exceptional spin generation and shot control. The elongated shape extends reach without adding excessive weight, ideal for singles play.",
+  "specifications": {
+    "weight": "8.0 oz",
+    "grip_size": "4.125 in",
+    "face_material": "MaxGrit carbon fiber",
+    "core": "Polypropylene honeycomb",
+    "shape": "elongated",
+    "length": "16.5 in",
+    "width": "7.375 in"
+  },
+  "care_instructions": "Clean with a damp microfiber cloth. The MaxGrit surface is durable but avoid scraping against rough surfaces. Replace the grip wrap every 3-6 months depending on play frequency."
+}

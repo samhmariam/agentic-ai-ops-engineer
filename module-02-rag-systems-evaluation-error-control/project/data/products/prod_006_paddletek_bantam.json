@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_006",
+  "name": "Paddletek Bantam TS-5",
+  "category": "paddles",
+  "brand": "Paddletek",
+  "price": 114.99,
+  "description": "The Paddletek Bantam TS-5 is the go-to paddle for beginners and recreational players seeking an affordable yet high-quality entry point. Its lightweight polymer core and fiberglass composite face offer a forgiving sweet spot and easy maneuverability, reducing arm fatigue during longer sessions.",
+  "specifications": {
+    "weight": "7.3 oz",
+    "grip_size": "4.0 in",
+    "face_material": "Fiberglass composite",
+    "core": "Smart Response Technology polymer",
+    "shape": "widebody",
+    "length": "15.5 in",
+    "width": "8.0 in"
+  },
+  "care_instructions": "Clean with a damp cloth. The fiberglass face is durable for recreational use. Store indoors to protect the edge guard from cracking in cold weather."
+}

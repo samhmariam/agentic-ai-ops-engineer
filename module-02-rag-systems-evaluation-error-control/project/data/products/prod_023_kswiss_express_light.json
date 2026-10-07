@@ -1,0 +1,15 @@
+{
+  "product_id": "prod_023",
+  "name": "K-Swiss Express Light Court Shoes",
+  "category": "shoes",
+  "brand": "K-Swiss",
+  "price": 99.99,
+  "description": "The K-Swiss Express Light is engineered for speed and agility on the court. Its lightweight mesh upper provides breathability during long matches, while the Durawrap heel counter locks in lateral stability. The Surge 7.0 midsole returns energy on every step.",
+  "specifications": {
+    "weight": "11.2 oz (men's size 10)",
+    "sole_type": "Dragguard rubber outsole",
+    "closure": "Traditional lace-up with padded tongue",
+    "cushioning": "Surge 7.0 midsole with ortholite insole"
+  },
+  "care_instructions": "Allow shoes to air dry between sessions. Remove insoles periodically to prevent odor. Clean the mesh upper with a soft brush and mild soap. Replace shoes when the outsole tread shows significant wear to prevent slipping."
+}

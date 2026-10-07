@@ -34,6 +34,12 @@ _fake_oi_openai = MagicMock()
 _fake_oi_openai.OpenAIInstrumentor = MagicMock(return_value=MagicMock())
 sys.modules["openinference.instrumentation.openai"] = _fake_oi_openai
 
+# On Windows, loading pyarrow's native dataset module *after* llm_guard's
+# native stack (onnxruntime) crashes the interpreter with an access
+# violation, which kills collection of tests/evaluation (datasets ->
+# pyarrow.dataset). Loading it first avoids the conflict; it is a no-op
+# on Linux/macOS.
+import pyarrow.dataset  # noqa: E402,F401
 import chromadb  # noqa: E402
 import openai  # noqa: E402
 import llm_guard.input_scanners  # noqa: E402

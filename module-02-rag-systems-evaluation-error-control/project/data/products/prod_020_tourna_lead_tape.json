@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_020",
+  "name": "Tourna Lead Tape Roll",
+  "category": "accessories",
+  "brand": "Tourna",
+  "price": 6.99,
+  "description": "Tourna Lead Tape lets you customize your paddle's weight and balance point. Apply strips to the head for more power or to the handle for better control. The adhesive backing sticks firmly and can be repositioned during experimentation. Each roll provides enough tape for 4-6 paddle applications.",
+  "specifications": {
+    "material": "Adhesive-backed lead alloy",
+    "dimensions": "1/4 in x 72 in roll",
+    "features": ["Repositionable adhesive", "Easy to cut with scissors", "0.25 oz per 6-inch strip"]
+  },
+  "care_instructions": "Apply to a clean, dry paddle surface for best adhesion. Cover with electrical tape for a smoother feel and to prevent the lead tape from peeling during play."
+}

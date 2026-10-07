@@ -1,0 +1,20 @@
+{
+  "product_id": "prod_027",
+  "name": "JOOLA Ben Johns Perseus 3S 16mm",
+  "category": "paddles",
+  "brand": "JOOLA",
+  "price": 199.95,
+  "description": "The JOOLA Ben Johns Perseus 3S 16mm is the 16 mm control variant of Ben Johns' signature paddle in JOOLA's third-generation 3S lineup. The Charged Carbon face uses an electrostatic treatment to lock in spin without sacrificing dwell, and the Propulsion Core extends ball contact time for plush resets at the kitchen line. The 16 mm build trades a hint of raw power for a wider sweet spot and softer feel compared to the 14 mm sibling, which is why most all-court players gravitate to this thickness. UPA-A certified.",
+  "specifications": {
+    "weight": "8.0 oz",
+    "grip_size": "4.125 in",
+    "face_material": "Charged Carbon",
+    "core": "16 mm Propulsion Core (honeycomb polymer)",
+    "shape": "elongated",
+    "length": "16.5 in",
+    "width": "7.5 in",
+    "handle_length": "5.5 in",
+    "grip": "JOOLA Black Feel-Tec Pure Grip"
+  },
+  "care_instructions": "Clean the Charged Carbon face with a microfiber cloth and a small amount of mild soap — strong solvents strip the electrostatic surface treatment that drives the paddle's spin response. Inspect the edge guard periodically; the thermoformed wall is impact-resistant but can chip on hard floors. Store in the included sleeve."
+}

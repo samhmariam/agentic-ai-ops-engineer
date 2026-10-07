@@ -1,0 +1,21 @@
+{
+  "product_id": "prod_030",
+  "name": "Enhance Gen 4.5 Elongated",
+  "category": "paddles",
+  "brand": "Enhance",
+  "price": 169.00,
+  "description": "The Enhance Gen 4.5 Elongated is the brand's flagship full-foam-core paddle, widely reviewed as one of the best foam-core options under $175. The T700 raw carbon fiber face delivers high spin and a stiff striking surface, while the EPP foam core replaces traditional polypropylene honeycomb to extend dwell time and produce a markedly softer, quieter feel on contact. The elongated profile, 5.7 in handle, and 16.5 in length combine for extra reach on backhand drives and overheads, and the foam construction widens the off-center sweet spot relative to honeycomb paddles in the same shape.",
+  "specifications": {
+    "weight": "8.1-8.3 oz",
+    "grip_size": "4.1 in",
+    "face_material": "T700 raw carbon fiber",
+    "core": "EPP foam (full foam core, no honeycomb)",
+    "shape": "elongated",
+    "length": "16.4 in",
+    "width": "7.5 in",
+    "handle_length": "5.7 in",
+    "swing_weight": "118-120",
+    "twist_weight": "6.25"
+  },
+  "care_instructions": "Wipe the raw T700 carbon face with a damp microfiber after each session — solvents and abrasive cleaners erode the surface texture that drives spin. EPP foam cores are more sensitive to heat than polypropylene; never leave the paddle in a hot vehicle or in direct sunlight for extended periods, as heat can deform the foam and change the paddle's response. Store flat in a paddle cover."
+}

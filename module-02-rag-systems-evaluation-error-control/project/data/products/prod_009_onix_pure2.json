@@ -1,0 +1,16 @@
+{
+  "product_id": "prod_009",
+  "name": "Onix Pure 2 Indoor Pickleballs",
+  "category": "balls",
+  "brand": "Onix",
+  "price": 9.99,
+  "description": "The Onix Pure 2 is engineered specifically for indoor play, featuring 26 precisely spaced holes for a softer, more controlled flight on gym and rec center surfaces. The true-flight design minimizes wobble and provides consistent bounce on smooth indoor courts.",
+  "specifications": {
+    "diameter": "2.87 in",
+    "weight": "0.86 oz",
+    "hole_count": 26,
+    "material": "Durable TPU blend",
+    "indoor_outdoor": "indoor"
+  },
+  "care_instructions": "Indoor balls last longer than outdoor balls. Store at room temperature. Clean with a damp cloth if they pick up dust or gym floor residue."
+}

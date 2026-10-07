@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_018",
+  "name": "Engage Court Shorts",
+  "category": "apparel",
+  "brand": "Engage",
+  "price": 44.99,
+  "description": "The Engage Court Shorts are built for athletic movement with a 7-inch inseam and gusseted crotch for unrestricted lateral reach. Deep side pockets hold multiple balls, and the lightweight woven fabric dries quickly after sweaty sessions. Elastic waistband with internal drawcord.",
+  "specifications": {
+    "material": "100% recycled polyester, DWR finish",
+    "sizes_available": ["S", "M", "L", "XL", "XXL"],
+    "color_options": ["Graphite", "Navy", "Black"]
+  },
+  "care_instructions": "Machine wash cold. The DWR (durable water repellent) finish will diminish over time — tumble dry on low heat periodically to reactivate the treatment."
+}

@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_016",
+  "name": "Lija Rally Skort",
+  "category": "apparel",
+  "brand": "Lija",
+  "price": 68.99,
+  "description": "The Lija Rally Skort combines style and function with a flattering A-line silhouette and built-in compression shorts with a ball pocket. The UPF 50+ fabric provides sun protection during outdoor play, while the four-way stretch material moves with you through every shot.",
+  "specifications": {
+    "material": "86% polyester / 14% spandex, UPF 50+",
+    "sizes_available": ["XS", "S", "M", "L", "XL"],
+    "color_options": ["Black", "White", "Ocean Blue", "Sunset Pink"]
+  },
+  "care_instructions": "Machine wash cold, gentle cycle. Do not bleach. Lay flat to dry to maintain shape and UPF protection. Do not iron."
+}

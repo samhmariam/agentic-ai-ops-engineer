@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_inbox_good_001",
+  "name": "Engage Pursuit MX Lite",
+  "category": "paddles",
+  "brand": "Engage",
+  "price": 174.99,
+  "description": "The Engage Pursuit MX Lite is a tournament-leaning paddle tuned for control players. Its textured fiberglass face dwells the ball just long enough to add spin without sacrificing pop, while the lightweight ControlPro polymer core keeps swing weight low so dink exchanges feel effortless.",
+  "specifications": {
+    "weight": "7.6 oz",
+    "grip_size": "4.125 in",
+    "face_material": "Textured fiberglass",
+    "core": "ControlPro polymer",
+    "shape": "elongated",
+    "length": "16.0 in",
+    "width": "7.5 in"
+  },
+  "care_instructions": "Wipe the face with a damp microfiber cloth after play. Do not soak the paddle or store it in a hot car. A paddle cover is recommended between sessions to prevent edge dings."
+}

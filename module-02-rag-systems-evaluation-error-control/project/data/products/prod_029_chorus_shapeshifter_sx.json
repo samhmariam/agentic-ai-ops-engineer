@@ -1,0 +1,19 @@
+{
+  "product_id": "prod_029",
+  "name": "Chorus Shapeshifter SX 16mm",
+  "category": "paddles",
+  "brand": "Chorus",
+  "price": 189.00,
+  "description": "The Chorus Shapeshifter SX 16mm is the widebody all-court variant in the Shapeshifter series, built around a unique three-layer face stack: a top sheet of 3D 18K cubic carbon fiber in a triaxial weave for grip and durability, a Toray T700 carbon middle layer for stiffness, and a fiberglass backing layer for energy return. The unibody mold uses denser foam around the perimeter to widen the sweet spot relative to traditional edge-guarded builds. The 16 mm Power Polymer core balances the soft touch of a control paddle with the responsive snap of a thinner power build.",
+  "specifications": {
+    "weight": "7.8-8.0 oz",
+    "grip_size": "4.125 in",
+    "face_material": "3D 18K cubic carbon fiber (triaxial weave) over Toray T700 carbon and fiberglass backing",
+    "core": "16 mm Power Polymer honeycomb",
+    "shape": "widebody",
+    "length": "16.0 in",
+    "width": "8.0 in",
+    "construction": "thermoformed unibody with perimeter foam"
+  },
+  "care_instructions": "The 3D cubic carbon face is durable but its texture is what generates spin — clean with a damp microfiber, avoid abrasive cleaners. The foam perimeter widens the sweet spot but softens above 130°F, so do not leave the paddle in a hot car. Store in a sleeve when not in use."
+}

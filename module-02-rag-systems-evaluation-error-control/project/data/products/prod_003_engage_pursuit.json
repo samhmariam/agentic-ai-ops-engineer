@@ -1,0 +1,18 @@
+{
+  "product_id": "prod_003",
+  "name": "Engage Pursuit MX",
+  "category": "paddles",
+  "brand": "Engage",
+  "price": 159.99,
+  "description": "The Engage Pursuit MX features a proprietary ControlPro polymer core that delivers unmatched touch and feel for dinking and soft game strategies. The textured fiberglass face adds spin capability without sacrificing control, making it a favorite among players who prioritize finesse over raw power.",
+  "specifications": {
+    "weight": "7.5 oz",
+    "grip_size": "4.25 in",
+    "face_material": "Textured fiberglass",
+    "core": "ControlPro polymer",
+    "shape": "widebody",
+    "length": "15.5 in",
+    "width": "8.125 in"
+  },
+  "care_instructions": "Wipe down with a damp cloth after each session. The textured face can collect debris — use a soft brush for deeper cleaning. Avoid exposing the paddle to temperatures above 120°F."
+}

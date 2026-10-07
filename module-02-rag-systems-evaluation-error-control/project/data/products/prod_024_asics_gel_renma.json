@@ -1,0 +1,15 @@
+{
+  "product_id": "prod_024",
+  "name": "ASICS Gel-Renma Court Shoes",
+  "category": "shoes",
+  "brand": "ASICS",
+  "price": 89.99,
+  "description": "The ASICS Gel-Renma is ASICS' first court shoe designed specifically for this sport, featuring their renowned GEL technology in the forefoot and rearfoot for superior shock absorption. The TRUSSTIC system reduces sole weight while maintaining structural integrity, and the AHAR+ outsole delivers exceptional durability.",
+  "specifications": {
+    "weight": "11.8 oz (men's size 10)",
+    "sole_type": "AHAR+ high-abrasion rubber",
+    "closure": "Traditional lace-up",
+    "cushioning": "Forefoot and rearfoot GEL technology"
+  },
+  "care_instructions": "Clean with a soft cloth and mild soap solution. Air dry away from direct heat sources. The GEL cushioning system does not require special maintenance but replace the shoes after 60-80 hours of court play for optimal support."
+}

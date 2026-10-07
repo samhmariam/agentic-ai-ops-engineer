@@ -1,0 +1,15 @@
+{
+  "product_id": "prod_012",
+  "name": "Selkirk Team Backpack",
+  "category": "bags",
+  "brand": "Selkirk",
+  "price": 89.99,
+  "description": "The Selkirk Team Backpack holds up to 4 paddles and all your gear in a ventilated, weather-resistant design. Features a dedicated paddle compartment with fleece lining, separate shoe pocket, insulated cooler pocket, and padded laptop sleeve for players heading straight from work to the court.",
+  "specifications": {
+    "dimensions": "20 x 13 x 9 in",
+    "compartments": 6,
+    "material": "600D polyester with PVC backing",
+    "capacity": "35L"
+  },
+  "care_instructions": "Spot clean with mild soap and water. Air dry completely before storing to prevent mildew. Machine washing is not recommended as it can damage the PVC backing and structure."
+}

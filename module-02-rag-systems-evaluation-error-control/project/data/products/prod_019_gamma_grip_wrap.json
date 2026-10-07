@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_019",
+  "name": "Gamma Supreme Overgrip 3-Pack",
+  "category": "accessories",
+  "brand": "Gamma",
+  "price": 8.99,
+  "description": "The Gamma Supreme Overgrip provides a tacky, moisture-absorbing surface that keeps your paddle secure in sweaty conditions. This 3-pack of thin overgrips wraps easily over your existing grip without adding bulk, and each grip lasts approximately 10-15 hours of play.",
+  "specifications": {
+    "material": "Tacky polyurethane",
+    "dimensions": "30 in x 1.1 in x 0.5 mm",
+    "features": ["Self-adhesive backing", "Perforated for moisture absorption", "Tapered end for clean finish"]
+  },
+  "care_instructions": "Overgrips are consumable — replace when tackiness fades or the grip becomes slippery. Store unused grips in the sealed packaging to preserve tackiness."
+}

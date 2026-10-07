@@ -1,0 +1,15 @@
+{
+  "product_id": "prod_014",
+  "name": "JOOLA Tour Elite Pro Duffel",
+  "category": "bags",
+  "brand": "JOOLA",
+  "price": 119.99,
+  "description": "The JOOLA Tour Elite Pro Duffel is built for the serious competitor who needs maximum organization. Fits up to 6 paddles with individual protective sleeves, has a ventilated shoe compartment, thermal-lined drink pocket, and a rigid base to keep the bag upright on the court.",
+  "specifications": {
+    "dimensions": "24 x 14 x 12 in",
+    "compartments": 8,
+    "material": "1200D ballistic nylon",
+    "capacity": "52L"
+  },
+  "care_instructions": "Spot clean the exterior with a damp cloth. Remove the ventilated shoe divider and wash separately. The rigid base can be wiped down with a disinfecting wipe."
+}

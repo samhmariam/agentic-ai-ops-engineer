@@ -1,0 +1,15 @@
+{
+  "product_id": "prod_013",
+  "name": "Franklin Pickleball Sling Bag",
+  "category": "bags",
+  "brand": "Franklin",
+  "price": 39.99,
+  "description": "A compact sling bag designed for players who travel light. The Franklin Sling Bag holds 2 paddles and essentials like balls, a water bottle, and phone. The adjustable cross-body strap and lightweight design make it easy to grab and go for casual play sessions.",
+  "specifications": {
+    "dimensions": "18 x 10 x 5 in",
+    "compartments": 3,
+    "material": "Ripstop nylon",
+    "capacity": "12L"
+  },
+  "care_instructions": "Wipe clean with a damp cloth. The ripstop nylon is water-resistant but not waterproof — avoid leaving the bag in rain."
+}

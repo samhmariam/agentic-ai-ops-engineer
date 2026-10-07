@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_021",
+  "name": "PBPro Portable Net System",
+  "category": "accessories",
+  "brand": "PBPro",
+  "price": 159.99,
+  "description": "The PBPro Portable Net System sets up regulation-height play on any flat surface in under 5 minutes. The powder-coated steel frame with center post support keeps the net taut at 34 inches center height, and the whole system packs into an included carry bag weighing just 22 lbs.",
+  "specifications": {
+    "material": "Powder-coated steel frame, polyester net",
+    "dimensions": "22 ft wide x 36 in tall (regulation)",
+    "features": ["Center post height adjustment", "Weighted base plates", "Carry bag included", "5-minute setup"]
+  },
+  "care_instructions": "After outdoor use, wipe down the steel frame to prevent rust. Store the net dry to prevent mildew. Check the center post tension mechanism periodically and lubricate with WD-40 if it becomes stiff."
+}

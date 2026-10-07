@@ -1,0 +1,19 @@
+{
+  "product_id": "prod_031",
+  "name": "CRBN 1X Power Series 16mm",
+  "category": "paddles",
+  "brand": "CRBN",
+  "price": 219.99,
+  "description": "The CRBN 1X Power Series is an elongated, thermoformed paddle built for players who want maximum reach and put-away power from the baseline. Its raw Toray T700 carbon fiber face grips the ball for heavy topspin drives and serves, and foam-injected perimeter walls enlarge the sweet spot and stabilize off-center hits. The 5.5 inch handle leaves room for two-handed backhands.",
+  "specifications": {
+    "weight": "8.0 oz",
+    "grip_size": "4.25 in",
+    "face_material": "Raw Toray T700 carbon fiber",
+    "core": "16 mm polypropylene honeycomb with foam-injected edge walls",
+    "shape": "elongated",
+    "length": "16.5 in",
+    "width": "7.5 in",
+    "handle_length": "5.5 in"
+  },
+  "care_instructions": "Clean the raw carbon face with a carbon-safe eraser or damp microfiber to restore grit; never use abrasive pads. Keep out of hot cars and store in the included cover."
+}

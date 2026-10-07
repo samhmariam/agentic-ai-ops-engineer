@@ -1,0 +1,16 @@
+{
+  "product_id": "prod_011",
+  "name": "Franklin X-26 Indoor Pickleballs",
+  "category": "balls",
+  "brand": "Franklin",
+  "price": 7.99,
+  "description": "The Franklin X-26 offers reliable indoor performance at a budget-friendly price. The 26-hole pattern provides a slower flight speed and softer feel compared to outdoor balls, making it ideal for beginners learning the game in gym or recreation center settings. Pack of 3.",
+  "specifications": {
+    "diameter": "2.87 in",
+    "weight": "0.85 oz",
+    "hole_count": 26,
+    "material": "Injection-molded plastic",
+    "indoor_outdoor": "indoor"
+  },
+  "care_instructions": "Wipe with a damp cloth as needed. Indoor balls are more durable than outdoor balls but should still be replaced when they lose roundness or develop soft spots."
+}

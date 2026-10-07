@@ -1,0 +1,17 @@
+{
+  "product_id": "prod_034",
+  "name": "Skechers Viper Court Pro",
+  "category": "accessories",
+  "brand": "Skechers",
+  "price": 110.00,
+  "description": "The Skechers Viper Court Pro is a dedicated pickleball shoe built for quick lateral movement at the kitchen line. A Goodyear Performance rubber outsole with a herringbone tread grips both outdoor hard courts and indoor floors, while a lightweight Arch Fit insole and responsive cushioning midsole reduce fatigue over long sessions. A reinforced toe cap protects against drag during low volleys.",
+  "specifications": {
+    "upper_material": "Engineered mesh with synthetic overlays",
+    "midsole": "Lightweight responsive cushioning foam",
+    "outsole": "Goodyear Performance rubber, herringbone tread",
+    "insole": "Arch Fit removable insole",
+    "size_range": "7-14 US M",
+    "weight_per_shoe": "11.5 oz"
+  },
+  "care_instructions": "Brush off court dust after play and wipe the upper with a damp cloth. Remove the insole and air dry at room temperature; never put the shoes in a dryer or near a heater."
+}

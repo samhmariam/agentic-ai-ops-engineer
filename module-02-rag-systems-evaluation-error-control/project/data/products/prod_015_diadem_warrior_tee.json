@@ -1,0 +1,14 @@
+{
+  "product_id": "prod_015",
+  "name": "Diadem Warrior Performance Tee",
+  "category": "apparel",
+  "brand": "Diadem",
+  "price": 34.99,
+  "description": "The Diadem Warrior Performance Tee uses moisture-wicking polyester blend fabric to keep you cool and dry during intense rallies. Features flatlock seams to reduce chafing, a tagless collar for comfort, and a reflective logo for low-light visibility on evening courts.",
+  "specifications": {
+    "material": "92% polyester / 8% spandex",
+    "sizes_available": ["XS", "S", "M", "L", "XL", "XXL"],
+    "color_options": ["Navy", "Black", "White", "Coral"]
+  },
+  "care_instructions": "Machine wash cold with like colors. Do not use fabric softener as it reduces moisture-wicking performance. Hang dry or tumble dry low."
+}
