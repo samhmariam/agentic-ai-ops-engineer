@@ -1,0 +1,21 @@
+scenario_id,region,property_type,bedrooms,expected_priority,expected_action,rationale
+G001,west,apartment,2,high,prioritize_new_listings,demand=0.91 supply=0.22 — strongest demand in dataset with very tight supply
+G002,north,apartment,1,low,deprioritize,demand=0.54 supply=0.81 — moderate demand but market is heavily oversupplied
+G003,south,house,3,medium,monitor_opportunity,demand=0.68 supply=0.55 — balanced signals with slight demand edge
+G004,east,apartment,2,high,prioritize_new_listings,demand=0.82 supply=0.37 — clear high demand with constrained supply
+G005,center,studio,1,low,deprioritize,demand=0.47 supply=0.88 — weak demand and severe oversupply
+G006,west,apartment,1,high,prioritize_new_listings,demand=0.77 supply=0.44 — above-threshold demand with below-median supply; listing opportunity worth pursuing
+G007,west,house,3,low,deprioritize,demand=0.63 supply=0.72 — moderate demand outweighed by high supply
+G008,north,apartment,2,high,prioritize_new_listings,demand=0.80 supply=0.31 — strong demand with low supply in otherwise weak north market
+G009,north,house,2,low,deprioritize,demand=0.41 supply=0.88 — weakest demand profile in north plus near-saturated supply
+G010,south,apartment,2,medium,monitor_opportunity,demand=0.72 supply=0.48 — above-average demand with moderate supply; worth watching
+G011,south,house,4,low,deprioritize,demand=0.49 supply=0.62 — below-median demand and above-median supply
+G012,east,studio,1,low,deprioritize,demand=0.59 supply=0.85 — middling demand but supply is very high; opportunity cost too low
+G013,east,house,3,low,deprioritize,demand=0.55 supply=0.58 — no compelling demand signal; near-median scores with slight supply excess; deprioritize
+G014,center,apartment,1,low,deprioritize,demand=0.65 supply=0.68 — tricky: demand looks decent but supply exceeds demand index
+G015,center,apartment,2,low,deprioritize,demand=0.56 supply=0.76 — demand below median supply well above; deprioritize
+G016,west,studio,1,medium,monitor_opportunity,demand=0.69 supply=0.52 — decent demand but supply is almost balanced; not a clear high
+G017,south,studio,1,high,prioritize_new_listings,demand=0.78 supply=0.27 — surprisingly strong studio demand in south with very tight supply
+G018,east,apartment,1,medium,monitor_opportunity,demand=0.66 supply=0.51 — borderline signals; slight demand edge but supply nearly in balance
+G019,north,house,3,low,deprioritize,demand=0.37 supply=0.91 — lowest demand in dataset; near-total oversupply
+G020,center,house,2,low,deprioritize,demand=0.48 supply=0.67 — below-median demand and above-median supply in center
