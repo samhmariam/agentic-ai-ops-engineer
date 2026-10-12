@@ -1,0 +1,6 @@
+scenario_id,region,property_type,bedrooms,expected_priority,expected_action,must_mention,must_not_mention
+S001,west,apartment,2,high,prioritize_new_listings,"prioritize_new_listings;0.91","ibuyer;buy property"
+S002,north,apartment,1,low,deprioritize,"deprioritize;0.81","ibuyer;buy property"
+S003,south,house,3,medium,monitor_opportunity,"monitor_opportunity;0.68","guaranteed sale"
+S004,east,apartment,2,high,prioritize_new_listings,"prioritize_new_listings;0.82","buy property"
+S005,center,studio,1,low,deprioritize,"deprioritize;0.47","high priority"

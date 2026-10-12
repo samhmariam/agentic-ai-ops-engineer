@@ -1,0 +1,7 @@
+services:
+  realthor:
+    build: .
+    env_file: .env
+    volumes:
+      - ./outputs:/app/outputs
+    command: analyze --region west --property-type apartment --bedrooms 2
