@@ -1,0 +1,34 @@
+{
+  "total_runs": 34,
+  "success_count": 30,
+  "failure_count": 4,
+  "success_rate": 0.8823529411764706,
+  "avg_latency_s": 3.161470588235294,
+  "p95_latency_s": 7.08,
+  "total_cost_usd": 0.012254000000000001,
+  "avg_cost_usd": 0.00036041176470588237,
+  "tool_call_counts": {
+    "get_demand_signals": 17,
+    "get_supply_snapshot": 16,
+    "get_supply_opportunities": 10,
+    "get_listing_velocity": 6,
+    "submit_channel_recommendation": 3
+  },
+  "guardrail_block_count": 4,
+  "hitl_approval_count": 2,
+  "hitl_rejection_count": 1,
+  "common_failure_reasons": [
+    [
+      "RateLimitError: rate limit exceeded",
+      2
+    ],
+    [
+      "APITimeoutError: request timed out",
+      1
+    ],
+    [
+      "APIConnectionError: connection reset",
+      1
+    ]
+  ]
+}
