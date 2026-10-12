@@ -1,0 +1,6 @@
+services:
+  realthor:
+    build: .
+    image: realthor:latest
+    env_file: .env
+    command: chat --user analyst_001 --message "What's the listing priority for west apartments?"

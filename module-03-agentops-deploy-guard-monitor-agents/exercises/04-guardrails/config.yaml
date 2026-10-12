@@ -1,0 +1,24 @@
+agent:
+  name: RealThor
+  version: "0.4.0"
+
+model:
+  name: gpt-4o-mini
+  temperature: 0.0
+
+paths:
+  prompt: prompts/system_prompt_v4.md
+  demand_data: data/demand_signals.csv
+  supply_data: data/supply_snapshot.csv
+  neighborhood_data: data/neighborhood_profiles.csv
+  velocity_data: data/listing_velocity.csv
+  listings_data: data/listings.csv
+  supply_opportunities_data: data/supply_opportunities.csv
+  demand_leads_data: data/demand_leads.csv
+  sales_data: data/sales.csv
+  users_data: data/users.csv
+
+evaluation:
+  default_sample: 10
+  distribution: even
+  seed: 42
