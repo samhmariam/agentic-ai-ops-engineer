@@ -297,7 +297,9 @@ def test_extends_merges_overrides_and_removes(cfg, tmp_path):
     )
     merged = load_config(child)
     assert merged["experiment"]["name"] == "exp-a"
-    assert merged["model"] == {"name": cfg["model"]["name"], "temperature": 0.5}
+    assert merged["model"]["temperature"] == 0.5                       # overridden
+    assert merged["model"]["name"] == cfg["model"]["name"]             # inherited
+    assert merged["model"]["timeout_s"] == cfg["model"]["timeout_s"]   # inherited
     assert "draft_email" not in merged["tools"]["enabled"]                     # removed
     assert merged["tools"]["enabled"]["list_open_opportunities"] == "1.0.0"   # overridden
     assert merged["tools"]["enabled"]["send_email"] == "1.0.0"                # added

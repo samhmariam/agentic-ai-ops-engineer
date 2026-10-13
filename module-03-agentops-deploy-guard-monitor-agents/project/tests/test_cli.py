@@ -157,3 +157,68 @@ def test_evaluate_min_pass_rate_gate(fake_eval_agent, tmp_config):
 def test_eval_subcommand_matches_evaluate(fake_eval_agent, tmp_config):
     result = invoke("eval", "--config", str(tmp_config), "--case", "E012")
     assert result.exit_code == 0 and "PASS  E012" in result.stdout
+
+
+class SlowGraph:
+    """Answers every question after a fixed delay, so concurrency is measurable."""
+
+    def __init__(self, delay):
+        self.delay = delay
+
+    def invoke(self, payload, config=None):
+        import time
+        time.sleep(self.delay)
+        question = payload["messages"][0]["content"]
+        return {"messages": [AIMessage(content=f"I could not find an account. ({question[:20]})")]}
+
+
+def test_parallel_evaluation_is_faster_and_keeps_task_order(monkeypatch, tmp_config, tmp_path):
+    import time
+
+    from salesops_agent import evaluation
+
+    agent = SalesOpsAgent(graph=SlowGraph(0.3), manifest=describe_versions(load_config(tmp_config)))
+    monkeypatch.setattr(evaluation, "build_agent", lambda cfg: agent)
+    cfg = load_config(tmp_config)
+    ids = ["E001", "E002", "E003", "E004", "E011", "E012", "E018", "E019"]
+
+    started = time.perf_counter()
+    out = evaluation.run_evaluation(cfg, ids, workers=8)
+    parallel = time.perf_counter() - started
+
+    assert [r["case_id"] for r in out.summary["results"]] == sorted(ids)   # task order, not completion order
+    assert len({r["run"]["run_id"] for r in out.summary["results"]}) == len(ids)
+    assert parallel < 0.3 * len(ids) / 2                                     # well under the sequential 2.4s
+    events = [json.loads(l) for l in (tmp_path / "logs" / "agent.jsonl").read_text().splitlines()]
+    assert sum(e["event"] == "run_completed" for e in events) == len(ids)   # no lost or duplicated log lines
+    assert len(list((tmp_path / "traces").glob("*.json"))) == len(ids)
+
+
+def test_evaluate_workers_option(fake_eval_agent, tmp_config):
+    result = run_evaluate("--config", str(tmp_config), "--case", "E012", "--case", "E004", "--workers", "2")
+    assert result.exit_code == 0 and "(2 workers)" in result.stdout
+    assert run_evaluate("--workers", "0").exit_code == 2                     # validated range
+
+
+def test_send_email_outbox_is_safe_under_concurrency(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from salesops_agent.data import CRMData
+    from salesops_agent.tools import make_tools
+
+    outbox = tmp_path / "outbox.json"
+    send = {t.name: t for t in make_tools(CRMData(tmp_config_data_dir()), outbox, {"send_email": "1.0.0"})}["send_email"]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(lambda i: send.invoke({"to": f"u{i}@x.com", "subject": "s", "body": "b"}), range(40)))
+    assert len(json.loads(outbox.read_text())) == 40                          # no lost writes
+
+
+def tmp_config_data_dir():
+    return load_config(DEFAULT_CONFIG_PATH)["paths"]["data_dir"]
+
+
+def test_model_timeout_and_retries_are_configured():
+    from salesops_agent.agent import model_kwargs
+
+    kwargs = model_kwargs(load_config())
+    assert kwargs["timeout"] == 30 and kwargs["max_retries"] == 2

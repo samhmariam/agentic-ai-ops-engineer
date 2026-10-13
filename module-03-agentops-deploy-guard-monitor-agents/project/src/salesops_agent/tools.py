@@ -13,6 +13,7 @@ are the notebook prototype's text, unchanged.
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
     from salesops_agent.guardrails.tool import ToolGuardrail
 
 CLOSED_STAGES = {"Closed Won", "Closed Lost"}
+_OUTBOX_LOCK = threading.Lock()
 
 Classification = Literal["crm", "restricted"]
 
@@ -143,12 +145,13 @@ def build_tool_specs(crm: CRMData, email_outbox: Path) -> ToolRegistry:
         }
 
     def send_email(to: str, subject: str, body: str) -> Dict[str, Any]:
-        outbox = load_json(email_outbox) if email_outbox.exists() else []
         message = {"to": to, "subject": subject, "body": body, "status": "sent"}
-        outbox.append(message)
-        email_outbox.parent.mkdir(parents=True, exist_ok=True)
-        with email_outbox.open("w", encoding="utf-8") as f:
-            json.dump(outbox, f, indent=2)
+        with _OUTBOX_LOCK:   # read-modify-write; parallel evaluation runs share one outbox
+            outbox = load_json(email_outbox) if email_outbox.exists() else []
+            outbox.append(message)
+            email_outbox.parent.mkdir(parents=True, exist_ok=True)
+            with email_outbox.open("w", encoding="utf-8") as f:
+                json.dump(outbox, f, indent=2)
         return {"status": "sent", "message": message}
 
     specs = [

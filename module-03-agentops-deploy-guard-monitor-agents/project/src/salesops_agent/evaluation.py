@@ -29,10 +29,12 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, List, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Callable, Dict, List, Optional
 
 from salesops_agent.agent import build_agent
 from salesops_agent.config import ensure_output_dirs, with_overrides
+from salesops_agent.logging_utils import setup_logging
 from salesops_agent.reporting import p95, write_evaluation_report
 from salesops_agent.runner import RunResult, run_question
 
@@ -119,8 +121,18 @@ def run_evaluation(
     cfg: dict[str, Any],
     case_ids: Optional[List[str]] = None,
     on_result: Optional[Callable[[CaseResult], None]] = None,
+    workers: int = 1,
 ) -> EvaluationOutput:
+    """Run every task and score it.
+
+    With workers > 1, tasks run concurrently on a thread pool (each task is an
+    independent agent run with its own run id, trace and guardrail context; the
+    shared log, outbox and review queue are written under locks). `on_result` is
+    called on the calling thread as tasks finish; results are stored in task order,
+    so reports are identical regardless of completion order.
+    """
     ensure_output_dirs(cfg)
+    setup_logging(cfg)   # attach the log handler once, before worker threads start
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     eval_cfg = with_overrides(
         cfg,
@@ -130,15 +142,21 @@ def run_evaluation(
     cases = load_cases(cfg["paths"]["eval_cases"], case_ids)
     agent = build_agent(eval_cfg)
 
-    results: List[CaseResult] = []
-    for case in cases:
+    def evaluate_case(case: EvalCase) -> CaseResult:
         run = run_question(eval_cfg, case.question, source=f"eval:{case.id}", agent=agent, role=case.role)
         failures = score_case(case, run)
-        result = CaseResult(case_id=case.id, category=case.category, passed=not failures,
-                            failures=failures, run=run.to_dict(), task=case.task)
-        results.append(result)
-        if on_result:
-            on_result(result)
+        return CaseResult(case_id=case.id, category=case.category, passed=not failures,
+                          failures=failures, run=run.to_dict(), task=case.task)
+
+    by_id: Dict[str, CaseResult] = {}
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        futures = [pool.submit(evaluate_case, case) for case in cases]
+        for future in as_completed(futures):
+            result = future.result()
+            by_id[result.case_id] = result
+            if on_result:
+                on_result(result)
+    results = [by_id[case.id] for case in cases]
 
     passed = sum(r.passed for r in results)
     experiment = cfg["experiment"]["name"]

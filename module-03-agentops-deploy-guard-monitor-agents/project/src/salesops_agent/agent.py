@@ -54,6 +54,15 @@ def _load_components(cfg: dict[str, Any]) -> _Components:
     return _Components(prompt, tools, input_guard, tool_guard, output_guard, manifest)
 
 
+def model_kwargs(cfg: dict[str, Any]) -> Dict[str, Any]:
+    """Arguments for init_chat_model. The timeout bounds a single API request (a
+    stalled call fails after timeout_s and is retried up to max_retries times)
+    instead of waiting for the client default."""
+    m = cfg["model"]
+    return {"model": m["name"], "temperature": m["temperature"],
+            "timeout": m["timeout_s"], "max_retries": m["max_retries"]}
+
+
 def describe_versions(cfg: dict[str, Any]) -> Dict[str, Any]:
     """Version manifest for the current config, without creating a model client."""
     return _load_components(cfg).manifest
@@ -62,7 +71,7 @@ def describe_versions(cfg: dict[str, Any]) -> Dict[str, Any]:
 def build_agent(cfg: dict[str, Any]) -> SalesOpsAgent:
     """Build the SalesOps agent. Credentials come from the environment (.env)."""
     c = _load_components(cfg)
-    model = init_chat_model(cfg["model"]["name"], temperature=cfg["model"]["temperature"])
+    model = init_chat_model(**model_kwargs(cfg))
     graph = create_agent(model=model, tools=c.tools, system_prompt=c.prompt.text)
     return SalesOpsAgent(graph=graph, manifest=c.manifest, input_guard=c.input_guard,
                          tool_guard=c.tool_guard, output_guard=c.output_guard)

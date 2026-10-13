@@ -52,6 +52,8 @@ class ExperimentSection(_Section):
 class ModelSection(_Section):
     name: str = Field(pattern=r"^[a-z_-]+:.+$", description="provider:model for init_chat_model")
     temperature: float = Field(ge=0.0, le=2.0)
+    timeout_s: float = Field(default=30.0, gt=0, description="per-request timeout; a stalled call fails fast")
+    max_retries: int = Field(default=2, ge=0, le=10, description="client retries after timeouts/429/5xx")
 
 
 class PromptSection(_Section):

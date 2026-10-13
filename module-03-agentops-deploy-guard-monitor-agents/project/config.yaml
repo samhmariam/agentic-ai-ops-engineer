@@ -17,6 +17,8 @@ agent:
 model:
   name: openai:gpt-4o-mini   # provider:model, passed to init_chat_model
   temperature: 0.0
+  timeout_s: 30       # per API request; stalled calls fail fast and are retried
+  max_retries: 2
 
 prompt:
   registry: prompts/registry.yaml

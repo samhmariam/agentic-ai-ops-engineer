@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import threading
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -34,6 +35,7 @@ from salesops_agent.data import CRMData
 Action = Literal["allow", "redact", "review", "block"]
 _SEVERITY = {"allow": 0, "redact": 1, "review": 2, "block": 3}
 _SENTENCES = re.compile(r"(?<=[.!?])\s+|\n+")
+_QUEUE_LOCK = threading.Lock()
 
 
 # -- policy schema ----------------------------------------------------------
@@ -244,7 +246,7 @@ class OutputGuardrail:
                 "request": request,
                 "response": text,
             }
-            with review_queue.open("a", encoding="utf-8") as f:
+            with _QUEUE_LOCK, review_queue.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(item) + "\n")
         return decision
 

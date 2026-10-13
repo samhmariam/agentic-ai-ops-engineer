@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 
 import click
 from dotenv import load_dotenv
@@ -112,6 +113,10 @@ def versions(as_json, config_path):
 
 def _eval_options(f):
     f = click.option(
+        "--workers", type=click.IntRange(1, 16), default=4, show_default=True,
+        help="Tasks evaluated concurrently (1 = sequential).",
+    )(f)
+    f = click.option(
         "--min-pass-rate", type=click.FloatRange(0, 1), default=0.0, show_default=True,
         help="Exit 1 if any evaluated config scores below this pass rate (CI gate).",
     )(f)
@@ -122,7 +127,7 @@ def _eval_options(f):
     return click.option("--case", "case_ids", multiple=True, help="Run only these task IDs (repeatable).")(f)
 
 
-def _run_evaluations(case_ids, config_paths, min_pass_rate):
+def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=4):
     """Shared body of `salesops-agent eval` and the standalone `evaluate` command."""
     from salesops_agent.evaluation import run_evaluation
 
@@ -139,12 +144,14 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate):
         name = cfg["experiment"]["name"]
         click.echo(f"\n== {name}: {cfg['experiment']['description']}")
         click.echo(f"{'':4}  {'ID':<4}  {'Task':<56}  {'Latency':>7}  {'Est. cost'}")
-        out = run_evaluation(cfg, list(case_ids) or None, on_result=show)
+        started = time.perf_counter()
+        out = run_evaluation(cfg, list(case_ids) or None, on_result=show, workers=workers)
+        wall = time.perf_counter() - started
         s, t = out.summary, out.summary["totals"]
         click.echo(
             f"\n{name}: {s['passed']}/{s['total']} passed ({s['pass_rate']:.0%}) | "
             f"total latency {t['latency_s_total']:.1f}s (avg {t['latency_s_avg']:.2f}s) | "
-            f"est. cost ${t['cost_usd']:.4f}"
+            f"est. cost ${t['cost_usd']:.4f} | wall time {wall:.1f}s ({workers} workers)"
         )
         click.echo(f"Report: {', '.join(str(p) for p in out.report_paths)}")
         click.echo(f"Result: {out.result_path}")
@@ -156,25 +163,25 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate):
 
 @app.command("eval")
 @_eval_options
-def eval_cmd(case_ids, config_paths, min_pass_rate):
+def eval_cmd(case_ids, config_paths, min_pass_rate, workers):
     """Run the evaluation suite for one or more experiment configs.
 
     Prints success/failure, latency, estimated cost and failure reason per task, and
     writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
     """
-    _run_evaluations(case_ids, config_paths, min_pass_rate)
+    _run_evaluations(case_ids, config_paths, min_pass_rate, workers)
 
 
 @click.command()
 @_eval_options
-def evaluate(case_ids, config_paths, min_pass_rate):
+def evaluate(case_ids, config_paths, min_pass_rate, workers):
     """Run the SalesOps evaluation suite (same as `salesops-agent eval`).
 
     Prints success/failure, latency, estimated cost and failure reason per task, and
     writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
     """
     load_dotenv(PROJECT_ROOT / ".env")
-    _run_evaluations(case_ids, config_paths, min_pass_rate)
+    _run_evaluations(case_ids, config_paths, min_pass_rate, workers)
 
 
 @app.command()
