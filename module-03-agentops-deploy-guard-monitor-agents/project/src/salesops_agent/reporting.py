@@ -1,11 +1,13 @@
 """Report generation.
 
 Combines run telemetry from logs/ (all `run_completed` events) with the latest
-evaluation result from reports/ into a Markdown report at reports/report_<experiment>_<ts>.md.
+evaluation result from reports/ into a Markdown report at reports/report_<experiment>_<ts>.md,
+and writes the evaluation report (reports/evaluation_report.{md,csv,json}).
 """
 
 from __future__ import annotations
 
+import csv
 import json
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -137,3 +139,103 @@ def build_report(cfg: dict[str, Any]) -> Path:
     out = reports_dir / f"report_{cfg['experiment']['name']}_{now.strftime('%Y%m%dT%H%M%SZ')}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
     return out
+
+
+# -- evaluation report ------------------------------------------------------
+
+EVALUATION_REPORT_STEM = "evaluation_report"
+CSV_COLUMNS = [
+    "task_id", "task", "category", "status", "latency_s", "input_tokens",
+    "output_tokens", "cost_usd", "tools_called", "failure_reason",
+]
+
+
+def _task_rows(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows = []
+    for r in summary["results"]:
+        run = r["run"]
+        rows.append({
+            "task_id": r["case_id"],
+            "task": r.get("task", ""),
+            "category": r["category"],
+            "status": "PASS" if r["passed"] else "FAIL",
+            "latency_s": run["latency_s"],
+            "input_tokens": run["input_tokens"],
+            "output_tokens": run["output_tokens"],
+            "cost_usd": run["cost_usd"],
+            "tools_called": " ".join(run["tools_called"]),
+            "failure_reason": "; ".join(r["failures"]),
+        })
+    return rows
+
+
+def _md_cell(value: Any) -> str:
+    return str(value).replace("|", "\\|").replace("\n", " ")
+
+
+def _evaluation_markdown(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> str:
+    t = summary["totals"]
+    ds = summary["eval_dataset"]
+    failed = [row for row in rows if row["status"] == "FAIL"]
+    lines = [
+        "# Evaluation Report",
+        "",
+        f"Experiment **{summary['experiment']}**, run `{summary['timestamp']}`, "
+        f"dataset `{ds['file']}` ({ds['cases']} tasks, sha256 `{ds['sha256'][:12]}`).",
+        "",
+        "## Summary",
+        "",
+        "| Metric | Value |",
+        "|---|---|",
+        f"| Tasks passed | {summary['passed']}/{summary['total']} ({summary['pass_rate']:.0%}) |",
+        f"| Tasks failed | {summary['total'] - summary['passed']} |",
+        f"| Total latency (s) | {t['latency_s_total']:.2f} |",
+        f"| Avg / p95 latency (s) | {t['latency_s_avg']:.2f} / {t['latency_s_p95']:.2f} |",
+        f"| Tokens (input + output) | {t['input_tokens']:,} + {t['output_tokens']:,} |",
+        f"| Estimated cost (USD) | {t['cost_usd']:.4f} |",
+        "",
+        "## Tasks",
+        "",
+        "| ID | Task | Category | Result | Latency (s) | Est. cost (USD) | Failure reason |",
+        "|---|---|---|---|---|---|---|",
+        *[
+            f"| {row['task_id']} | {_md_cell(row['task'])} | {row['category']} | {row['status']} | "
+            f"{row['latency_s']:.2f} | {row['cost_usd']:.6f} | {_md_cell(row['failure_reason'])} |"
+            for row in rows
+        ],
+        "",
+    ]
+    if failed:
+        lines += ["## Failures", ""]
+        lines += [f"- **{row['task_id']}** ({_md_cell(row['task'])}): {_md_cell(row['failure_reason'])}"
+                  for row in failed]
+        lines.append("")
+    lines += [
+        "## Versions",
+        "",
+        *[f"- {line}" for line in short_manifest(summary["versions"])],
+        "",
+        "Cost is estimated from token usage and the per-model prices in config (`pricing`). "
+        "Latency is wall-clock time for the full agent run, including tool calls.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def write_evaluation_report(summary: Dict[str, Any], reports_dir: Path) -> List[Path]:
+    """Write the latest evaluation as reports/evaluation_report.{md,csv,json}."""
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    rows = _task_rows(summary)
+    md_path = reports_dir / f"{EVALUATION_REPORT_STEM}.md"
+    csv_path = reports_dir / f"{EVALUATION_REPORT_STEM}.csv"
+    json_path = reports_dir / f"{EVALUATION_REPORT_STEM}.json"
+
+    md_path.write_text(_evaluation_markdown(summary, rows), encoding="utf-8")
+    with csv_path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)
+    report = {k: v for k, v in summary.items() if k != "results"}
+    report["tasks"] = rows
+    json_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    return [md_path, csv_path, json_path]

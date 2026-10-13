@@ -389,3 +389,16 @@ def test_eval_dataset_fingerprint(cfg):
     assert fp["cases"] == len(load_cases(cfg["paths"]["eval_cases"]))
     assert fp["subset"] is None and len(fp["sha256"]) == 64
     assert dataset_fingerprint(cfg["paths"]["eval_cases"], ["E2", "E1"])["subset"] == ["E1", "E2"]
+
+
+def test_must_contain_any():
+    case = EvalCase("X", "c", "q", must_contain_any=["not found", "no account"])
+    assert score_case(case, _run("Sorry, no account matches.")) == []
+    assert score_case(case, _run("Health score 72."))[0].startswith("none of the expected phrases")
+
+
+def test_eval_tasks_are_named_and_cover_categories(cfg):
+    cases = load_cases(cfg["paths"]["eval_cases"])
+    assert len(cases) >= 5
+    assert all(c.task for c in cases)
+    assert {"account_risk", "pipeline", "restricted_data", "side_effect", "grounding"} <= {c.category for c in cases}

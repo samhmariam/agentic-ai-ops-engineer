@@ -95,29 +95,71 @@ def versions(as_json, config_path):
     click.echo(json.dumps(manifest, indent=2) if as_json else "\n".join(short_manifest(manifest)))
 
 
-@app.command("eval")
-@click.option("--case", "case_ids", multiple=True, help="Run only these case IDs (repeatable).")
-@click.option(
-    "--config", "config_paths", multiple=True,
-    help="Config(s) to evaluate, e.g. configs/prompt-v2.yaml (repeatable; default: config.yaml).",
-)
-def eval_cmd(case_ids, config_paths):
-    """Run the evaluation suite for one or more experiment configs.
+def _eval_options(f):
+    f = click.option(
+        "--min-pass-rate", type=click.FloatRange(0, 1), default=0.0, show_default=True,
+        help="Exit 1 if any evaluated config scores below this pass rate (CI gate).",
+    )(f)
+    f = click.option(
+        "--config", "config_paths", multiple=True,
+        help="Config(s) to evaluate, e.g. configs/candidate-v2.yaml (repeatable; default: config.yaml).",
+    )(f)
+    return click.option("--case", "case_ids", multiple=True, help="Run only these task IDs (repeatable).")(f)
 
-    Writes reports/eval_<experiment>_<ts>.json per config.
-    """
+
+def _run_evaluations(case_ids, config_paths, min_pass_rate):
+    """Shared body of `salesops-agent eval` and the standalone `evaluate` command."""
     from salesops_agent.evaluation import run_evaluation
 
     def show(result):
+        run = result.run
         mark = "PASS" if result.passed else "FAIL"
-        click.echo(f"{mark}  {result.case_id}  [{result.category}]  {'; '.join(result.failures)}")
+        line = f"{mark}  {result.case_id}  {result.task[:44]:<44}  {run['latency_s']:6.2f}s  ${run['cost_usd']:.5f}"
+        click.echo(line + (f"  -> {'; '.join(result.failures)}" if result.failures else ""))
 
     _require_api_key()
+    below = []
     for config_path in config_paths or (None,):
         cfg = _load(config_path)
-        click.echo(f"\n== {cfg['experiment']['name']}: {cfg['experiment']['description']}")
+        name = cfg["experiment"]["name"]
+        click.echo(f"\n== {name}: {cfg['experiment']['description']}")
+        click.echo(f"{'':4}  {'ID':<4}  {'Task':<44}  {'Latency':>7}  {'Est. cost'}")
         out = run_evaluation(cfg, list(case_ids) or None, on_result=show)
-        click.echo(f"Results written to {out}")
+        s, t = out.summary, out.summary["totals"]
+        click.echo(
+            f"\n{name}: {s['passed']}/{s['total']} passed ({s['pass_rate']:.0%}) | "
+            f"total latency {t['latency_s_total']:.1f}s (avg {t['latency_s_avg']:.2f}s) | "
+            f"est. cost ${t['cost_usd']:.4f}"
+        )
+        click.echo(f"Report: {', '.join(str(p) for p in out.report_paths)}")
+        click.echo(f"Result: {out.result_path}")
+        if s["pass_rate"] < min_pass_rate:
+            below.append(f"{name} {s['pass_rate']:.0%}")
+    if below:
+        raise click.ClickException(f"Pass rate below {min_pass_rate:.0%}: {', '.join(below)}")
+
+
+@app.command("eval")
+@_eval_options
+def eval_cmd(case_ids, config_paths, min_pass_rate):
+    """Run the evaluation suite for one or more experiment configs.
+
+    Prints success/failure, latency, estimated cost and failure reason per task, and
+    writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
+    """
+    _run_evaluations(case_ids, config_paths, min_pass_rate)
+
+
+@click.command()
+@_eval_options
+def evaluate(case_ids, config_paths, min_pass_rate):
+    """Run the SalesOps evaluation suite (same as `salesops-agent eval`).
+
+    Prints success/failure, latency, estimated cost and failure reason per task, and
+    writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
+    """
+    load_dotenv(PROJECT_ROOT / ".env")
+    _run_evaluations(case_ids, config_paths, min_pass_rate)
 
 
 @app.command()

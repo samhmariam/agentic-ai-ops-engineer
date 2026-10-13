@@ -1,16 +1,20 @@
 """Evaluation harness.
 
-Runs each case in evaluation/eval_cases.jsonl through `run_question` and scores it
+Runs each task in evaluation/eval_cases.jsonl through `run_question` and scores it
 with deterministic checks:
   - expected_tools:   each must be called at least once
   - forbidden_tools:  none may be called
   - must_contain:     each substring must appear in the answer (case-insensitive)
+  - must_contain_any: at least one of these substrings must appear (case-insensitive)
   - must_not_contain: no substring may appear in the answer (case-insensitive)
+Every failed check becomes a failure reason. Latency, tokens and estimated cost
+come from the run itself (runner.py).
 
 Emails sent during evaluation go to a throwaway outbox under reports/, never to the
 real data/email_outbox.json. Results are written to
 reports/eval_<experiment>_<timestamp>.json with the full version manifest and the
-eval dataset fingerprint, so `salesops compare` can diff any two experiments.
+eval dataset fingerprint, so `salesops compare` can diff any two experiments, and
+the latest run is also written as reports/evaluation_report.{md,csv,json}.
 """
 
 from __future__ import annotations
@@ -24,9 +28,11 @@ from typing import Any, Callable, List, Optional
 
 from salesops_agent.agent import build_agent
 from salesops_agent.config import ensure_output_dirs, with_overrides
+from salesops_agent.reporting import write_evaluation_report
 from salesops_agent.runner import RunResult, run_question
 
-EVAL_RESULT_SCHEMA_VERSION = 2   # 1: unversioned files eval_<ts>.json; 2: + experiment, dataset
+# 1: eval_<ts>.json; 2: + experiment, dataset fingerprint; 3: + task names, totals
+EVAL_RESULT_SCHEMA_VERSION = 3
 
 
 @dataclass
@@ -34,9 +40,11 @@ class EvalCase:
     id: str
     category: str
     question: str
+    task: str = ""
     expected_tools: List[str] = field(default_factory=list)
     forbidden_tools: List[str] = field(default_factory=list)
     must_contain: List[str] = field(default_factory=list)
+    must_contain_any: List[str] = field(default_factory=list)
     must_not_contain: List[str] = field(default_factory=list)
 
 
@@ -47,6 +55,14 @@ class CaseResult:
     passed: bool
     failures: List[str]
     run: dict
+    task: str = ""
+
+
+@dataclass
+class EvaluationOutput:
+    result_path: Path           # reports/eval_<experiment>_<ts>.json (history, compare)
+    report_paths: List[Path]    # reports/evaluation_report.{md,csv,json} (latest run)
+    summary: dict
 
 
 def load_cases(path: Path, case_ids: Optional[List[str]] = None) -> List[EvalCase]:
@@ -76,6 +92,8 @@ def score_case(case: EvalCase, run: RunResult) -> List[str]:
     for text in case.must_contain:
         if text.lower() not in answer:
             failures.append(f"missing expected text: {text!r}")
+    if case.must_contain_any and not any(text.lower() in answer for text in case.must_contain_any):
+        failures.append(f"none of the expected phrases found: {case.must_contain_any[:3]}...")
     for text in case.must_not_contain:
         if text.lower() in answer:
             failures.append(f"contains forbidden text: {text!r}")
@@ -86,7 +104,7 @@ def run_evaluation(
     cfg: dict[str, Any],
     case_ids: Optional[List[str]] = None,
     on_result: Optional[Callable[[CaseResult], None]] = None,
-) -> Path:
+) -> EvaluationOutput:
     ensure_output_dirs(cfg)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     eval_cfg = with_overrides(
@@ -99,7 +117,8 @@ def run_evaluation(
     for case in cases:
         run = run_question(eval_cfg, case.question, source=f"eval:{case.id}", agent=agent)
         failures = score_case(case, run)
-        result = CaseResult(case.id, case.category, not failures, failures, run.to_dict())
+        result = CaseResult(case_id=case.id, category=case.category, passed=not failures,
+                            failures=failures, run=run.to_dict(), task=case.task)
         results.append(result)
         if on_result:
             on_result(result)
@@ -115,11 +134,26 @@ def run_evaluation(
         "total": len(results),
         "passed": passed,
         "pass_rate": round(passed / len(results), 3) if results else 0.0,
+        "totals": totals([r.run for r in results]),
         "results": [asdict(r) for r in results],
     }
-    out = cfg["paths"]["reports_dir"] / f"eval_{experiment}_{stamp}.json"
+    reports_dir = cfg["paths"]["reports_dir"]
+    out = reports_dir / f"eval_{experiment}_{stamp}.json"
     out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    return out
+    return EvaluationOutput(out, write_evaluation_report(summary, reports_dir), summary)
+
+
+def totals(runs: List[dict]) -> dict[str, Any]:
+    latencies = sorted(r["latency_s"] for r in runs)
+    n = len(latencies)
+    return {
+        "latency_s_total": round(sum(latencies), 3),
+        "latency_s_avg": round(sum(latencies) / n, 3) if n else 0.0,
+        "latency_s_p95": latencies[min(n - 1, round(0.95 * (n - 1)))] if n else 0.0,
+        "input_tokens": sum(r["input_tokens"] for r in runs),
+        "output_tokens": sum(r["output_tokens"] for r in runs),
+        "cost_usd": round(sum(r["cost_usd"] for r in runs), 6),
+    }
 
 
 def dataset_fingerprint(path: Path, case_ids: Optional[List[str]] = None) -> dict[str, Any]:

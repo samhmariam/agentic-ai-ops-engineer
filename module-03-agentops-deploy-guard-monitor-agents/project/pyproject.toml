@@ -23,6 +23,7 @@ dependencies = [
 [project.scripts]
 salesops-agent = "salesops_agent.cli:app"
 salesops = "salesops_agent.cli:app"   # short alias
+evaluate = "salesops_agent.cli:evaluate"
 
 [dependency-groups]
 dev = [

@@ -107,3 +107,51 @@ def test_versions_and_help():
     help_text = invoke("--help").output
     for command in ("ask", "eval", "compare", "experiments", "report", "versions"):
         assert command in help_text
+
+
+@pytest.fixture
+def fake_eval_agent(monkeypatch, tmp_config):
+    from salesops_agent import evaluation
+
+    graph = FakeGraph(answer="I could not find an account named Quantum Pickle Logistics.")
+    agent = SalesOpsAgent(graph=graph, manifest=describe_versions(load_config(tmp_config)))
+    monkeypatch.setattr(evaluation, "build_agent", lambda cfg: agent)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    return graph
+
+
+def run_evaluate(*args):
+    return CliRunner().invoke(cli.evaluate, list(args))
+
+
+def test_evaluate_prints_per_task_metrics_and_writes_reports(fake_eval_agent, tmp_config, tmp_path):
+    result = run_evaluate("--config", str(tmp_config), "--case", "E012", "--case", "E004")
+    assert result.exit_code == 0, result.output
+    out = result.stdout
+    assert "PASS  E012" in out                                   # unknown account admitted
+    assert "FAIL  E004" in out and "expected tool not called: lookup_account" in out
+    assert "s  $0." in out and "1/2 passed (50%)" in out
+
+    reports = tmp_path / "reports"
+    md, csv_text = (reports / "evaluation_report.md").read_text(), (reports / "evaluation_report.csv").read_text()
+    data = json.loads((reports / "evaluation_report.json").read_text())
+
+    header, *rows = csv_text.strip().splitlines()
+    assert header.split(",")[:4] == ["task_id", "task", "category", "status"]
+    assert {"latency_s", "cost_usd", "failure_reason"} <= set(header.split(","))
+    assert len(rows) == 2
+    assert data["passed"] == 1 and data["experiment"] == "cli-test"
+    assert {t["task_id"]: t["status"] for t in data["tasks"]} == {"E004": "FAIL", "E012": "PASS"}
+    assert set(data["totals"]) >= {"latency_s_total", "latency_s_avg", "cost_usd"}
+    assert "| Tasks passed | 1/2 (50%) |" in md and "## Failures" in md and "Failure reason" in md
+    assert list(reports.glob("eval_cli-test_*.json"))             # history file for compare
+
+
+def test_evaluate_min_pass_rate_gate(fake_eval_agent, tmp_config):
+    result = run_evaluate("--config", str(tmp_config), "--case", "E004", "--min-pass-rate", "0.5")
+    assert result.exit_code == 1 and "Pass rate below 50%" in result.output
+
+
+def test_eval_subcommand_matches_evaluate(fake_eval_agent, tmp_config):
+    result = invoke("eval", "--config", str(tmp_config), "--case", "E012")
+    assert result.exit_code == 0 and "PASS  E012" in result.stdout
