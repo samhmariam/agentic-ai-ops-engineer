@@ -1,7 +1,7 @@
 """Report generation.
 
 Combines run telemetry from logs/ (all `run_completed` events) with the latest
-evaluation result from reports/ into a Markdown report at reports/report_<ts>.md.
+evaluation result from reports/ into a Markdown report at reports/report_<experiment>_<ts>.md.
 """
 
 from __future__ import annotations
@@ -133,6 +133,6 @@ def build_report(cfg: dict[str, Any]) -> Path:
         *_eval_section(ev),
         *_run_section(runs),
     ]
-    out = reports_dir / f"report_{now.strftime('%Y%m%dT%H%M%SZ')}.md"
+    out = reports_dir / f"report_{cfg['experiment']['name']}_{now.strftime('%Y%m%dT%H%M%SZ')}.md"
     out.write_text("\n".join(lines), encoding="utf-8")
     return out
