@@ -30,9 +30,24 @@ def load_run_events(log_path: Path) -> List[Dict[str, Any]]:
     return events
 
 
-def latest_eval(reports_dir: Path) -> Optional[Dict[str, Any]]:
-    files = sorted(reports_dir.glob("eval_2*.json"))
-    return json.loads(files[-1].read_text(encoding="utf-8")) if files else None
+def experiment_of(ev: Dict[str, Any]) -> str:
+    """Experiment name of an eval result (older results predate experiment labels)."""
+    return ev.get("experiment") or ev.get("versions", {}).get("experiment") or "unlabeled"
+
+
+def load_eval_results(reports_dir: Path) -> List[tuple[Path, Dict[str, Any]]]:
+    """All eval result files in reports_dir, oldest first."""
+    found = []
+    for path in reports_dir.glob("eval_*.json"):
+        if path.name.startswith("eval_outbox_"):
+            continue
+        found.append((path, json.loads(path.read_text(encoding="utf-8"))))
+    return sorted(found, key=lambda item: item[1]["timestamp"])
+
+
+def latest_eval(reports_dir: Path, experiment: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    results = [ev for _, ev in load_eval_results(reports_dir) if experiment in (None, experiment_of(ev))]
+    return results[-1] if results else None
 
 
 def _p95(values: List[float]) -> float:
@@ -104,7 +119,7 @@ def build_report(cfg: dict[str, Any]) -> Path:
     reports_dir.mkdir(parents=True, exist_ok=True)
     runs = load_run_events(cfg["paths"]["logs_dir"] / cfg["logging"]["file"])
     now = datetime.now(timezone.utc)
-    ev = latest_eval(reports_dir)
+    ev = latest_eval(reports_dir, experiment=cfg["experiment"]["name"])
 
     lines = [
         "# SalesOps Agent Report",

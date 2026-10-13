@@ -1,4 +1,4 @@
-"""Command-line entry point: `salesops ask | eval | report | versions`."""
+"""Command-line entry point: `salesops ask | eval | compare | experiments | report | versions`."""
 
 from __future__ import annotations
 
@@ -54,23 +54,65 @@ def versions(as_json, config_path):
 
 @app.command("eval")
 @click.option("--case", "case_ids", multiple=True, help="Run only these case IDs (repeatable).")
-@config_option
-def eval_cmd(case_ids, config_path):
-    """Run the evaluation suite and write reports/eval_<ts>.json."""
+@click.option(
+    "--config", "config_paths", multiple=True,
+    help="Config(s) to evaluate, e.g. configs/prompt-v2.yaml (repeatable; default: config.yaml).",
+)
+def eval_cmd(case_ids, config_paths):
+    """Run the evaluation suite for one or more experiment configs.
+
+    Writes reports/eval_<experiment>_<ts>.json per config.
+    """
     from salesops_agent.evaluation import run_evaluation
 
     def show(result):
         mark = "PASS" if result.passed else "FAIL"
         click.echo(f"{mark}  {result.case_id}  [{result.category}]  {'; '.join(result.failures)}")
 
-    out = run_evaluation(load_config(config_path), list(case_ids) or None, on_result=show)
-    click.echo(f"\nResults written to {out}")
+    for config_path in config_paths or (None,):
+        cfg = load_config(config_path)
+        click.echo(f"\n== {cfg['experiment']['name']}: {cfg['experiment']['description']}")
+        out = run_evaluation(cfg, list(case_ids) or None, on_result=show)
+        click.echo(f"Results written to {out}")
+
+
+@app.command()
+@click.argument("baseline")
+@click.argument("candidate")
+@click.option("--fail-on-regression", is_flag=True, help="Exit 1 if any case passing in BASELINE fails in CANDIDATE.")
+@config_option
+def compare(baseline, candidate, fail_on_regression, config_path):
+    """Compare two eval results: BASELINE and CANDIDATE are experiment names
+    (latest run of each) or eval result file paths."""
+    from salesops_agent.comparison import write_comparison
+
+    reports_dir = load_config(config_path)["paths"]["reports_dir"]
+    try:
+        out, comp = write_comparison(baseline, candidate, reports_dir)
+    except FileNotFoundError as exc:
+        raise click.ClickException(str(exc))
+    click.echo(f"{comp.baseline} -> {comp.candidate}: "
+               f"{len(comp.fixes)} fixed {comp.fixes}, {len(comp.regressions)} regressed {comp.regressions}")
+    if not comp.dataset_match:
+        click.echo("Warning: runs used different eval datasets; deltas are not like-for-like.", err=True)
+    click.echo(f"Comparison written to {out}")
+    if fail_on_regression and comp.regressions:
+        raise SystemExit(1)
+
+
+@app.command()
+def experiments():
+    """List the baseline and experiment configs under configs/."""
+    for path in [PROJECT_ROOT / "config.yaml", *sorted((PROJECT_ROOT / "configs").glob("*.yaml"))]:
+        cfg = load_config(path)
+        rel = path.relative_to(PROJECT_ROOT).as_posix()
+        click.echo(f"{cfg['experiment']['name']:<16} {rel:<28} {cfg['experiment']['description']}")
 
 
 @app.command()
 @config_option
 def report(config_path):
-    """Build a Markdown report from logs and the latest evaluation."""
+    """Build a Markdown report from logs and the experiment's latest evaluation."""
     from salesops_agent.reporting import build_report
 
     out = build_report(load_config(config_path))

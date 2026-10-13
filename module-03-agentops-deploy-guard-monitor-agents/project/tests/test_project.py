@@ -10,9 +10,10 @@ from pydantic import ValidationError
 from salesops_agent.agent import describe_versions
 from salesops_agent.config import PROJECT_ROOT, ConfigError, load_config, with_overrides
 from salesops_agent.data import CRMData, normalize_lookup_text
-from salesops_agent.evaluation import EvalCase, load_cases, score_case
+from salesops_agent.comparison import compare, render_markdown, resolve_eval
+from salesops_agent.evaluation import EvalCase, dataset_fingerprint, load_cases, score_case
 from salesops_agent.prompts import load_system_prompt, prompt_hash
-from salesops_agent.reporting import build_report
+from salesops_agent.reporting import build_report, latest_eval
 from salesops_agent.runner import RunResult
 from salesops_agent.schemas import DataValidationError
 from salesops_agent.tools import make_tools, tool_versions
@@ -332,3 +333,59 @@ def test_every_registered_prompt_matches_its_hash(cfg):
         exp = copy.deepcopy(cfg)
         exp["prompt"]["version"] = version
         assert load_system_prompt(exp).version == version
+
+
+def _eval(experiment, ts, outcomes, manifest=None, dataset_sha="abc"):
+    """Synthetic eval result: outcomes maps case_id -> passed."""
+    run = {"latency_s": 1.0, "input_tokens": 100, "output_tokens": 10, "cost_usd": 0.001}
+    results = [{"case_id": cid, "category": "c", "passed": ok, "failures": [] if ok else ["boom"], "run": run}
+               for cid, ok in outcomes.items()]
+    passed = sum(outcomes.values())
+    return {"experiment": experiment, "timestamp": ts, "versions": manifest or {"experiment": experiment},
+            "eval_dataset": {"sha256": dataset_sha, "subset": None},
+            "total": len(results), "passed": passed, "pass_rate": passed / len(results), "results": results}
+
+
+def test_compare_reports_fixes_regressions_and_version_changes(cfg):
+    base_m = describe_versions(cfg)
+    cand_m = copy.deepcopy(base_m)
+    cand_m.update(experiment="cand", prompt_version="v2", prompt_sha256="f" * 64)
+    cand_m["tools"]["list_open_opportunities"] = "1.1.0"
+    del cand_m["tools"]["send_email"]
+
+    comp = compare(_eval("base", "1", {"E1": False, "E2": True, "E3": True}, base_m),
+                   _eval("cand", "2", {"E1": True, "E2": False, "E3": True}, cand_m))
+    assert comp.fixes == ["E1"] and comp.regressions == ["E2"]
+    assert comp.dataset_match
+    changed = {k: (b, c) for k, b, c in comp.version_rows if b != c}
+    assert changed["tool: list_open_opportunities"] == ("1.0.0", "1.1.0")
+    assert changed["tool: send_email"] == ("1.0.0", "—")
+    assert changed["prompt"][1].startswith("v2")
+    assert "tool: lookup_account" not in changed
+    text = render_markdown(comp)
+    assert "1 fixed, 1 regressed" in text and "Warning" not in text
+
+
+def test_compare_flags_different_datasets():
+    comp = compare(_eval("a", "1", {"E1": True}), _eval("b", "2", {"E1": True}, dataset_sha="other"))
+    assert not comp.dataset_match
+    assert "Warning" in render_markdown(comp)
+
+
+def test_latest_eval_by_experiment_ignores_outboxes(tmp_path):
+    for ev in (_eval("a", "20260101T000000Z", {"E1": True}), _eval("a", "20260102T000000Z", {"E1": False}),
+               _eval("b", "20260103T000000Z", {"E1": True})):
+        (tmp_path / f"eval_{ev['experiment']}_{ev['timestamp']}.json").write_text(json.dumps(ev), encoding="utf-8")
+    (tmp_path / "eval_outbox_20260104T000000Z.json").write_text("[]", encoding="utf-8")
+    assert latest_eval(tmp_path)["experiment"] == "b"
+    assert latest_eval(tmp_path, "a")["timestamp"] == "20260102T000000Z"
+    assert resolve_eval("a", tmp_path)["passed"] == 0
+    with pytest.raises(FileNotFoundError):
+        resolve_eval("missing", tmp_path)
+
+
+def test_eval_dataset_fingerprint(cfg):
+    fp = dataset_fingerprint(cfg["paths"]["eval_cases"])
+    assert fp["cases"] == len(load_cases(cfg["paths"]["eval_cases"]))
+    assert fp["subset"] is None and len(fp["sha256"]) == 64
+    assert dataset_fingerprint(cfg["paths"]["eval_cases"], ["E2", "E1"])["subset"] == ["E1", "E2"]

@@ -8,12 +8,14 @@ with deterministic checks:
   - must_not_contain: no substring may appear in the answer (case-insensitive)
 
 Emails sent during evaluation go to a throwaway outbox under reports/, never to the
-real data/email_outbox.json. Results are written to reports/eval_<timestamp>.json
-for the reporting step and for comparison across prompt/tool versions.
+real data/email_outbox.json. Results are written to
+reports/eval_<experiment>_<timestamp>.json with the full version manifest and the
+eval dataset fingerprint, so `salesops compare` can diff any two experiments.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -23,6 +25,8 @@ from typing import Any, Callable, List, Optional
 from salesops_agent.agent import build_agent
 from salesops_agent.config import ensure_output_dirs, with_overrides
 from salesops_agent.runner import RunResult, run_question
+
+EVAL_RESULT_SCHEMA_VERSION = 2   # 1: unversioned files eval_<ts>.json; 2: + experiment, dataset
 
 
 @dataclass
@@ -101,14 +105,33 @@ def run_evaluation(
             on_result(result)
 
     passed = sum(r.passed for r in results)
+    experiment = cfg["experiment"]["name"]
     summary = {
+        "eval_result_schema_version": EVAL_RESULT_SCHEMA_VERSION,
+        "experiment": experiment,
         "timestamp": stamp,
         "versions": agent.manifest,
+        "eval_dataset": dataset_fingerprint(cfg["paths"]["eval_cases"], case_ids),
         "total": len(results),
         "passed": passed,
         "pass_rate": round(passed / len(results), 3) if results else 0.0,
         "results": [asdict(r) for r in results],
     }
-    out = cfg["paths"]["reports_dir"] / f"eval_{stamp}.json"
+    out = cfg["paths"]["reports_dir"] / f"eval_{experiment}_{stamp}.json"
     out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return out
+
+
+def dataset_fingerprint(path: Path, case_ids: Optional[List[str]] = None) -> dict[str, Any]:
+    """Identify the eval dataset a result was scored against.
+
+    Results are only directly comparable when this fingerprint matches; the
+    comparison report flags a mismatch.
+    """
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return {
+        "file": path.name,
+        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "cases": sum(1 for line in text.splitlines() if line.strip()),
+        "subset": sorted(case_ids) if case_ids else None,
+    }
