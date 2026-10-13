@@ -121,6 +121,14 @@ def compare(base: Dict[str, Any], cand: Dict[str, Any]) -> Comparison:
             fixes.append(case_id)
         elif b is None or c is None:
             change = "only in " + ("candidate" if b is None else "baseline")
+        elif not b["passed"] and not c["passed"] and b["failures"] != c["failures"]:
+            # Still failing, but for different reasons: show what got better or worse.
+            resolved = [f for f in b["failures"] if f not in c["failures"]]
+            new = [f for f in c["failures"] if f not in b["failures"]]
+            change = "; ".join(filter(None, [
+                f"resolved: {', '.join(resolved)}" if resolved else "",
+                f"new: {', '.join(new)}" if new else "",
+            ]))
         else:
             change = ""
         case_rows.append((case_id, category, b_status, c_status, change))

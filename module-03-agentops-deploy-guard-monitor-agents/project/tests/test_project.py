@@ -416,3 +416,12 @@ def test_eval_tasks_are_named_and_cover_categories(cfg):
                                               (list(range(1, 21)), 19), (list(range(1, 101)), 95)])
 def test_p95_nearest_rank(values, expected):
     assert p95(values) == expected
+
+
+def test_compare_shows_changed_failure_reasons_for_still_failing_cases():
+    base = _eval("a", "1", {"E1": False})
+    cand = _eval("b", "2", {"E1": False})
+    base["results"][0]["failures"] = ["forbidden tool called: x", "contains forbidden text: '2M'"]
+    cand["results"][0]["failures"] = ["forbidden tool called: x"]
+    row = compare(base, cand).case_rows[0]
+    assert row[4] == "resolved: contains forbidden text: '2M'"
