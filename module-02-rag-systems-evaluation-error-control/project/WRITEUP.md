@@ -11,11 +11,14 @@ is in [`EVIDENCE.md`](EVIDENCE.md).
 
 - **Python:** `uv run python --version` → `Python 3.12.11` (uv venv,
   Windows 11).
-- **Branch / commit:** branch `main`; clone its tip. The revision adds one
-  code change: the request-level tracing in `src/gateway/router.py`,
-  `src/gateway/routes.py`, `src/tracing/trace_export.py`,
-  `scripts/show_traces.py` and `scripts/seed_traces.py`, plus tests (§7).
-  `make test` and `make verify` were re-run after that change (§9).
+- **Branch / commit:** branch `main`, commit `508ae21` ("Trace each /query
+  request as a single Phoenix trace"); clone the tip of `main`. `508ae21`
+  is the last commit that changes code. It adds the request-level tracing in
+  `src/gateway/router.py`, `src/gateway/routes.py`,
+  `src/tracing/trace_export.py`, `scripts/show_traces.py` and
+  `scripts/seed_traces.py`, plus tests (§7). The only later commit records
+  this hash in `WRITEUP.md`, so the test and verify results in §9 apply to
+  the tip of `main`.
 - **Test suite:** `make test` → `247 passed, 26 warnings in 9.58s` (see §9).
 - **Verify:** `make verify` → `Automated: 4 passed, 0 failed` (see §9).
 - **Windows notes.** There is no GNU `make` on this machine, so each target
@@ -1023,9 +1026,9 @@ are committed. Getting there needed two repository fixes:
   `data/` and still ignores the runtime stores (`chroma/`, `phoenix/`,
   `cost_log.jsonl`, inbox drops and quarantine).
 
-Both were re-run on 2026-10-13, after the §7 tracing change to
-`src/gateway/router.py` and `src/gateway/routes.py`. The output below is
-pasted from the terminal.
+Both were re-run on 2026-10-13 on branch `main` at commit `508ae21`, which
+contains the §7 tracing change to `src/gateway/router.py` and
+`src/gateway/routes.py`. The output below is pasted from the terminal.
 
 - Tail of `make test` (`uv run pytest tests/ -q`):
 
