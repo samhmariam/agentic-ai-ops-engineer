@@ -1,19 +1,30 @@
 """Configuration loading and validation.
 
-config.yaml is the single source of truth for model, prompt version, enabled tools
-and file locations. It is validated against `AppConfig` (schema_version 1) on load,
-so a typo or missing key fails at startup instead of mid-run. Every entry under
-`paths` is resolved relative to the config file, so commands behave the same from
-any working directory. The loaded dict also carries the config file's SHA-256 so
-runs can be traced back to the exact configuration that produced them.
+config.yaml is the baseline configuration. Experiment configs under configs/ name a
+parent with `extends:` and override only what they change, so each experiment's
+difference from the baseline is visible at a glance:
+
+    extends: ../config.yaml
+    experiment: {name: prompt-v2}
+    prompt: {version: v2}
+    tools:
+      enabled:
+        lookup_internal_hr_data: null   # null removes an inherited entry
+
+Mappings merge recursively; lists and scalars replace. Relative paths are resolved
+against the file that declares them. The merged result is validated against
+`AppConfig` (schema_version 1), so a typo or missing key fails at startup instead
+of mid-run, and its canonical SHA-256 is recorded with every run.
 """
 
 from __future__ import annotations
 
 import copy
 import hashlib
+import json
+import re
 from pathlib import Path
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Optional
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -21,6 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.yaml"
 CONFIG_SCHEMA_VERSION = 1
+SEMVER = r"^\d+\.\d+\.\d+$"
 
 
 class _Section(BaseModel):
@@ -29,7 +41,12 @@ class _Section(BaseModel):
 
 class AgentSection(_Section):
     name: str
-    version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    version: str = Field(pattern=SEMVER)
+
+
+class ExperimentSection(_Section):
+    name: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]*$")
+    description: str = ""
 
 
 class ModelSection(_Section):
@@ -43,13 +60,14 @@ class PromptSection(_Section):
 
 
 class ToolsSection(_Section):
-    enabled: List[str] = Field(min_length=1)
+    enabled: Dict[str, str] = Field(min_length=1, description="tool name -> pinned tool version")
 
     @field_validator("enabled")
     @classmethod
-    def no_duplicates(cls, value: List[str]) -> List[str]:
-        if len(value) != len(set(value)):
-            raise ValueError("tools.enabled contains duplicates")
+    def versions_are_semver(cls, value: Dict[str, str]) -> Dict[str, str]:
+        bad = {name: ver for name, ver in value.items() if not re.match(SEMVER, str(ver))}
+        if bad:
+            raise ValueError(f"tool versions must be MAJOR.MINOR.PATCH: {bad}")
         return value
 
 
@@ -79,6 +97,7 @@ class Price(_Section):
 
 class AppConfig(_Section):
     schema_version: Literal[1]
+    experiment: ExperimentSection
     agent: AgentSection
     model: ModelSection
     prompt: PromptSection
@@ -93,26 +112,72 @@ class ConfigError(ValueError):
     pass
 
 
-def config_hash(text: str) -> str:
-    return hashlib.sha256(text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
+def deep_merge(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge overlay into a copy of base. Dicts merge, None deletes, others replace."""
+    merged = copy.deepcopy(base)
+    for key, value in overlay.items():
+        if value is None:
+            merged.pop(key, None)
+        elif isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            merged[key] = copy.deepcopy(value)
+    return merged
 
 
-def load_config(config_path: str | Path | None = None) -> dict[str, Any]:
-    """Load, validate and resolve config.yaml. Returns a plain dict."""
+def _resolve_relative_paths(raw: Dict[str, Any], base_dir: Path) -> None:
+    for key, value in (raw.get("paths") or {}).items():
+        if value is not None:
+            raw["paths"][key] = str(base_dir / value)
+    prompt = raw.get("prompt") or {}
+    if prompt.get("registry") is not None:
+        prompt["registry"] = str(base_dir / prompt["registry"])
+
+
+def _load_raw(path: Path, chain: List[Path]) -> Dict[str, Any]:
+    if path in chain:
+        raise ConfigError(f"Circular extends: {' -> '.join(map(str, chain + [path]))}")
+    if not path.is_file():
+        raise ConfigError(f"Config file not found: {path}")
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    chain.append(path)
+    _resolve_relative_paths(raw, path.parent)
+    parent = raw.pop("extends", None)
+    if parent is None:
+        return raw
+    return deep_merge(_load_raw((path.parent / parent).resolve(), chain), raw)
+
+
+def _portable(value: Any) -> Any:
+    """Paths inside the project become project-relative, so hashes match across machines."""
+    if isinstance(value, dict):
+        return {k: _portable(v) for k, v in value.items()}
+    if isinstance(value, Path):
+        try:
+            return value.resolve().relative_to(PROJECT_ROOT).as_posix()
+        except ValueError:
+            return value.as_posix()
+    return value
+
+
+def config_hash(validated: Dict[str, Any]) -> str:
+    canonical = json.dumps(_portable(validated), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def load_config(config_path: Optional[str | Path] = None) -> dict[str, Any]:
+    """Load, merge (`extends`), validate and resolve a config. Returns a plain dict."""
     path = Path(config_path or DEFAULT_CONFIG_PATH).resolve()
-    text = path.read_text(encoding="utf-8")
+    chain: List[Path] = []
+    raw = _load_raw(path, chain)
     try:
-        model = AppConfig.model_validate(yaml.safe_load(text))
+        cfg = AppConfig.model_validate(raw).model_dump()
     except ValidationError as exc:
         raise ConfigError(f"Invalid config {path}:\n{exc}") from exc
 
-    cfg = model.model_dump()
-    base = path.parent
+    cfg["config_sha256"] = config_hash(cfg)
     cfg["config_path"] = str(path)
-    cfg["config_sha256"] = config_hash(text)
-    cfg["paths"] = {key: base / value for key, value in cfg["paths"].items()}
-    cfg["prompt"]["registry"] = base / cfg["prompt"]["registry"]
-
+    cfg["config_files"] = [str(p) for p in chain]
     if not cfg["paths"]["data_dir"].is_dir():
         raise ConfigError(f"paths.data_dir does not exist: {cfg['paths']['data_dir']}")
     return cfg

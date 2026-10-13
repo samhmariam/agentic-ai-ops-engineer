@@ -1,8 +1,13 @@
-# SalesOps Agent runtime configuration.
+# SalesOps Agent baseline configuration.
 # All paths are resolved relative to this file, not the current working directory.
 # Validated on load against salesops_agent.config.AppConfig; unknown keys are errors.
+# Experiment configs in configs/ extend this file and override only what they change.
 
 schema_version: 1
+
+experiment:
+  name: baseline-v1
+  description: Notebook prototype behaviour, refactored. Prompt v1, all tools at 1.0.0.
 
 agent:
   name: SalesOps Agent
@@ -16,19 +21,19 @@ prompt:
   registry: prompts/registry.yaml
   version: v1
 
-# Tools exposed to the agent. v1 mirrors the notebook prototype, including the
-# restricted HR/financial tools and send_email. Later steps gate these with
-# guardrails and human approval.
+# Tools exposed to the agent, each pinned to a version from the tool registry
+# (salesops_agent.tools). The baseline mirrors the notebook prototype, including
+# the restricted HR/financial tools and send_email.
 tools:
   enabled:
-    - lookup_account
-    - lookup_account_context
-    - list_open_opportunities
-    - summarize_pipeline
-    - lookup_internal_hr_data
-    - lookup_internal_financial_data
-    - draft_email
-    - send_email
+    lookup_account: "1.0.0"
+    lookup_account_context: "1.0.0"
+    list_open_opportunities: "1.0.0"
+    summarize_pipeline: "1.0.0"
+    lookup_internal_hr_data: "1.0.0"
+    lookup_internal_financial_data: "1.0.0"
+    draft_email: "1.0.0"
+    send_email: "1.0.0"
 
 paths:
   data_dir: data

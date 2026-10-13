@@ -40,6 +40,7 @@ def git_revision() -> Dict[str, Any]:
 
 def build_manifest(cfg: dict[str, Any], prompt: Prompt, tool_versions: Dict[str, str]) -> Dict[str, Any]:
     return {
+        "experiment": cfg["experiment"]["name"],
         "agent_version": cfg["agent"]["version"],
         "config_schema_version": CONFIG_SCHEMA_VERSION,
         "config_sha256": cfg["config_sha256"],
@@ -58,6 +59,7 @@ def short_manifest(manifest: Dict[str, Any]) -> List[str]:
     git = manifest["git"]
     git_text = f"{git['commit']}{' (uncommitted changes)' if git['dirty'] else ''}" if git["commit"] else "n/a"
     return [
+        f"experiment {manifest.get('experiment', 'n/a')}",
         f"agent {manifest['agent_version']}",
         f"prompt {manifest['prompt_version']} ({manifest['prompt_sha256'][:12]})",
         f"config schema v{manifest['config_schema_version']} ({manifest['config_sha256'][:12]})",

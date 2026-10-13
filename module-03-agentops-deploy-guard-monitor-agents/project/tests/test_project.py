@@ -30,6 +30,9 @@ def crm(cfg):
 
 
 def _tools(crm, outbox, enabled):
+    """enabled: {name: version}, or a list of names to build at 1.0.0."""
+    if isinstance(enabled, list):
+        enabled = {name: "1.0.0" for name in enabled}
     return {t.name: t for t in make_tools(crm, outbox, enabled)}
 
 
@@ -46,10 +49,14 @@ def test_config_paths_are_absolute(cfg):
         lambda c: c.pop("schema_version"),
         lambda c: c.update(schema_version=2),
         lambda c: c["model"].update(temperature=5),
-        lambda c: c["tools"].update(enabled=["lookup_account", "lookup_account"]),
+        lambda c: c["tools"].update(enabled={"lookup_account": "1.0"}),
+        lambda c: c["tools"].update(enabled=["lookup_account"]),
         lambda c: c["paths"].update(unexpected="x"),
+        lambda c: c.pop("experiment"),
+        lambda c: c["experiment"].update(name="Has Spaces"),
     ],
-    ids=["missing-version", "future-version", "bad-temperature", "duplicate-tool", "unknown-key"],
+    ids=["missing-version", "future-version", "bad-temperature", "non-semver-tool",
+         "unpinned-tool-list", "unknown-key", "missing-experiment", "bad-experiment-name"],
 )
 def test_invalid_config_rejected(cfg, tmp_path, mutate):
     mutate(raw := _raw_config_with_absolute_paths(cfg))
@@ -141,8 +148,24 @@ def test_resolve_unknown_account(crm):
 def test_tools_respect_enabled_list(cfg, crm, tmp_path):
     tools = _tools(crm, tmp_path / "outbox.json", ["lookup_account", "summarize_pipeline"])
     assert set(tools) == {"lookup_account", "summarize_pipeline"}
-    with pytest.raises(ValueError):
-        make_tools(crm, tmp_path / "outbox.json", ["drop_tables"])
+    with pytest.raises(ValueError, match="unknown tool 'drop_tables'"):
+        make_tools(crm, tmp_path / "outbox.json", {"drop_tables": "1.0.0"})
+    with pytest.raises(ValueError, match=r"no version 9.9.9 \(available: \['1.0.0', '1.1.0'\]\)"):
+        make_tools(crm, tmp_path / "outbox.json", {"list_open_opportunities": "9.9.9"})
+
+
+def test_tool_versions_coexist_and_differ(crm, tmp_path):
+    v1_0 = _tools(crm, tmp_path / "o.json", {"list_open_opportunities": "1.0.0"})["list_open_opportunities"]
+    v1_1 = _tools(crm, tmp_path / "o.json", {"list_open_opportunities": "1.1.0"})["list_open_opportunities"]
+    assert v1_0.metadata["version"] == "1.0.0" and v1_1.metadata["version"] == "1.1.0"
+    all_open = v1_0.invoke({})
+    capped = v1_1.invoke({"limit": 5})
+    assert len(all_open) == capped["total_matching"] == 133
+    assert capped["returned"] == len(capped["opportunities"]) == 5
+    amounts = [o["amount_usd"] for o in capped["opportunities"]]
+    assert amounts == sorted(amounts, reverse=True)
+    assert capped["total_amount_usd"] == sum(o["amount_usd"] for o in all_open)
+    assert "limit" in v1_1.args and "limit" not in v1_0.args
 
 
 def test_pipeline_summary_counts(cfg, crm, tmp_path):
@@ -249,3 +272,45 @@ def test_report_includes_eval_versions(cfg, tmp_path):
     text = build_report(with_overrides(cfg, logs_dir=tmp_path / "logs", reports_dir=reports)).read_text(encoding="utf-8")
     assert "## Versions under evaluation" in text
     assert f"prompt v1 ({manifest['prompt_sha256'][:12]})" in text
+
+
+def test_extends_merges_overrides_and_removes(cfg, tmp_path):
+    base = _write_config(tmp_path, _raw_config_with_absolute_paths(cfg))
+    child_dir = tmp_path / "configs"
+    child_dir.mkdir()
+    child = child_dir / "exp.yaml"
+    child.write_text(
+        "extends: ../config.yaml\n"
+        "experiment: {name: exp-a}\n"
+        "model: {temperature: 0.5}\n"
+        "tools:\n  enabled:\n    lookup_internal_hr_data: null\n    list_open_opportunities: '1.1.0'\n"
+        "paths: {reports_dir: out}\n",
+        encoding="utf-8",
+    )
+    merged = load_config(child)
+    assert merged["experiment"]["name"] == "exp-a"
+    assert merged["model"] == {"name": cfg["model"]["name"], "temperature": 0.5}
+    assert "lookup_internal_hr_data" not in merged["tools"]["enabled"]
+    assert merged["tools"]["enabled"]["list_open_opportunities"] == "1.1.0"
+    assert merged["tools"]["enabled"]["send_email"] == "1.0.0"
+    # child-relative path resolves against the child file; inherited ones are untouched
+    assert merged["paths"]["reports_dir"] == child_dir / "out"
+    assert merged["paths"]["data_dir"] == cfg["paths"]["data_dir"]
+    assert merged["config_files"] == [str(child.resolve()), str(base.resolve())]
+    assert merged["config_sha256"] != load_config(base)["config_sha256"]
+
+
+def test_extends_cycle_rejected(tmp_path):
+    (tmp_path / "a.yaml").write_text("extends: b.yaml\n", encoding="utf-8")
+    (tmp_path / "b.yaml").write_text("extends: a.yaml\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="Circular"):
+        load_config(tmp_path / "a.yaml")
+
+
+def test_config_hash_is_content_based(cfg, tmp_path):
+    # Same effective config, different file text (comments, key order) -> same hash.
+    raw = _raw_config_with_absolute_paths(cfg)
+    first = load_config(_write_config(tmp_path, raw))["config_sha256"]
+    reordered = "# a comment\n" + yaml.safe_dump(dict(reversed(list(raw.items()))), sort_keys=False)
+    (tmp_path / "config.yaml").write_text(reordered, encoding="utf-8")
+    assert load_config(tmp_path / "config.yaml")["config_sha256"] == first

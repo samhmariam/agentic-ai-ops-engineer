@@ -134,6 +134,13 @@ class OpportunityFilter(BaseModel):
     )
 
 
+class OpportunityFilterV1_1(OpportunityFilter):
+    limit: int = Field(
+        default=25, ge=1, le=100,
+        description="Maximum opportunities to return, largest amount first (default 25).",
+    )
+
+
 class NoArgs(BaseModel):
     pass
 

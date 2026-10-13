@@ -2,10 +2,12 @@
 
 Each tool is declared as a `ToolSpec`: a version, a pydantic input schema from
 schemas.py, and metadata describing its risk (data classification and whether it
-has side effects). `make_tools` turns the specs enabled in config.yaml into
-LangChain StructuredTools, so arguments are validated before a tool runs and the
-version/risk metadata travels with the tool. Descriptions are the text the model
-sees and are kept identical to the notebook prototype.
+has side effects). Several versions of a tool can coexist in the registry; config
+pins one per tool (`tools.enabled: {name: version}`), so an experiment can swap a
+single tool version and be evaluated against the baseline. `make_tools` turns the
+pinned specs into LangChain StructuredTools, so arguments are validated before a
+tool runs and the version/risk metadata travels with the tool. 1.0.0 descriptions
+are the notebook prototype's text, unchanged.
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ from salesops_agent.schemas import (
     InternalDataQuery,
     NoArgs,
     OpportunityFilter,
+    OpportunityFilterV1_1,
     SendEmailInput,
 )
 
@@ -51,7 +54,13 @@ class ToolSpec:
         }
 
 
-def build_tool_specs(crm: CRMData, email_outbox: Path) -> Dict[str, ToolSpec]:
+ToolRegistry = Dict[str, Dict[str, ToolSpec]]   # name -> version -> spec
+
+
+def build_tool_specs(crm: CRMData, email_outbox: Path) -> ToolRegistry:
+    """Every version of every tool. Released versions are never edited: a behaviour
+    or schema change is added as a new ToolSpec with a bumped version, and configs
+    choose which version to run."""
     def lookup_account(account_name_or_id: str) -> Dict[str, Any]:
         account = crm.resolve_account(account_name_or_id)
         if not account:
@@ -77,6 +86,19 @@ def build_tool_specs(crm: CRMData, email_outbox: Path) -> Dict[str, ToolSpec]:
         if stage:
             results = [o for o in results if o["stage"].lower() == stage.lower()]
         return results
+
+    def list_open_opportunities_v1_1(stage: Optional[str] = None, limit: int = 25) -> Dict[str, Any]:
+        # 1.0.0 returned every open opportunity (~12k tokens unfiltered). 1.1.0 caps the
+        # list, returns the largest deals first, and reports totals so the model can
+        # answer count/value questions without paging through records.
+        matching = sorted(list_open_opportunities(stage), key=lambda o: o["amount_usd"], reverse=True)
+        return {
+            "stage_filter": stage,
+            "total_matching": len(matching),
+            "total_amount_usd": sum(o["amount_usd"] for o in matching),
+            "returned": min(limit, len(matching)),
+            "opportunities": matching[:limit],
+        }
 
     def summarize_pipeline() -> Dict[str, Any]:
         summary: Dict[str, Dict[str, Any]] = {}
@@ -136,6 +158,10 @@ def build_tool_specs(crm: CRMData, email_outbox: Path) -> Dict[str, ToolSpec]:
         ToolSpec("list_open_opportunities", "1.0.0",
                  "List open opportunities, optionally filtered by stage.",
                  OpportunityFilter, "crm", False, list_open_opportunities),
+        ToolSpec("list_open_opportunities", "1.1.0",
+                 "List open opportunities, optionally filtered by stage. Returns the total count "
+                 "and value of all matching opportunities plus the largest ones (up to `limit`).",
+                 OpportunityFilterV1_1, "crm", False, list_open_opportunities_v1_1),
         ToolSpec("summarize_pipeline", "1.0.0",
                  "Summarize opportunity count and value by stage.",
                  NoArgs, "crm", False, summarize_pipeline),
@@ -152,7 +178,10 @@ def build_tool_specs(crm: CRMData, email_outbox: Path) -> Dict[str, ToolSpec]:
                  "Fake-send an email by appending it to a local JSON outbox.",
                  SendEmailInput, "crm", True, send_email),
     ]
-    return {spec.name: spec for spec in specs}
+    registry: ToolRegistry = {}
+    for spec in specs:
+        registry.setdefault(spec.name, {})[spec.version] = spec
+    return registry
 
 
 def to_langchain_tool(spec: ToolSpec) -> BaseTool:
@@ -165,13 +194,25 @@ def to_langchain_tool(spec: ToolSpec) -> BaseTool:
     )
 
 
-def make_tools(crm: CRMData, email_outbox: Path, enabled: List[str]) -> List[BaseTool]:
-    """Build the enabled tools, in config order. Unknown names are a config error."""
-    specs = build_tool_specs(crm, email_outbox)
-    unknown = sorted(set(enabled) - specs.keys())
-    if unknown:
-        raise ValueError(f"Unknown tools in config tools.enabled: {unknown}")
-    return [to_langchain_tool(specs[name]) for name in enabled]
+def make_tools(crm: CRMData, email_outbox: Path, enabled: Dict[str, str]) -> List[BaseTool]:
+    """Build the enabled tools at their pinned versions, in config order.
+
+    Unknown tool names or versions are config errors; the message lists what exists.
+    """
+    registry = build_tool_specs(crm, email_outbox)
+    problems = []
+    for name, version in enabled.items():
+        if name not in registry:
+            problems.append(f"unknown tool {name!r} (known: {sorted(registry)})")
+        elif version not in registry[name]:
+            problems.append(f"{name} has no version {version} (available: {sorted(registry[name])})")
+    if problems:
+        raise ValueError("Invalid tools.enabled in config: " + "; ".join(problems))
+    return [to_langchain_tool(registry[name][version]) for name, version in enabled.items()]
+
+
+def available_tool_versions(crm: CRMData, email_outbox: Path) -> Dict[str, List[str]]:
+    return {name: sorted(versions) for name, versions in build_tool_specs(crm, email_outbox).items()}
 
 
 def tool_versions(tools: List[BaseTool]) -> Dict[str, str]:
