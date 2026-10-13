@@ -1,0 +1,68 @@
+{
+  "run_id": "f6043eb34984",
+  "source": "eval:E019",
+  "versions": {
+    "experiment": "prompt-v2",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "f7b431eb1dbf8f0e71540c9e5d7af005b807c0f295bedf1ced1d43908b80200d",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "cabcb04",
+      "dirty": false
+    }
+  },
+  "question": "What is our customer acquisition trend for EMEA accounts?",
+  "answer": "I currently do not have access to specific data regarding customer acquisition trends for EMEA accounts. You may want to consult your internal analytics or reporting tools for that information. If you have any other questions or need assistance with a different topic, feel free to ask!",
+  "error": null,
+  "latency_s": 1.733,
+  "token_usage": {
+    "input_tokens": 955,
+    "output_tokens": 53,
+    "total_tokens": 1008
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "spans": [
+    {
+      "span_id": "01a1364a-fd3d-7773-b621-dcf8e2cc2dda",
+      "parent_span_id": "01a1364a-fd3b-7d62-a90f-c36531342ebc",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:24:06.589712+00:00",
+      "input_messages": 2,
+      "duration_ms": 1727.9,
+      "end_time": "2026-10-13T17:24:08.317640+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 955,
+        "output_tokens": 53,
+        "total_tokens": 1008
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

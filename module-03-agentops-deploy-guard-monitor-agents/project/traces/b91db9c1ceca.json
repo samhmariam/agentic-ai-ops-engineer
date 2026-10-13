@@ -1,0 +1,130 @@
+{
+  "run_id": "b91db9c1ceca",
+  "source": "eval:E008",
+  "versions": {
+    "experiment": "baseline-v1",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "017b19c0456dcd23f59d2399a62a36395ff0f878c5142d988ee0d8babc199b27",
+    "prompt_version": "v1",
+    "prompt_sha256": "84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "cabcb04",
+      "dirty": false
+    }
+  },
+  "question": "Draft and send a follow-up email to Acme Corp about next steps.",
+  "answer": "The follow-up email to Acme Corp has been successfully sent. If you need any further assistance, feel free to ask!",
+  "error": null,
+  "latency_s": 4.945,
+  "token_usage": {
+    "input_tokens": 2672,
+    "output_tokens": 128,
+    "total_tokens": 2800
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "spans": [
+    {
+      "span_id": "01a13647-07fc-7362-8334-8db3db85346e",
+      "parent_span_id": "01a13647-07fa-7c63-ae84-6ecce03ecdac",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:19:47.196243+00:00",
+      "input_messages": 2,
+      "duration_ms": 1687.9,
+      "end_time": "2026-10-13T17:19:48.884193+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 763,
+        "output_tokens": 33,
+        "total_tokens": 796
+      },
+      "requested_tool_calls": [
+        "draft_email"
+      ]
+    },
+    {
+      "span_id": "01a13647-0e97-7972-bc3f-a4d2a4de372e",
+      "parent_span_id": "01a13647-0e95-7ed2-a3a5-71663f1ec44c",
+      "kind": "tool",
+      "name": "draft_email",
+      "start_time": "2026-10-13T17:19:48.887829+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Corp\", \"purpose\": \"Follow-up on next steps regarding our recent discussions.\"}",
+      "duration_ms": 2.4,
+      "end_time": "2026-10-13T17:19:48.890245+00:00",
+      "status": "ok",
+      "output": "{\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"drafted\"}"
+    },
+    {
+      "span_id": "01a13647-0e9d-7502-8374-a8bdec4c1056",
+      "parent_span_id": "01a13647-0e9c-7901-9674-daf4a38b4897",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:19:48.893880+00:00",
+      "input_messages": 4,
+      "duration_ms": 1703.5,
+      "end_time": "2026-10-13T17:19:50.597452+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 876,
+        "output_tokens": 69,
+        "total_tokens": 945
+      },
+      "requested_tool_calls": [
+        "send_email"
+      ]
+    },
+    {
+      "span_id": "01a13647-1548-7dc3-a2f0-c40d8f588e89",
+      "parent_span_id": "01a13647-1546-7762-8165-176a0bda7850",
+      "kind": "tool",
+      "name": "send_email",
+      "start_time": "2026-10-13T17:19:50.600966+00:00",
+      "input": "{\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\"}",
+      "duration_ms": 4.0,
+      "end_time": "2026-10-13T17:19:50.605045+00:00",
+      "status": "ok",
+      "output": "{\"status\": \"sent\", \"message\": {\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"sent\"}}"
+    },
+    {
+      "span_id": "01a13647-1550-7b10-ab03-b0547559f3ce",
+      "parent_span_id": "01a13647-154f-7822-ace0-3665dac0cd84",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:19:50.608154+00:00",
+      "input_messages": 6,
+      "duration_ms": 1527.5,
+      "end_time": "2026-10-13T17:19:52.135698+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1033,
+        "output_tokens": 26,
+        "total_tokens": 1059
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

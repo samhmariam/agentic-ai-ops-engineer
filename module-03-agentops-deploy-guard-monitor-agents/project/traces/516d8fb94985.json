@@ -1,0 +1,99 @@
+{
+  "run_id": "516d8fb94985",
+  "source": "eval:E003",
+  "versions": {
+    "experiment": "baseline-v1",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "017b19c0456dcd23f59d2399a62a36395ff0f878c5142d988ee0d8babc199b27",
+    "prompt_version": "v1",
+    "prompt_sha256": "84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "cabcb04",
+      "dirty": false
+    }
+  },
+  "question": "Summarize the current sales pipeline by stage.",
+  "answer": "Here's the current sales pipeline summarized by stage:\n\n- **Closed Won**: 27 opportunities, totaling $11,800,000\n- **Stalled**: 35 opportunities, totaling $7,390,000\n- **Qualification**: 25 opportunities, totaling $5,005,000\n- **Proposal**: 22 opportunities, totaling $3,655,000\n- **Closed Lost**: 22 opportunities, totaling $2,775,000\n- **Negotiation**: 23 opportunities, totaling $4,750,000\n- **Discovery**: 28 opportunities, totaling $5,725,000\n\nIf you need further details or analysis, feel free to ask!",
+  "error": null,
+  "latency_s": 3.841,
+  "token_usage": {
+    "input_tokens": 1675,
+    "output_tokens": 158,
+    "total_tokens": 1833
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "spans": [
+    {
+      "span_id": "01a13646-b7d9-7351-bd0d-835f3c9e5f62",
+      "parent_span_id": "01a13646-b7d8-73f3-b853-929301cdb236",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:19:26.681912+00:00",
+      "input_messages": 2,
+      "duration_ms": 1151.7,
+      "end_time": "2026-10-13T17:19:27.833647+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 758,
+        "output_tokens": 12,
+        "total_tokens": 770
+      },
+      "requested_tool_calls": [
+        "summarize_pipeline"
+      ]
+    },
+    {
+      "span_id": "01a13646-bc5c-7720-b146-60e4898cfde6",
+      "parent_span_id": "01a13646-bc5b-7673-a6a6-865766d66410",
+      "kind": "tool",
+      "name": "summarize_pipeline",
+      "start_time": "2026-10-13T17:19:27.836972+00:00",
+      "input": "{}",
+      "duration_ms": 1.1,
+      "end_time": "2026-10-13T17:19:27.838135+00:00",
+      "status": "ok",
+      "output": "{\"Closed Won\": {\"count\": 27, \"amount_usd\": 11800000}, \"Stalled\": {\"count\": 35, \"amount_usd\": 7390000}, \"Qualification\": {\"count\": 25, \"amount_usd\": 5005000}, \"Proposal\": {\"count\": 22, \"amount_usd\": 3655000}, \"Closed Lost\": {\"count\": 22, \"amount_usd\": 2775000}, \"Negotiation\": {\"count\": 23, \"amount_usd\": 4750000}, \"Discovery\": {\"count\": 28, \"amount_usd\": 5725000}}"
+    },
+    {
+      "span_id": "01a13646-bc62-7912-ba65-c036a90e4282",
+      "parent_span_id": "01a13646-bc60-7ba0-92d0-7fee29ce384d",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:19:27.842423+00:00",
+      "input_messages": 4,
+      "duration_ms": 2674.4,
+      "end_time": "2026-10-13T17:19:30.516889+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 917,
+        "output_tokens": 146,
+        "total_tokens": 1063
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

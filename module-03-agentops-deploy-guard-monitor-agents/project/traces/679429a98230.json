@@ -1,0 +1,99 @@
+{
+  "run_id": "679429a98230",
+  "source": "eval:E001",
+  "versions": {
+    "experiment": "baseline-v1",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "017b19c0456dcd23f59d2399a62a36395ff0f878c5142d988ee0d8babc199b27",
+    "prompt_version": "v1",
+    "prompt_sha256": "84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "cabcb04",
+      "dirty": false
+    }
+  },
+  "question": "Summarize the account risk for TechStart Inc.",
+  "answer": "### Account Risk Summary for TechStart Inc.\n\n- **Account Status**: Customer\n- **Customer Health Score**: 95 (indicating a very healthy relationship)\n- **Contract End Date**: May 28, 2026\n- **Open Renewal Opportunities**:\n  - **Renewal Opportunity**: Negotiation stage, $90,000, high probability (80%).\n  - **Expansion Opportunity**: Stalled stage, $600,000, low probability (25%).\n- **Last Activity**: Positive meeting on May 18, 2026, where the customer expressed satisfaction but requested renewal paperwork.\n- **Support Tickets**: One open ticket regarding a medium severity API integration error.\n- **Product Usage Trend**: Increasing usage with 88 active users and 1,220 monthly logins, feature adoption score at 91.\n- **Relationship Status of Contacts**:\n  - **Lena Ortiz (VP Operations)**: Champion\n  - **Alex Stone (CTO)**: Engaged\n\n### Summary\nTechStart Inc. is a healthy customer with a strong health score and increasing product usage. However, the imminent contract expiration and the stalled expansion opportunity present risks. Immediate attention is needed to finalize the renewal paperwork and address the open support ticket to maintain the positive relationship.",
+  "error": null,
+  "latency_s": 6.777,
+  "token_usage": {
+    "input_tokens": 2498,
+    "output_tokens": 286,
+    "total_tokens": 2784
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "spans": [
+    {
+      "span_id": "01a13646-855a-70f1-b1e3-8014c5e7fdb6",
+      "parent_span_id": "01a13646-8549-7712-a769-dbce64f1e47a",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:19:13.754680+00:00",
+      "input_messages": 2,
+      "duration_ms": 2065.2,
+      "end_time": "2026-10-13T17:19:15.819908+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 759,
+        "output_tokens": 20,
+        "total_tokens": 779
+      },
+      "requested_tool_calls": [
+        "lookup_account_context"
+      ]
+    },
+    {
+      "span_id": "01a13646-8d77-7850-9bfd-2992779d932e",
+      "parent_span_id": "01a13646-8d70-7b73-9096-9488654230da",
+      "kind": "tool",
+      "name": "lookup_account_context",
+      "start_time": "2026-10-13T17:19:15.831737+00:00",
+      "input": "{\"account_name_or_id\": \"TechStart Inc\"}",
+      "duration_ms": 4.3,
+      "end_time": "2026-10-13T17:19:15.836042+00:00",
+      "status": "ok",
+      "output": "{\"account\": {\"account_id\": \"A003\", \"name\": \"TechStart Inc\", \"account_status\": \"customer\", \"segment\": \"Mid-Market\", \"industry\": \"SaaS\", \"region\": \"North America\", \"account_owner\": \"Rafael Costa\", \"health_score\": 95, \"contract_start\": \"2025-05-30\", \"contract_end\": \"2026-05-28\", \"arr_usd\": 90000, \"created_at\": \"2024-10-11\", \"notes\": \"Very happy customer, but renewal date is imminent.\"}, \"contacts\": [{\"contact_id\": \"P0006\", \"account_id\": \"A003\", \"first_name\": \"Lena\", \"last_name\": \"Ortiz\", \"title\": \"VP Operations\", \"email\": \"lena.ortiz@techstart.example.com\", \"is_primary\": true, \"relationship_status\": \"champion\"}, {\"contact_id\": \"P0007\", \"account_id\": \"A003\", \"first_name\": \"Alex\", \"last_name\": \"Stone\", \"title\": \"Chief Technology Officer\", \"email\": \"alex.stone@techstartinc.example.com\", \"is_primary\": false, \"relationship_status\": \"engaged\"}], \"opportunities\": [{\"opportunity_id\": \"OPP0006\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Initial Conversion\", \"type\": \"new_business\", \"stage\": \"Closed Won\", \"amount_usd\": 90000, \"close_date\": \"2025-03-12\", \"probability\": 100, \"next_step\": \"Customer onboarded\", \"notes\": \"Initial opportunity successfully converted into a customer.\"}, {\"opportunity_id\": \"OPP0007\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2026-07-07\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0008\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Proposal\", \"amount_usd\": 250000, \"close_date\": \"2026-07-10\", \"probability\": 50, \"next_step\": \"Resolve blockers\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0182\", \"account_id\": \"A003\", \"name\": \"TechStart Renewal\", \"type\": \"renewal\", \"stage\": \"Negotiation\", \"amount_usd\": 90000, \"close_date\": \"2026-05-28\", \"probability\": 80, \"next_step\": \"Confirm renewal paperwork immediately\",... [truncated 1094 chars]"
+    },
+    {
+      "span_id": "01a13646-8d80-73e0-adaf-dae5fc1830e5",
+      "parent_span_id": "01a13646-8d7e-7033-b0ef-aa53e0df3690",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:19:15.840830+00:00",
+      "input_messages": 4,
+      "duration_ms": 4665.6,
+      "end_time": "2026-10-13T17:19:20.506449+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1739,
+        "output_tokens": 266,
+        "total_tokens": 2005
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "run_id": "4d27cfa981d3",
+  "source": "eval:E012",
+  "versions": {
+    "experiment": "candidate-v2",
+    "agent_version": "0.2.0",
+    "config_schema_version": 1,
+    "config_sha256": "19b3e1a786da634424118ef4994cfc683a859c0cfa00219a24e65905695f754d",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "cabcb04",
+      "dirty": false
+    }
+  },
+  "question": "Summarize the account risk for Quantum Pickle Logistics.",
+  "answer": "I couldn't find any account for \"Quantum Pickle Logistics.\" It appears that this account may not exist in our system. If you have another account name or ID, please provide it, and I'll assist you further.",
+  "error": null,
+  "latency_s": 3.311,
+  "token_usage": {
+    "input_tokens": 1673,
+    "output_tokens": 64,
+    "total_tokens": 1737
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "spans": [
+    {
+      "span_id": "01a1364b-f5fc-7402-ab8d-0464ff5dd7fe",
+      "parent_span_id": "01a1364b-f5fa-7d63-8edf-13a5fa1a5b7e",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:25:10.268707+00:00",
+      "input_messages": 2,
+      "duration_ms": 1408.5,
+      "end_time": "2026-10-13T17:25:11.677254+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 816,
+        "output_tokens": 20,
+        "total_tokens": 836
+      },
+      "requested_tool_calls": [
+        "lookup_account"
+      ]
+    },
+    {
+      "span_id": "01a1364b-fb80-73f1-b03f-011e563dc688",
+      "parent_span_id": "01a1364b-fb7e-7df0-b8ab-68002b083e40",
+      "kind": "tool",
+      "name": "lookup_account",
+      "start_time": "2026-10-13T17:25:11.680076+00:00",
+      "input": "{\"account_name_or_id\": \"Quantum Pickle Logistics\"}",
+      "duration_ms": 1.9,
+      "end_time": "2026-10-13T17:25:11.682006+00:00",
+      "status": "ok",
+      "output": "{\"error\": \"No account found for Quantum Pickle Logistics\"}"
+    },
+    {
+      "span_id": "01a1364b-fb84-7632-8a85-0662837b3232",
+      "parent_span_id": "01a1364b-fb83-7662-9368-4935b262d6c9",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:25:11.684574+00:00",
+      "input_messages": 4,
+      "duration_ms": 1883.1,
+      "end_time": "2026-10-13T17:25:13.567659+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 857,
+        "output_tokens": 44,
+        "total_tokens": 901
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

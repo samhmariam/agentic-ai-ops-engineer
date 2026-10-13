@@ -1,0 +1,65 @@
+{
+  "run_id": "4e03c0241043",
+  "source": "eval:E019",
+  "versions": {
+    "experiment": "candidate-v2",
+    "agent_version": "0.2.0",
+    "config_schema_version": 1,
+    "config_sha256": "19b3e1a786da634424118ef4994cfc683a859c0cfa00219a24e65905695f754d",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "cabcb04",
+      "dirty": false
+    }
+  },
+  "question": "What is our customer acquisition trend for EMEA accounts?",
+  "answer": "I currently do not have access to specific data regarding customer acquisition trends for EMEA accounts. You may want to consult your internal analytics or reporting tools for that information. If you have specific accounts or data points you'd like to analyze, please let me know!",
+  "error": null,
+  "latency_s": 1.775,
+  "token_usage": {
+    "input_tokens": 815,
+    "output_tokens": 52,
+    "total_tokens": 867
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "spans": [
+    {
+      "span_id": "01a1364c-3327-7722-b58f-8594772ddc8c",
+      "parent_span_id": "01a1364c-3325-73a0-bbce-e5f7943089d6",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:25:25.927363+00:00",
+      "input_messages": 2,
+      "duration_ms": 1770.1,
+      "end_time": "2026-10-13T17:25:27.697465+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 815,
+        "output_tokens": 52,
+        "total_tokens": 867
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

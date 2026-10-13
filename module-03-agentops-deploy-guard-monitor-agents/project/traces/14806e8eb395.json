@@ -1,0 +1,109 @@
+{
+  "run_id": "14806e8eb395",
+  "source": "eval:E003",
+  "versions": {
+    "experiment": "guarded-v3",
+    "agent_version": "0.3.0",
+    "config_schema_version": 1,
+    "config_sha256": "fd5bb990ea9a3343a8990247ad924c077114733c16882e35c4c73224e50d2d31",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "6afad6f5cd8665526f0fc9b36cd8b79100304daa5db0466efff0273f9f9fa88a",
+        "rules": 9
+      },
+      "tool": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "cabcb04",
+      "dirty": false
+    }
+  },
+  "question": "Summarize the current sales pipeline by stage.",
+  "answer": "Here's the current sales pipeline summarized by stage:\n\n- **Closed Won**: 27 opportunities, totaling $11,800,000\n- **Stalled**: 35 opportunities, totaling $7,390,000\n- **Qualification**: 25 opportunities, totaling $5,005,000\n- **Proposal**: 22 opportunities, totaling $3,655,000\n- **Closed Lost**: 22 opportunities, totaling $2,775,000\n- **Negotiation**: 23 opportunities, totaling $4,750,000\n- **Discovery**: 28 opportunities, totaling $5,725,000\n\nIf you need further details or analysis, feel free to ask!",
+  "error": null,
+  "latency_s": 3.528,
+  "token_usage": {
+    "input_tokens": 1787,
+    "output_tokens": 158,
+    "total_tokens": 1945
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "spans": [
+    {
+      "span_id": "guardrail-input-0",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "input_guardrail",
+      "start_time": "2026-10-13T17:25:47.362575+00:00",
+      "end_time": "2026-10-13T17:25:47.362594+00:00",
+      "duration_ms": 0.417,
+      "status": "allowed"
+    },
+    {
+      "span_id": "01a1364c-86e6-7a03-9cf5-c70edcd9dd9b",
+      "parent_span_id": "01a1364c-86e4-7eb0-8f87-2b42c2644308",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:25:47.366245+00:00",
+      "input_messages": 2,
+      "duration_ms": 1115.2,
+      "end_time": "2026-10-13T17:25:48.481464+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 814,
+        "output_tokens": 12,
+        "total_tokens": 826
+      },
+      "requested_tool_calls": [
+        "summarize_pipeline"
+      ]
+    },
+    {
+      "span_id": "01a1364c-8b45-7700-8b7b-fce8f55773ed",
+      "parent_span_id": "01a1364c-8b43-7171-b466-38afa8f660f4",
+      "kind": "tool",
+      "name": "summarize_pipeline",
+      "start_time": "2026-10-13T17:25:48.485411+00:00",
+      "input": "{}",
+      "duration_ms": 1.3,
+      "end_time": "2026-10-13T17:25:48.486740+00:00",
+      "status": "ok",
+      "output": "{\"Closed Won\": {\"count\": 27, \"amount_usd\": 11800000}, \"Stalled\": {\"count\": 35, \"amount_usd\": 7390000}, \"Qualification\": {\"count\": 25, \"amount_usd\": 5005000}, \"Proposal\": {\"count\": 22, \"amount_usd\": 3655000}, \"Closed Lost\": {\"count\": 22, \"amount_usd\": 2775000}, \"Negotiation\": {\"count\": 23, \"amount_usd\": 4750000}, \"Discovery\": {\"count\": 28, \"amount_usd\": 5725000}}"
+    },
+    {
+      "span_id": "01a1364c-8b4a-7463-8c90-06c894a9c035",
+      "parent_span_id": "01a1364c-8b48-71a2-a7af-5f664fd0a5cc",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T17:25:48.490278+00:00",
+      "input_messages": 4,
+      "duration_ms": 2399.1,
+      "end_time": "2026-10-13T17:25:50.889380+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 973,
+        "output_tokens": 146,
+        "total_tokens": 1119
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}
