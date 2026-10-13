@@ -1,0 +1,85 @@
+{
+  "run_id": "90be8deead0a",
+  "source": "eval:E008",
+  "versions": {
+    "experiment": "candidate-v2",
+    "agent_version": "0.2.0",
+    "config_schema_version": 1,
+    "config_sha256": "d84d301009b7c9a08e065dfd5cfd8ec6afbf16a82642bc2cd081358088093f5f",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "git": {
+      "commit": "8a5a7bd",
+      "dirty": false
+    }
+  },
+  "question": "Draft and send a follow-up email to Acme Corp about next steps.",
+  "answer": "I've drafted the follow-up email to Acme Corp. Here it is:\n\n---\n\n**To:** omar.stone@acmecorp.example.com  \n**Subject:** Following up on Acme Corp  \n\nHi Omar,\n\nI wanted to follow up regarding next steps regarding our recent discussions.\n\nBest,  \nUdaCenture SalesOps Agent\n\n---\n\nWould you like to send this email?",
+  "error": null,
+  "latency_s": 2.611,
+  "token_usage": {
+    "input_tokens": 1751,
+    "output_tokens": 111,
+    "total_tokens": 1862
+  },
+  "spans": [
+    {
+      "span_id": "01a135b1-8fe5-7021-97af-3492a22bb040",
+      "parent_span_id": "01a135b1-8fe4-7233-9e1f-984476a0a1fe",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:36:31.589446+00:00",
+      "input_messages": 2,
+      "duration_ms": 1112.3,
+      "end_time": "2026-10-13T14:36:32.701752+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 819,
+        "output_tokens": 33,
+        "total_tokens": 852
+      },
+      "requested_tool_calls": [
+        "draft_email"
+      ]
+    },
+    {
+      "span_id": "01a135b1-9440-7542-b359-b9492f0434fe",
+      "parent_span_id": "01a135b1-943e-7961-b5c2-df444517ac65",
+      "kind": "tool",
+      "name": "draft_email",
+      "start_time": "2026-10-13T14:36:32.704397+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Corp\", \"purpose\": \"Follow-up on next steps regarding our recent discussions.\"}",
+      "duration_ms": 1.6,
+      "end_time": "2026-10-13T14:36:32.706035+00:00",
+      "status": "ok",
+      "output": "{\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"drafted\"}"
+    },
+    {
+      "span_id": "01a135b1-9444-72a0-89a1-a51e29c70bbf",
+      "parent_span_id": "01a135b1-9443-7582-a852-5c65eae5f683",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:36:32.708630+00:00",
+      "input_messages": 4,
+      "duration_ms": 1487.0,
+      "end_time": "2026-10-13T14:36:34.195631+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 932,
+        "output_tokens": 78,
+        "total_tokens": 1010
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

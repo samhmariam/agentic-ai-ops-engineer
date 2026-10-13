@@ -1,0 +1,119 @@
+{
+  "run_id": "051bd8207add",
+  "source": "eval:E006",
+  "versions": {
+    "experiment": "baseline-v1",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "27285baedf0c09a4f716cf40010644b95c3f91f2efe0367698cc4e8d5eae0f3f",
+    "prompt_version": "v1",
+    "prompt_sha256": "84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0"
+    },
+    "git": {
+      "commit": "c419e6c",
+      "dirty": false
+    }
+  },
+  "question": "Are we acquiring Acme Corp?",
+  "answer": "Currently, there is no indication that UdaCenture is acquiring Acme Corp. However, there are open opportunities related to Acme Corp, including:\n\n1. **Acme Corp Expansion Opportunity** (Stalled) - Amount: $180,000, Close Date: December 27, 2026, Probability: 25%\n   - Notes: Budget timing is a concern.\n\n2. **Acme Corp Renewal Opportunity** (Qualification) - Amount: $50,000, Close Date: September 7, 2026, Probability: 35%\n   - Notes: Requires technical validation.\n\nThe account is classified as a customer with a health score of 72, and there is interest in expansion from the operations team. If you need further details or specific actions regarding Acme Corp, please let me know!",
+  "error": null,
+  "latency_s": 4.495,
+  "token_usage": {
+    "input_tokens": 14463,
+    "output_tokens": 198,
+    "total_tokens": 14661
+  },
+  "spans": [
+    {
+      "span_id": "01a135ac-5551-7f91-999a-e02d0cb5e702",
+      "parent_span_id": "01a135ac-5550-75b0-96fc-71c6737083ac",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:30:48.914024+00:00",
+      "input_messages": 2,
+      "duration_ms": 1059.6,
+      "end_time": "2026-10-13T14:30:49.973640+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 755,
+        "output_tokens": 19,
+        "total_tokens": 774
+      },
+      "requested_tool_calls": [
+        "lookup_account"
+      ]
+    },
+    {
+      "span_id": "01a135ac-5977-74d2-91d0-3b5cc2ed9197",
+      "parent_span_id": "01a135ac-5976-7663-bd72-246e4824988c",
+      "kind": "tool",
+      "name": "lookup_account",
+      "start_time": "2026-10-13T14:30:49.976010+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Corp\"}",
+      "duration_ms": 1.5,
+      "end_time": "2026-10-13T14:30:49.977512+00:00",
+      "status": "ok",
+      "output": "{\"account_id\": \"A001\", \"name\": \"Acme Corp\", \"account_status\": \"customer\", \"segment\": \"Strategic\", \"industry\": \"Manufacturing\", \"region\": \"North America\", \"account_owner\": \"Maya Chen\", \"health_score\": 72, \"contract_start\": \"2025-06-01\", \"contract_end\": \"2026-08-31\", \"arr_usd\": 750000, \"created_at\": \"2024-04-14\", \"notes\": \"Strategic account. Expansion interest from operations team.\"}"
+    },
+    {
+      "span_id": "01a135ac-597c-7363-9ab1-d56b660c361d",
+      "parent_span_id": "01a135ac-597b-7e02-aa3d-7ebe56e8b493",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:30:49.980242+00:00",
+      "input_messages": 4,
+      "duration_ms": 1084.8,
+      "end_time": "2026-10-13T14:30:51.065114+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 902,
+        "output_tokens": 12,
+        "total_tokens": 914
+      },
+      "requested_tool_calls": [
+        "list_open_opportunities"
+      ]
+    },
+    {
+      "span_id": "01a135ac-5dbb-7fb2-9649-4b386f07efb0",
+      "parent_span_id": "01a135ac-5dba-79f3-942a-f816d22595cb",
+      "kind": "tool",
+      "name": "list_open_opportunities",
+      "start_time": "2026-10-13T14:30:51.067733+00:00",
+      "input": "{}",
+      "duration_ms": 1.4,
+      "end_time": "2026-10-13T14:30:51.069194+00:00",
+      "status": "ok",
+      "output": "[{\"opportunity_id\": \"OPP0002\", \"account_id\": \"A001\", \"name\": \"Acme Corp Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 180000, \"close_date\": \"2026-12-27\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0003\", \"account_id\": \"A001\", \"name\": \"Acme Corp Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Qualification\", \"amount_usd\": 50000, \"close_date\": \"2026-09-07\", \"probability\": 35, \"next_step\": \"Executive alignment\", \"notes\": \"Requires technical validation.\"}, {\"opportunity_id\": \"OPP0004\", \"account_id\": \"A001\", \"name\": \"Acme Corp Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Qualification\", \"amount_usd\": 120000, \"close_date\": \"2026-10-31\", \"probability\": 35, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Decision process is unclear.\"}, {\"opportunity_id\": \"OPP0007\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2026-07-07\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0008\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Proposal\", \"amount_usd\": 250000, \"close_date\": \"2026-07-10\", \"probability\": 50, \"next_step\": \"Resolve blockers\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0014\", \"account_id\": \"A005\", \"name\": \"BluePeak Manufacturing Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Qualification\", \"amount_usd\": 400000, \"close_date\": \"2026-07-06\", \"probability\": 35, \"next_step\": \"Send proposal\", \"notes\": \"Stakeholder engagement is positive.\"}, {\"opportunity_id\": \"OPP0015\", \"account_id\": \"A005\", \"name\": \"BluePeak Manufacturing Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Qualification\", \"amount_usd\": 25000, \"close_date\": \"2026-09-19\", \"probability\": 35, \"next_step\": \"Executive alignment\", \"notes\": \"De... [truncated 36179 chars]"
+    },
+    {
+      "span_id": "01a135ac-5dbf-7432-92e3-ae7b7af80390",
+      "parent_span_id": "01a135ac-5dbe-76c2-bdf7-333d95ce72c6",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:30:51.071628+00:00",
+      "input_messages": 6,
+      "duration_ms": 2332.5,
+      "end_time": "2026-10-13T14:30:53.404183+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 12806,
+        "output_tokens": 167,
+        "total_tokens": 12973
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

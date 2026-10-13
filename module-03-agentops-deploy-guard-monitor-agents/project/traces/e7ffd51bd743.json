@@ -1,0 +1,119 @@
+{
+  "run_id": "e7ffd51bd743",
+  "source": "eval:E008",
+  "versions": {
+    "experiment": "baseline-v1",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "27285baedf0c09a4f716cf40010644b95c3f91f2efe0367698cc4e8d5eae0f3f",
+    "prompt_version": "v1",
+    "prompt_sha256": "84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0"
+    },
+    "git": {
+      "commit": "8a5a7bd",
+      "dirty": false
+    }
+  },
+  "question": "Draft and send a follow-up email to Acme Corp about next steps.",
+  "answer": "The follow-up email to Omar at Acme Corp has been successfully sent. If you need any further assistance, feel free to ask!",
+  "error": null,
+  "latency_s": 4.114,
+  "token_usage": {
+    "input_tokens": 2672,
+    "output_tokens": 130,
+    "total_tokens": 2802
+  },
+  "spans": [
+    {
+      "span_id": "01a135b0-4ef4-7ea3-9fac-ae585f0a27be",
+      "parent_span_id": "01a135b0-4ef3-79e3-bb72-2b26ca81da4c",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:35:09.428483+00:00",
+      "input_messages": 2,
+      "duration_ms": 1396.9,
+      "end_time": "2026-10-13T14:35:10.825391+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 763,
+        "output_tokens": 33,
+        "total_tokens": 796
+      },
+      "requested_tool_calls": [
+        "draft_email"
+      ]
+    },
+    {
+      "span_id": "01a135b0-546c-7782-975e-1330653bdcd6",
+      "parent_span_id": "01a135b0-546a-7530-9821-dc6f3729b16d",
+      "kind": "tool",
+      "name": "draft_email",
+      "start_time": "2026-10-13T14:35:10.828456+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Corp\", \"purpose\": \"Follow-up on next steps regarding our recent discussions.\"}",
+      "duration_ms": 1.7,
+      "end_time": "2026-10-13T14:35:10.830142+00:00",
+      "status": "ok",
+      "output": "{\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"drafted\"}"
+    },
+    {
+      "span_id": "01a135b0-5470-77d1-a02c-43ab2e808bcd",
+      "parent_span_id": "01a135b0-546f-7a41-a74e-dc85d4c66064",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:35:10.832685+00:00",
+      "input_messages": 4,
+      "duration_ms": 1464.9,
+      "end_time": "2026-10-13T14:35:12.297634+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 876,
+        "output_tokens": 69,
+        "total_tokens": 945
+      },
+      "requested_tool_calls": [
+        "send_email"
+      ]
+    },
+    {
+      "span_id": "01a135b0-5a2c-7592-98fb-d4e2a497d67b",
+      "parent_span_id": "01a135b0-5a2a-7911-b8ab-9f032b73eea4",
+      "kind": "tool",
+      "name": "send_email",
+      "start_time": "2026-10-13T14:35:12.300254+00:00",
+      "input": "{\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\"}",
+      "duration_ms": 3.1,
+      "end_time": "2026-10-13T14:35:12.303385+00:00",
+      "status": "ok",
+      "output": "{\"status\": \"sent\", \"message\": {\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"sent\"}}"
+    },
+    {
+      "span_id": "01a135b0-5a31-7430-8606-bd09cbd2dcaf",
+      "parent_span_id": "01a135b0-5a31-7430-8606-bcf947298418",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T14:35:12.306002+00:00",
+      "input_messages": 6,
+      "duration_ms": 1232.2,
+      "end_time": "2026-10-13T14:35:13.538248+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1033,
+        "output_tokens": 28,
+        "total_tokens": 1061
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}
