@@ -1,8 +1,12 @@
-* d715d42 (HEAD -> main) Record 12-task evaluation runs and evaluation report
+* a7d678f (HEAD -> main) Record 20-task evaluation of all experiments incl. guarded-v3
+* ed21c57 Document runtime controls and input guardrails in README
+* f5c3eae Add input guardrails and make the guarded config the default
+* 2e63a45 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* d715d42 Record 12-task evaluation runs and evaluation report
 * 00fd8a4 Document the evaluation suite, tasks and evaluation report in README
 * 06607f0 Use nearest-rank p95 latency and show full task names
 * 3bdc845 Add `uv run evaluate` and evaluation_report.{md,csv,json}
-* 51bfbdc (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 51bfbdc Regenerate GITLOG.txt from project git history
 * d1644b4 Record sample salesops-agent ask runs (log and traces)
 * 75f0675 Add salesops-agent local entry point
 * e82741f Regenerate GITLOG.txt from project git history
