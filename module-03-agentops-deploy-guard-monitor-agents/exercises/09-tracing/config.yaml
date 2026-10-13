@@ -1,0 +1,44 @@
+agent:
+  name: RealThor
+  version: "0.9.0"
+
+model:
+  name: gpt-4o-mini
+  temperature: 0.0
+
+sandbox:
+  timeout: 30
+
+hitl:
+  ibuyer_threshold: 500000
+
+debug:
+  state_db: state.db
+
+tracing:
+  enabled: true
+
+paths:
+  prompt: prompts/system_prompt_v9.md
+  analyst_prompt: prompts/analyst_prompt.md
+  demand_data: data/demand_signals.csv
+  supply_data: data/supply_snapshot.csv
+  neighborhood_data: data/neighborhood_profiles.csv
+  velocity_data: data/listing_velocity.csv
+  listings_data: data/listings.csv
+  supply_opportunities_data: data/supply_opportunities.csv
+  demand_leads_data: data/demand_leads.csv
+  sales_data: data/sales.csv
+  users_data: data/users.csv
+  channel_recommendations: data/channel_recommendations.jsonl
+
+logging:
+  log_dir: logs
+  reports_dir: reports
+  cost_per_1k_tokens_input: 0.00015
+  cost_per_1k_tokens_output: 0.00060
+
+evaluation:
+  default_sample: 10
+  distribution: even
+  seed: 42
