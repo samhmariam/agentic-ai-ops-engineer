@@ -114,7 +114,7 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate):
     def show(result):
         run = result.run
         mark = "PASS" if result.passed else "FAIL"
-        line = f"{mark}  {result.case_id}  {result.task[:44]:<44}  {run['latency_s']:6.2f}s  ${run['cost_usd']:.5f}"
+        line = f"{mark}  {result.case_id}  {result.task[:56]:<56}  {run['latency_s']:6.2f}s  ${run['cost_usd']:.5f}"
         click.echo(line + (f"  -> {'; '.join(result.failures)}" if result.failures else ""))
 
     _require_api_key()
@@ -123,7 +123,7 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate):
         cfg = _load(config_path)
         name = cfg["experiment"]["name"]
         click.echo(f"\n== {name}: {cfg['experiment']['description']}")
-        click.echo(f"{'':4}  {'ID':<4}  {'Task':<44}  {'Latency':>7}  {'Est. cost'}")
+        click.echo(f"{'':4}  {'ID':<4}  {'Task':<56}  {'Latency':>7}  {'Est. cost'}")
         out = run_evaluation(cfg, list(case_ids) or None, on_result=show)
         s, t = out.summary, out.summary["totals"]
         click.echo(

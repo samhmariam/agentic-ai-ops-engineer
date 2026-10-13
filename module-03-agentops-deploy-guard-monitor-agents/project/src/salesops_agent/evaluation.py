@@ -28,7 +28,7 @@ from typing import Any, Callable, List, Optional
 
 from salesops_agent.agent import build_agent
 from salesops_agent.config import ensure_output_dirs, with_overrides
-from salesops_agent.reporting import write_evaluation_report
+from salesops_agent.reporting import p95, write_evaluation_report
 from salesops_agent.runner import RunResult, run_question
 
 # 1: eval_<ts>.json; 2: + experiment, dataset fingerprint; 3: + task names, totals
@@ -149,7 +149,7 @@ def totals(runs: List[dict]) -> dict[str, Any]:
     return {
         "latency_s_total": round(sum(latencies), 3),
         "latency_s_avg": round(sum(latencies) / n, 3) if n else 0.0,
-        "latency_s_p95": latencies[min(n - 1, round(0.95 * (n - 1)))] if n else 0.0,
+        "latency_s_p95": p95(latencies),
         "input_tokens": sum(r["input_tokens"] for r in runs),
         "output_tokens": sum(r["output_tokens"] for r in runs),
         "cost_usd": round(sum(r["cost_usd"] for r in runs), 6),

@@ -13,7 +13,7 @@ from salesops_agent.data import CRMData, normalize_lookup_text
 from salesops_agent.comparison import compare, render_markdown, resolve_eval
 from salesops_agent.evaluation import EvalCase, dataset_fingerprint, load_cases, score_case
 from salesops_agent.prompts import load_system_prompt, prompt_hash
-from salesops_agent.reporting import build_report, latest_eval
+from salesops_agent.reporting import build_report, latest_eval, p95
 from salesops_agent.runner import RunResult
 from salesops_agent.schemas import DataValidationError
 from salesops_agent.tools import make_tools, tool_versions
@@ -402,3 +402,9 @@ def test_eval_tasks_are_named_and_cover_categories(cfg):
     assert len(cases) >= 5
     assert all(c.task for c in cases)
     assert {"account_risk", "pipeline", "restricted_data", "side_effect", "grounding"} <= {c.category for c in cases}
+
+
+@pytest.mark.parametrize("values, expected", [([], 0.0), ([3.0], 3.0), ([1, 2, 3, 4, 17.45], 17.45),
+                                              (list(range(1, 21)), 19), (list(range(1, 101)), 95)])
+def test_p95_nearest_rank(values, expected):
+    assert p95(values) == expected

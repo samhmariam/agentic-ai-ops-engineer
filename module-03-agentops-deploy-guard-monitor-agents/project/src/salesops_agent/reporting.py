@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,11 +53,15 @@ def latest_eval(reports_dir: Path, experiment: Optional[str] = None) -> Optional
     return results[-1] if results else None
 
 
-def _p95(values: List[float]) -> float:
+def p95(values: List[float]) -> float:
+    """Nearest-rank 95th percentile: the smallest value >= 95% of observations.
+
+    For fewer than 20 samples this is the maximum, which is the honest answer.
+    """
     if not values:
         return 0.0
     ordered = sorted(values)
-    return ordered[min(len(ordered) - 1, int(round(0.95 * (len(ordered) - 1))))]
+    return ordered[math.ceil(0.95 * len(ordered)) - 1]
 
 
 def _run_section(runs: List[Dict[str, Any]]) -> List[str]:
@@ -73,7 +78,7 @@ def _run_section(runs: List[Dict[str, Any]]) -> List[str]:
         f"| Runs | {len(runs)} |",
         f"| Success rate | {successes / len(runs):.1%} |",
         f"| Avg latency (s) | {sum(latencies) / len(latencies):.2f} |",
-        f"| p95 latency (s) | {_p95(latencies):.2f} |",
+        f"| p95 latency (s) | {p95(latencies):.2f} |",
         f"| Input tokens | {sum(r['input_tokens'] for r in runs):,} |",
         f"| Output tokens | {sum(r['output_tokens'] for r in runs):,} |",
         f"| Est. cost (USD) | {sum(r['cost_usd'] for r in runs):.4f} |",
