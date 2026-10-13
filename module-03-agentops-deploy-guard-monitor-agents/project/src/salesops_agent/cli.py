@@ -113,8 +113,8 @@ def versions(as_json, config_path):
 
 def _eval_options(f):
     f = click.option(
-        "--workers", type=click.IntRange(1, 16), default=4, show_default=True,
-        help="Tasks evaluated concurrently (1 = sequential).",
+        "--workers", type=click.IntRange(1, 16), default=2, show_default=True,
+        help="Tasks evaluated concurrently (1 = sequential). The course proxy throttles above ~2.",
     )(f)
     f = click.option(
         "--min-pass-rate", type=click.FloatRange(0, 1), default=0.0, show_default=True,
@@ -127,7 +127,7 @@ def _eval_options(f):
     return click.option("--case", "case_ids", multiple=True, help="Run only these task IDs (repeatable).")(f)
 
 
-def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=4):
+def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2):
     """Shared body of `salesops-agent eval` and the standalone `evaluate` command."""
     from salesops_agent.evaluation import run_evaluation
 
