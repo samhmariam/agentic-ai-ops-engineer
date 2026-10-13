@@ -13,6 +13,7 @@ and for module-by-module exploration in the curriculum.
 """
 
 from fastapi import APIRouter
+from opentelemetry import trace as otel_trace
 from pydantic import BaseModel, Field
 
 from src.cache.semantic import lookup as cache_lookup
@@ -84,23 +85,56 @@ async def query(request: QueryRequest) -> QueryResponse:
     Standalone wrappers (``guarded_route_query`` in ``src.guardrails`` and
     ``cached_route_query`` in ``src.cache``) compose the same pieces in
     isolation; they remain for tests and module-by-module exploration.
+
+    The whole handler runs inside one ``faq_request`` root span, with a
+    child span per layer, so one request maps to one Phoenix trace:
+    guards, cache calls, classification, retrieval, generation and the
+    hallucination judge all share its trace_id. Only the redacted
+    question is recorded on the span; raw input never reaches Phoenix.
     """
-    if reason := detect_prompt_injection(request.question):
-        return _safe_response(SAFE_BLOCKED_MESSAGE, blocked_by=reason)
-    cleaned, pii_found = detect_pii(request.question)
+    tracer = otel_trace.get_tracer("src.gateway.routes")
+    with tracer.start_as_current_span("faq_request") as root:
+        root.set_attribute("rag.input.top_k", request.top_k)
 
-    if cached := cache_lookup(cleaned):
-        return _annotate_pii(cached, pii_found)
+        with tracer.start_as_current_span("input_guards") as span:
+            reason = detect_prompt_injection(request.question)
+            if reason:
+                span.set_attribute("guard.blocked_by", reason)
+            else:
+                cleaned, pii_found = detect_pii(request.question)
+                span.set_attribute("guard.pii_found", ",".join(pii_found))
+        if reason:
+            root.set_attribute("guard.blocked_by", reason)
+            return _safe_response(SAFE_BLOCKED_MESSAGE, blocked_by=reason)
+        root.set_attribute("input.value", cleaned)
 
-    response = route_query(cleaned, top_k=request.top_k)
+        with tracer.start_as_current_span("cache_lookup") as span:
+            cached = cache_lookup(cleaned)
+            span.set_attribute("cache.hit", cached is not None)
+        if cached:
+            root.set_attribute("output.value", cached.answer)
+            return _annotate_pii(cached, pii_found)
 
-    if reason := check_hallucination(response.answer, response.sources):
-        return _safe_response(SAFE_FILTERED_MESSAGE, blocked_by=reason)
-    if reason := is_off_topic(response.answer):
-        return _safe_response(SAFE_FILTERED_MESSAGE, blocked_by=reason)
+        response = route_query(cleaned, top_k=request.top_k)
 
-    cache_store(cleaned, response)
-    return _annotate_pii(response, pii_found)
+        with tracer.start_as_current_span("output_guards") as span:
+            with tracer.start_as_current_span("hallucination_check"):
+                reason = check_hallucination(response.answer, response.sources)
+            if not reason:
+                with tracer.start_as_current_span("off_topic_check"):
+                    reason = is_off_topic(response.answer)
+            if reason:
+                span.set_attribute("guard.blocked_by", reason)
+        if reason:
+            root.set_attribute("guard.blocked_by", reason)
+            return _safe_response(SAFE_FILTERED_MESSAGE, blocked_by=reason)
+
+        with tracer.start_as_current_span("cache_store"):
+            cache_store(cleaned, response)
+        root.set_attribute("output.value", response.answer)
+        root.set_attribute("rag.model", response.model)
+        root.set_attribute("rag.cost_usd", response.cost_usd)
+        return _annotate_pii(response, pii_found)
 
 
 @router.get("/health")

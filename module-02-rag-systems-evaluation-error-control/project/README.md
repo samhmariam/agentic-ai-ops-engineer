@@ -83,7 +83,7 @@ differs in these details, checked against the imports in
 | 4 Classify | `gpt-4o-mini`, 2 tiers | Still `gpt-4o-mini`, but with **3 tiers**: `budget` → `gpt-4.1-nano`, `simple` → `gpt-4o-mini`, `complex` → `gpt-4o`, mapped by `MODEL_*` in `.env` (Deliverable 3 stand-out). |
 | 9 Output guards | `src/guardrails/output_guards.py` | `routes.py` imports from `src/guardrails/llm_judge/output_guards.py`. `check_hallucination` is a `gpt-4o-mini` judge, with an extra cost-log row (`hallucination_check`). `is_off_topic` is LLM Guard `BanTopics`, a zero-shot RoBERTa model. The older NLI scanner in `src/guardrails/llm_guard/output_guards.py` is kept as a reference. |
 | Watcher | Sidecar process, independent of HTTP | Started **in-process** by the FastAPI `lifespan` in `src/gateway/app.py`, so `data/inbox/` drops land in the same Chroma client `/query` reads, with no restart. `make watch` (`scripts/start_watcher.py`) remains for offline batch ingestion. |
-| Tracing scope | Step 5 | Only steps 6–7 sit inside the `rag_query` root span. The classifier, judge and cache embeddings appear as separate root traces, and the guards are untraced (Deliverable 7; backlog B3 in `FUTURE_WORK.md`). |
+| Tracing scope | Step 5 | One trace per request. The `/query` handler opens a `faq_request` root span, and the guards, cache calls, classification, retrieval, generation and judge are all child spans in that trace. `make show-traces --trace <id>` prints one trace's span tree (Deliverable 7). |
 
 ## Running it
 
@@ -94,7 +94,7 @@ Vocareum endpoint.
 ```bash
 make load-data   # chunk, embed and upsert data/products/*.json into Chroma
 make serve       # FastAPI on :8080 + in-process inbox watcher + Phoenix on :6006
-make test        # 242 tests
+make test        # 247 tests
 make verify      # automated capstone checks
 make eval        # RAGAS over data/golden_test_set.csv
 make cost-report # tiered vs gpt-4o baseline savings

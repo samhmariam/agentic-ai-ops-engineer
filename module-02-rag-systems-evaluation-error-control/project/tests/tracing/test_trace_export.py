@@ -7,6 +7,7 @@ import pandas as pd
 from src.tracing.trace_export import (
     render_json,
     render_markdown,
+    render_span_tree,
     summarize_traces,
 )
 
@@ -156,3 +157,61 @@ def test_render_json_roundtrips():
     ]
     parsed = json.loads(render_json(summaries))
     assert parsed == summaries
+
+
+# --- gateway-rooted traces ----------------------------------------------------
+
+
+def _gateway_trace() -> pd.DataFrame:
+    """faq_request → route_query → {classification → ChatCompletion, rag_query → ChatCompletion}."""
+    t = pd.Timestamp("2026-10-13 12:00:00")
+    ms = pd.Timedelta(milliseconds=1)
+
+    def span(span_id, name, parent, start, end, kind="UNKNOWN", rag=None):
+        return {
+            "context.trace_id": "abcdef0123456789",
+            "context.span_id": span_id,
+            "name": name,
+            "span_kind": kind,
+            "parent_id": parent,
+            "start_time": t + start * ms,
+            "end_time": t + end * ms,
+            "attributes.input.value": "Compare A and B" if parent is None else None,
+            "attributes.rag": rag,
+        }
+
+    return pd.DataFrame(
+        [
+            span("s0", "faq_request", None, 0, 4000, rag={"model": "gpt-4o"}),
+            span("s1", "route_query", "s0", 100, 3500),
+            span("s2", "classification", "s1", 100, 900),
+            span("s3", "ChatCompletion", "s2", 110, 890, kind="LLM"),
+            span("s4", "rag_query", "s1", 900, 3500, rag={"model": "gpt-4o", "latency_ms": 2600.0}),
+            span("s5", "ChatCompletion", "s4", 1500, 3490, kind="LLM"),
+        ]
+    )
+
+
+def test_summarize_traces_prefers_true_root_and_slowest_leaf():
+    s = summarize_traces(_gateway_trace(), last_n=10)[0]
+
+    assert s["question"] == "Compare A and B"
+    assert s["model"] == "gpt-4o"
+    assert s["latency_ms"] == 4000.0  # root duration, not rag_query's
+    assert s["slowest_span"] == "ChatCompletion"  # a leaf, not route_query
+    assert s["slowest_ms"] == 1990.0
+
+
+def test_render_span_tree_nests_children_with_share_of_root():
+    out = render_span_tree(_gateway_trace(), "abcdef01")
+
+    assert "root `faq_request` = 4000.0 ms" in out
+    assert "↳ route_query | UNKNOWN | 100.0 | 3400.0 | 85.0% |" in out
+    assert "↳ classification" in out
+    assert "↳ ChatCompletion | LLM | 1500.0 | 1990.0 | 49.8% |" in out
+    # classification is listed before rag_query (start-time order)
+    assert out.index("classification") < out.index("rag_query")
+
+
+def test_render_span_tree_unknown_prefix():
+    assert "No spans found" in render_span_tree(_gateway_trace(), "zzzz")

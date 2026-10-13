@@ -18,6 +18,7 @@ Usage:
 
 import sys
 import time
+from datetime import datetime, timezone
 
 import httpx
 
@@ -119,25 +120,39 @@ def _only_rag_query_traces(df):
 def _slowest_step_across_traces(df) -> str:
     """Return a `Slowest step across N traces: ...` one-liner.
 
-    Computes per-child-span average duration across every captured
-    trace, picks the highest, and reports the share of total root
-    latency it explains. Falls back to a polite stub when traces
-    haven't landed yet.
+    Computes per-leaf-span average duration across every captured
+    trace, picks the highest, and reports the share of the average root
+    span latency (the whole /query request) it explains. Falls back to
+    a polite stub when traces haven't landed yet.
     """
     if df is None or len(df) == 0:
         return "Slowest step across 0 traces: (no spans captured — check Phoenix tracer)"
 
-    children = df[df["name"] != "rag_query"].copy()
-    roots = df[df["name"] == "rag_query"]
-    if len(children) == 0 or len(roots) == 0:
-        return "Slowest step across 0 traces: (no rag_query spans found)"
+    roots = df[df["parent_id"].isna()]
+    if len(roots) == 0:
+        return "Slowest step across 0 traces: (no root spans found)"
 
-    children["_dur_ms"] = (
-        (children["end_time"] - children["start_time"]).dt.total_seconds() * 1000
+    # Leaf spans are the actual steps; containers (faq_request,
+    # route_query, rag_query, ...) always outlast their children. Leaves
+    # are labelled by their parent so the three CreateEmbeddings calls
+    # (cache_lookup, rag_query, cache_store) stay distinct.
+    parent_ids = set(df["parent_id"].dropna())
+    leaves = df[
+        ~df["context.span_id"].isin(parent_ids) & df["parent_id"].notna()
+    ].copy()
+    if len(leaves) == 0:
+        return "Slowest step across 0 traces: (no child spans found)"
+    name_by_id = dict(zip(df["context.span_id"], df["name"]))
+    leaves["_step"] = [
+        f"{name_by_id.get(p, '?')} > {n}"
+        for p, n in zip(leaves["parent_id"], leaves["name"])
+    ]
+    leaves["_dur_ms"] = (
+        (leaves["end_time"] - leaves["start_time"]).dt.total_seconds() * 1000
     )
-    avg_by_name = children.groupby("name")["_dur_ms"].mean().sort_values(ascending=False)
-    slowest_name = avg_by_name.index[0]
-    slowest_avg_ms = float(avg_by_name.iloc[0])
+    avg_by_step = leaves.groupby("_step")["_dur_ms"].mean().sort_values(ascending=False)
+    slowest_name = avg_by_step.index[0]
+    slowest_avg_ms = float(avg_by_step.iloc[0])
 
     avg_root_ms = (
         ((roots["end_time"] - roots["start_time"]).dt.total_seconds() * 1000).mean()
@@ -154,6 +169,7 @@ def _slowest_step_across_traces(df) -> str:
 def main() -> int:
     _preflight()
 
+    run_started = datetime.now(timezone.utc)
     print(f"Running {len(QUESTIONS)} traced queries against {QUERY_URL} ...", file=sys.stderr)
     for i, question in enumerate(QUESTIONS, 1):
         result = _post(question)
@@ -167,6 +183,10 @@ def main() -> int:
     time.sleep(SPAN_FLUSH_WAIT_S)
 
     df = _fetch_spans()
+    if df is not None and len(df):
+        # Phoenix persists traces across restarts; keep only this run's.
+        started = df.groupby("context.trace_id")["start_time"].transform("min")
+        df = df[started >= run_started]
     df_rag = _only_rag_query_traces(df)
     summaries = summarize_traces(df_rag, last_n=len(QUESTIONS))
     total_traces = 0 if df_rag is None else len(df_rag.groupby("context.trace_id"))

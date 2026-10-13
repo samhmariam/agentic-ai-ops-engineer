@@ -195,7 +195,7 @@ impact against effort.
 |---|---|---|---|
 | B1 | **Make the `BanTopics` off-topic guard cheaper.** It is the slowest step end to end: 26.6% of latency on average, up to 40% on long answers, because it is a CPU zero-shot RoBERTa that scales with answer length. Options: score a truncated answer, run it concurrently with the hallucination judge, fold the off-topic check into the judge prompt, or use a GPU. | WRITEUP §7 | High |
 | B2 | **Embed the question once per request.** It is currently embedded three times (cache lookup, retrieval, cache store), which costs 18.8% of latency. Pass one vector through all three. | WRITEUP §7 | High |
-| B3 | **Use one root span per request with labelled children.** Wrap the `/query` handler in a root span with `classification`, `retrieval`, `generation` and `guard` child spans. Today one request produces 5 disconnected traces, and about 35% of latency is untraced. Also drop or fix `rag_generation`, which is opened after the pipeline returns and always shows 0.0 ms. | WRITEUP §7 | Medium |
+| B3 | **Done 2026-10-13 (root span per request).** The `/query` handler opens a `faq_request` root span with `input_guards`, `cache_lookup`, `route_query` (`classification`, `rag_query`), `output_guards` and `cache_store` children (WRITEUP §7). **Still open:** drop or fix `rag_generation`, which is opened after the pipeline returns and always shows 0.0 ms. | WRITEUP §7 | Low |
 | B4 | **Run the classifier concurrently with the cache lookup,** or skip it for obvious lookups. It adds about 1.5 s per request. | WRITEUP §7, §3 | Medium |
 
 ### Retrieval and evaluation quality

@@ -32,6 +32,66 @@ def _safe_int(value: Any) -> int:
     return int(f)
 
 
+def _duration_ms(row: Any) -> float:
+    """Span duration in milliseconds, rounded to 0.1 ms."""
+    return round((row["end_time"] - row["start_time"]).total_seconds() * 1000, 1)
+
+
+def render_span_tree(df: Any, trace_id_prefix: str) -> str:
+    """Render one trace as a markdown span tree.
+
+    Each row shows the span's start offset and duration relative to the
+    root span, plus its share of the root's latency, so a single trace
+    can be read top-down without the Phoenix UI. Requires the Phoenix
+    ``context.span_id`` column to link children to parents.
+    """
+    if df is None or len(df) == 0:
+        return f"No spans found for trace `{trace_id_prefix}`.\n"
+    group = df[df["context.trace_id"].astype(str).str.startswith(trace_id_prefix)]
+    if len(group) == 0:
+        return f"No spans found for trace `{trace_id_prefix}`.\n"
+    trace_ids = group["context.trace_id"].unique()
+    if len(trace_ids) > 1:
+        return (
+            f"Prefix `{trace_id_prefix}` matches {len(trace_ids)} traces; "
+            "use a longer prefix.\n"
+        )
+
+    roots = group[group["parent_id"].isna()]
+    if len(roots) == 0:
+        return f"Trace `{trace_id_prefix}` has no root span.\n"
+    root = roots.iloc[0]
+    t0 = root["start_time"]
+    total_ms = _duration_ms(root)
+
+    children: dict[Any, list] = {}
+    for _, row in group.iterrows():
+        children.setdefault(row["parent_id"], []).append(row)
+
+    lines = [
+        f"# Trace `{trace_ids[0]}`",
+        "",
+        f"{len(group)} span(s); root `{root['name']}` = {total_ms} ms.",
+        "",
+        "| Span | Kind | Start (ms) | Duration (ms) | Share of root |",
+        "|---|---|---|---|---|",
+    ]
+
+    def walk(row: Any, depth: int) -> None:
+        dur = _duration_ms(row)
+        start = round((row["start_time"] - t0).total_seconds() * 1000, 1)
+        share = f"{dur / total_ms * 100:.1f}%" if total_ms else "—"
+        indent = "&nbsp;&nbsp;" * depth + ("↳ " if depth else "")
+        kind = row.get("span_kind", "") or ""
+        lines.append(f"| {indent}{row['name']} | {kind} | {start} | {dur} | {share} |")
+        kids = children.get(row.get("context.span_id"), [])
+        for kid in sorted(kids, key=lambda r: r["start_time"]):
+            walk(kid, depth + 1)
+
+    walk(root, 0)
+    return "\n".join(lines) + "\n"
+
+
 def summarize_traces(df: Any, last_n: int) -> list[dict]:
     """Group spans by trace_id, return one summary dict per trace.
 
@@ -44,14 +104,22 @@ def summarize_traces(df: Any, last_n: int) -> list[dict]:
 
     summaries: list[dict] = []
     for trace_id, group in df.groupby("context.trace_id"):
-        root = group[group["name"] == "rag_query"]
+        # Prefer the true root (the gateway's ``faq_request`` span once
+        # the handler is instrumented); fall back to ``rag_query`` for
+        # traces recorded before that, or exported without parent ids.
+        root = group[group["parent_id"].isna()]
         if len(root) == 0:
-            root = group[group["parent_id"].isna()]
+            root = group[group["name"] == "rag_query"]
         if len(root) == 0:
             continue
         root_row = root.iloc[0]
 
-        children = group[group["name"] != "rag_query"]
+        # The slowest *leaf* span is the slowest actual step; container
+        # spans (route_query, rag_query, ...) always outlast their children.
+        children = group[group.index != root.index[0]]
+        if "context.span_id" in group.columns:
+            parent_ids = set(group["parent_id"].dropna())
+            children = children[~children["context.span_id"].isin(parent_ids)]
         if len(children) > 0:
             children = children.copy()
             children["_dur_ms"] = (
@@ -74,6 +142,12 @@ def summarize_traces(df: Any, last_n: int) -> list[dict]:
         rag_attrs = root_row.get("attributes.rag") or {}
         if not isinstance(rag_attrs, dict):  # NaN-as-float guard
             rag_attrs = {}
+        if "latency_ms" not in rag_attrs:
+            # A gateway root carries no rag.latency_ms; use its duration.
+            rag_attrs = {
+                **rag_attrs,
+                "latency_ms": _duration_ms(root_row),
+            }
 
         # Token counts are set on the `rag_generation` child span (see
         # src/tracing/phoenix_backend.py), not on the rag_query root.

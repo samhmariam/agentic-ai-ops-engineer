@@ -165,3 +165,38 @@ def test_query_rejects_top_k_out_of_range():
     r = client.post("/query", json={"question": "Q", "top_k": 100})
 
     assert r.status_code == 422
+
+
+def test_query_records_one_trace_with_a_span_per_layer():
+    """Every layer of /query runs under a single faq_request root span."""
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+    with patch("src.gateway.routes.otel_trace.get_tracer",
+               return_value=provider.get_tracer("test")), \
+         patch("src.gateway.routes.cache_lookup", return_value=None), \
+         patch("src.gateway.routes.cache_store"), \
+         patch("src.gateway.routes.check_hallucination", return_value=None), \
+         patch("src.gateway.routes.is_off_topic", return_value=None), \
+         patch("src.gateway.routes.route_query", return_value=_response()):
+        client = TestClient(create_app())
+        r = client.post("/query", json={"question": "How heavy is Selkirk?"})
+
+    assert r.status_code == 200
+    spans = exporter.get_finished_spans()
+    by_name = {s.name: s for s in spans}
+    root = by_name["faq_request"]
+    assert root.parent is None
+    assert {s.context.trace_id for s in spans} == {root.context.trace_id}
+    for name in ("input_guards", "cache_lookup", "output_guards", "cache_store"):
+        assert by_name[name].parent.span_id == root.context.span_id
+    for name in ("hallucination_check", "off_topic_check"):
+        assert by_name[name].parent.span_id == by_name["output_guards"].context.span_id
+    assert root.attributes["input.value"] == "How heavy is Selkirk?"

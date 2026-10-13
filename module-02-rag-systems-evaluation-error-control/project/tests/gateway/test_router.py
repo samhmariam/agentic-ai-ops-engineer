@@ -55,3 +55,43 @@ def test_route_query_default_top_k_is_5():
         route_query("Q")
 
     assert traced.call_args.kwargs["top_k"] == 5
+
+
+def test_route_query_puts_classification_and_pipeline_in_one_trace():
+    """The classifier call must share the request trace, not start its own."""
+    from opentelemetry import trace as otel_trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("test")
+    seen: dict[str, object] = {}
+
+    def fake_classify(question):
+        seen["classify"] = otel_trace.get_current_span().get_span_context()
+        return "complex"
+
+    def fake_pipeline(question, model, top_k):
+        seen["pipeline"] = otel_trace.get_current_span().get_span_context()
+        return _make_response(model)
+
+    with patch("src.gateway.router.otel_trace.get_tracer", return_value=tracer), \
+         patch("src.gateway.router.classify", side_effect=fake_classify), \
+         patch("src.gateway.router.traced_pipeline", side_effect=fake_pipeline), \
+         patch("src.gateway.router.log_request"):
+        route_query("Compare A and B")
+
+    spans = {s.name: s for s in exporter.get_finished_spans()}
+    route, classification = spans["route_query"], spans["classification"]
+    assert classification.parent.span_id == route.context.span_id
+    assert classification.attributes["rag.query_type"] == "complex"
+    assert route.attributes["rag.model"] == settings.model_complex
+    # classify ran inside the classification span; the pipeline inside route_query
+    assert seen["classify"].span_id == classification.context.span_id
+    assert seen["pipeline"].span_id == route.context.span_id
+    assert seen["classify"].trace_id == seen["pipeline"].trace_id
