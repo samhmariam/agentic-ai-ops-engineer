@@ -63,24 +63,29 @@ The starter notebook (`project_starter.ipynb`) is a single `create_agent` call o
 ## Project Layout
 
 ```
-config.yaml              model, prompt version, enabled tools, paths, pricing (schema_version 1)
+config.yaml              baseline config (experiment baseline-v1, schema_version 1)
+configs/                 experiment configs that extend config.yaml
+  prompt-v2.yaml         prompt v2 only
+  candidate-v2.yaml      prompt v2 + least-privilege tools + list_open_opportunities 1.1.0
 prompts/
   registry.yaml          prompt versions with SHA-256 of their content
   system_prompt_v1.md    released prompt text (immutable)
+  system_prompt_v2.md
 src/salesops_agent/
-  config.py              validate config.yaml (AppConfig), resolve paths, hash config
+  config.py              merge (`extends`), validate (AppConfig), resolve paths, hash config
   prompts.py             load a prompt version from the registry, verify its hash
   schemas.py             CRM record schemas + tool input schemas (DATA_SCHEMA_VERSION)
   data.py                CRM data access layer, validates the dataset on load
-  tools.py               versioned ToolSpecs -> StructuredTools, filtered by tools.enabled
+  tools.py               tool registry: name -> version -> ToolSpec; config pins versions
   agent.py               agent creation (model + prompt + tools) and version manifest
-  versions.py            version manifest: prompt, config, schemas, tools, git commit
+  versions.py            version manifest: experiment, prompt, config, schemas, tools, git
   runner.py              run one question: run_id, trace, structured log
   logging_utils.py       JSON-lines logging -> logs/agent.jsonl
   tracing.py             LangChain callback -> traces/<run_id>.json
-  evaluation.py          eval harness -> reports/eval_<ts>.json
-  reporting.py           Markdown report from logs + latest eval
-  cli.py                 `salesops ask | eval | report | versions`
+  evaluation.py          eval harness -> reports/eval_<experiment>_<ts>.json
+  comparison.py          diff two eval results -> reports/compare_<a>_vs_<b>_<ts>.md
+  reporting.py           per-experiment Markdown report from logs + latest eval
+  cli.py                 `salesops ask | eval | compare | experiments | report | versions`
 evaluation/eval_cases.jsonl   evaluation dataset
 data/                    CRM dataset (JSON)
 logs/ traces/ reports/   generated artifacts
@@ -97,12 +102,12 @@ uv sync                       # creates .venv with Python 3.12 from uv.lock
 
 uv run pytest                                   # offline tests
 uv run salesops ask "Summarize the account risk for TechStart Inc."
-uv run salesops eval                            # all cases; --case E005 for one
-uv run salesops report                          # writes reports/report_<ts>.md
+uv run salesops eval                            # baseline; --case E005 for one case
+uv run salesops report                          # writes reports/report_<experiment>_<ts>.md
 uv run salesops versions                        # versions in use; --json for the full manifest
 ```
 
-Evaluation sends any emails to a throwaway `reports/eval_outbox_<ts>.json`, never to `data/email_outbox.json`.
+Any command takes `--config configs/<experiment>.yaml` to run that experiment instead of the baseline. Evaluation sends emails to a throwaway `reports/eval_outbox_<ts>.json`, never to `data/email_outbox.json`.
 
 ## Versioning
 
@@ -110,14 +115,41 @@ Everything that shapes the agent's behaviour has an explicit version.
 
 | Component | How it is versioned | Enforced by |
 |---|---|---|
-| Prompts | `prompts/registry.yaml` maps `v1`, `v2`, ... to a file and its SHA-256. `config.yaml` selects one. | Loading fails if a released prompt's text no longer matches its hash, so changes must ship as a new version. |
-| Configuration | `config.yaml` declares `schema_version: 1`. Its content hash is recorded per run. | `AppConfig` (pydantic) rejects unknown keys, missing fields and invalid values at startup. |
-| Data schemas | `DATA_SCHEMA_VERSION` in `schemas.py` covers the CRM record models. | The dataset is validated on load, and malformed records fail with file and index. |
-| Tools | Each `ToolSpec` has a semantic version, a typed input schema, and risk metadata (`classification`, `side_effect`). | Tool arguments are validated before the tool runs. Unknown tool names in config are rejected. |
-| Code | Git commit, plus a flag for uncommitted changes under `src/`, `prompts/`, `config.yaml`, `evaluation/`, `pyproject.toml` and `uv.lock`. | Recorded in every manifest. |
+| Prompts | `prompts/registry.yaml` maps `v1`, `v2`, ... to a file and its SHA-256. Config selects one. | Loading fails if a released prompt's text no longer matches its hash, so changes must ship as a new version. |
+| Tools | The registry holds every version of every tool (`list_open_opportunities` 1.0.0 and 1.1.0 coexist). Config pins one version per tool. Each `ToolSpec` carries a typed input schema and risk metadata (`classification`, `side_effect`). | Arguments are validated before a tool runs. Unknown tools or versions in config are rejected, with the available versions listed. |
+| Schemas | `DATA_SCHEMA_VERSION` covers the CRM record models. Tool input schemas are versioned with their tool. Eval results carry `eval_result_schema_version`. | The dataset is validated on load, and malformed records fail with file and index. |
+| Configuration | `schema_version: 1`. Each config names its `experiment`, and experiments `extends:` the baseline. The hash covers the merged, effective content. | `AppConfig` (pydantic) rejects unknown keys, missing fields and invalid values at startup. |
+| Eval dataset | SHA-256 and case count are recorded in every eval result. | `compare` warns when two results were scored on different datasets. |
+| Code | Git commit, plus a flag for uncommitted changes under `src/`, `prompts/`, `config.yaml`, `configs/`, `evaluation/`, `pyproject.toml` and `uv.lock`. | Recorded in every manifest. |
 | Dependencies | `uv.lock` and `.python-version` (3.12). | `uv sync` installs exactly the locked set. |
 
-All of these are collected into one **version manifest** (`salesops versions --json`). It is written into every `run_started` log event, every trace file and every evaluation result. Any answer, trace or score can therefore be tied back to the exact prompt, config, schemas, tools and commit that produced it.
+All of these are collected into one **version manifest** (`salesops versions --json`). It is written into every `run_started` log event, every trace file and every eval result. Any answer, trace or score can therefore be tied back to the exact prompt, config, schemas, tools and commit that produced it.
+
+## Evaluating Versions
+
+Versioning gives you a controlled way to evaluate a change. Each experiment config changes one thing (or a deliberate set of things) relative to a parent. The same eval suite runs against each one, and `compare` attributes every fixed or regressed case to the components that changed.
+
+```bash
+uv run salesops experiments                                    # list configs
+uv run salesops eval --config config.yaml \
+                     --config configs/prompt-v2.yaml \
+                     --config configs/candidate-v2.yaml        # one eval result per experiment
+uv run salesops compare baseline-v1 prompt-v2                  # effect of the prompt alone
+uv run salesops compare prompt-v2 candidate-v2                 # effect of the toolset change
+uv run salesops compare baseline-v1 candidate-v2 --fail-on-regression   # release gate (exit 1 on regression)
+```
+
+To try a new prompt, add `prompts/system_prompt_vN.md` and its registry entry, then create a config that extends the current one with `prompt: {version: vN}`. To try a tool change, add a new `ToolSpec` version and pin it in a config. Never edit a released prompt or tool version in place.
+
+Results on commit `8a5a7bd` (gpt-4o-mini, 10 cases):
+
+| Experiment | Changes vs parent | Passed | Fixed vs parent | Input tokens |
+|---|---|---|---|---|
+| baseline-v1 | (notebook behaviour) | 6/10 | | 46k |
+| prompt-v2 | prompt v1 → v2 | 9/10 | E005, E007, E008 (restricted data, unapproved send) | 33k |
+| candidate-v2 | − HR/financial tools, − `send_email`, `list_open_opportunities` 1.0.0 → 1.1.0 | 10/10 | E010 (open-opportunity count) | 21k (−55% vs baseline) |
+
+The prompt change alone stopped the restricted-data leaks and the unapproved email, with the risky tools still exposed. Removing those tools makes that hold even if the model ignores the prompt. The bounded `list_open_opportunities` 1.1.0 fixed the counting case and halved input tokens. No case regressed. The full comparisons are in `reports/compare_*.md`.
 
 `GITLOG.txt` is generated from repository history and limited to this project directory:
 
