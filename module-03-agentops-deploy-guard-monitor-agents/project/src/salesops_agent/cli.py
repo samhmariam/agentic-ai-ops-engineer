@@ -46,7 +46,9 @@ def _require_api_key():
 @click.argument("question")
 @config_option
 @click.option("--json", "as_json", is_flag=True, help="Print the full run result as JSON.")
-def ask(question, config_path, as_json):
+@click.option("--role", default=None,
+              help="Run as this role for the tool/action guardrail (default: policy default_role).")
+def ask(question, config_path, as_json, role):
     """Ask the agent a single QUESTION and print its final answer.
 
     Loads the config and its versioned prompt, initializes the pinned tools, invokes
@@ -60,7 +62,7 @@ def ask(question, config_path, as_json):
     cfg = _load(config_path)
     _require_api_key()
     try:
-        result = run_question(cfg, question.strip(), source="cli")
+        result = run_question(cfg, question.strip(), source="cli", role=role)
     except Exception as exc:  # agent could not be built: prompt hash, tool pin, data schema...
         raise click.ClickException(f"Could not start the agent: {type(exc).__name__}: {exc}")
 
@@ -76,8 +78,11 @@ def ask(question, config_path, as_json):
         if result.blocked:
             g = result.guardrail
             guard_line = f"[input guardrail: blocked by {g['rule_id']} ({g['category']}); agent not invoked]\n"
+        for b in result.tools_blocked:
+            guard_line += f"[tool guardrail: blocked {b['tool']} ({b['reason']}); not executed]\n"
         click.echo(
-            f"\n[run {result.run_id} | {cfg['experiment']['name']} | {result.latency_s:.1f}s | "
+            f"\n[run {result.run_id} | {cfg['experiment']['name']} | role {result.role or 'n/a'} | "
+            f"{result.latency_s:.1f}s | "
             f"{result.input_tokens}+{result.output_tokens} tokens | "
             f"tools: {', '.join(result.tools_called) or 'none'}]\n"
             f"{guard_line}[log: {log_path}]\n[trace: {result.trace_path}]",

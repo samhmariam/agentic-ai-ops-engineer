@@ -1,0 +1,91 @@
+# Tool/action guardrail policy v1: salesops_data_access_policy.
+#
+# Every tool call the agent proposes is checked against this policy in code BEFORE
+# the tool executes. A blocked call does not run; the agent receives an explicit
+# result instead:
+#   {"status": "blocked", "reason": "...", "policy": "salesops_data_access_policy", ...}
+# and the block is logged (tool_call_blocked) and traced.
+#
+# Default deny: a tool not listed under `tools` cannot be called at all.
+# Released policies are immutable: add tool_guardrails_v2.yaml to change rules.
+
+name: salesops_data_access_policy
+version: v1
+
+# Roles a run can be executed as (salesops-agent ask --role ...). Restricted tools
+# list the roles allowed to use them; everyone else is blocked.
+roles: [sales_rep, sales_manager, hr_admin, finance_admin]
+default_role: sales_rep
+
+limits:
+  max_tool_calls_per_run: 8
+  # Account-scoped tools (scope: account) may be called this many times per run,
+  # and only for accounts named in the user's request when it names any.
+  max_account_lookups_per_run: 3
+
+# Code-execution patterns rejected in any string argument of any tool. Code may only
+# run through a sandboxed tool (runtime control 5.4), never via tool arguments.
+unsafe_code_patterns:
+  - '\b(os\.(system|popen|remove|unlink)|subprocess|shutil\.rmtree|pickle\.loads?)\b'
+  - '\b(eval|exec|compile|__import__)\s*\('
+  - '\bimport\s+(os|sys|subprocess|shutil|socket|ctypes)\b'
+  - '\brm\s+-rf\b|\bcurl\s+https?://|\bwget\s+https?://'
+  - '\b(drop|truncate|delete\s+from|alter)\s+table\b'
+  - '<script\b|javascript:'
+
+messages:
+  restricted_internal_data: >-
+    This tool exposes restricted internal data and is not available for your role.
+  restricted_field_request: >-
+    The request targets restricted internal fields (compensation, performance or
+    confidential strategy), which this agent may not access.
+  out_of_scope_account: >-
+    This lookup targets an account that is not part of the user's request.
+  lookup_budget_exceeded: >-
+    Too many account lookups for one request; narrow the question to specific accounts.
+  tool_budget_exceeded: >-
+    Too many tool calls for one request.
+  unsafe_code: >-
+    The tool arguments contain executable code, which is not allowed outside the sandbox.
+  approval_required: >-
+    This action is customer-facing and requires human approval before it can run.
+    Present the draft to the user and ask for approval.
+  tool_not_allowed: >-
+    This tool is not permitted by the data access policy.
+
+tools:
+  lookup_account:
+    scope: account
+  lookup_account_context:
+    scope: account
+  draft_email:
+    scope: account
+  list_open_opportunities:
+    scope: pipeline
+  summarize_pipeline:
+    scope: pipeline
+
+  lookup_internal_hr_data:
+    scope: restricted
+    authorized_roles: [hr_admin]
+    # Queries naming these fields are blocked for every role.
+    blocked_query_patterns:
+      - '\b(salar(y|ies)|bonus(es)?|compensation|comp|equity|pay|payroll|performance|ratings?|reviews?|pips?|fired?|firing|terminat\w*|layoffs?|disciplinary)\b'
+    # Removed from results for every role: this agent never returns them.
+    redact_fields:
+      - records[].salary_usd
+      - records[].equity_bonus_usd
+      - records[].performance_status
+      - records[].notes
+
+  lookup_internal_financial_data:
+    scope: restricted
+    authorized_roles: [finance_admin]
+    blocked_query_patterns:
+      - '\b(confidential\w*|m ?& ?a|m_and_a|merg\w*|acqui\w*|layoffs?|lay ?off|reduction|headcount|discount\w*|strateg\w*)\b'
+    redact_fields:
+      - confidential_strategy
+
+  send_email:
+    scope: action
+    requires_approval: true

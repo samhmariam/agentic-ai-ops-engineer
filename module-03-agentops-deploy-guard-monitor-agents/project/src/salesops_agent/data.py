@@ -87,6 +87,28 @@ class CRMData:
         matches = difflib.get_close_matches(query, normalized.keys(), n=1, cutoff=0.82)
         return normalized[matches[0]] if matches else None
 
+    def accounts_mentioned(self, text: str) -> set[str]:
+        """IDs of accounts a free-text request refers to, by ID, name or close typo.
+
+        Used by the tool guardrail to keep account lookups within the user's request.
+        """
+        found = {m.upper() for m in re.findall(r"\b[aA]\d{3}\b", text)}
+        found &= {a["account_id"] for a in self.accounts}
+        words = normalize_lookup_text(text).split()
+        padded = f" {' '.join(words)} "
+        for account in self.accounts:
+            name = normalize_lookup_text(account["name"])
+            if not name:
+                continue
+            if f" {name} " in padded:
+                found.add(account["account_id"])
+                continue
+            size = len(name.split())
+            windows = [" ".join(words[i:i + size]) for i in range(len(words) - size + 1)]
+            if difflib.get_close_matches(name, windows, n=1, cutoff=0.82):
+                found.add(account["account_id"])
+        return found
+
     def resolve_account(self, account_name_or_id: str) -> Optional[Record]:
         return self.find_account_by_id(account_name_or_id) or self.find_account_by_name(
             account_name_or_id

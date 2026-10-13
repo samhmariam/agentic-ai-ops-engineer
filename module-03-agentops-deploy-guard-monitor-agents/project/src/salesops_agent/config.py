@@ -95,8 +95,14 @@ class InputGuardrailSection(_Section):
     policy: Path
 
 
+class ToolGuardrailSection(_Section):
+    enabled: bool
+    policy: Path
+
+
 class GuardrailsSection(_Section):
     input: InputGuardrailSection
+    tool: ToolGuardrailSection
 
 
 class Price(_Section):
@@ -136,7 +142,7 @@ def deep_merge(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # File references outside `paths` that are resolved relative to the declaring file.
-_PATH_FIELDS = [("prompt", "registry"), ("guardrails", "input", "policy")]
+_PATH_FIELDS = [("prompt", "registry"), ("guardrails", "input", "policy"), ("guardrails", "tool", "policy")]
 
 
 def _resolve_relative_paths(raw: Dict[str, Any], base_dir: Path) -> None:

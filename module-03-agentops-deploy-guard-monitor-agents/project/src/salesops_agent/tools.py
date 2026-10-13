@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Type
 
 from langchain_core.tools import BaseTool, StructuredTool
 from pydantic import BaseModel
@@ -30,6 +30,9 @@ from salesops_agent.schemas import (
     OpportunityFilterV1_1,
     SendEmailInput,
 )
+
+if TYPE_CHECKING:
+    from salesops_agent.guardrails.tool import ToolGuardrail
 
 CLOSED_STAGES = {"Closed Won", "Closed Lost"}
 
@@ -184,9 +187,10 @@ def build_tool_specs(crm: CRMData, email_outbox: Path) -> ToolRegistry:
     return registry
 
 
-def to_langchain_tool(spec: ToolSpec) -> BaseTool:
+def to_langchain_tool(spec: ToolSpec, guard: Optional["ToolGuardrail"] = None) -> BaseTool:
+    """Build the LangChain tool; with a guard, every call is policy-checked before it runs."""
     return StructuredTool.from_function(
-        func=spec.func,
+        func=guard.wrap(spec.name, spec.func) if guard else spec.func,
         name=spec.name,
         description=spec.description,
         args_schema=spec.args_schema,
@@ -194,7 +198,9 @@ def to_langchain_tool(spec: ToolSpec) -> BaseTool:
     )
 
 
-def make_tools(crm: CRMData, email_outbox: Path, enabled: Dict[str, str]) -> List[BaseTool]:
+def make_tools(
+    crm: CRMData, email_outbox: Path, enabled: Dict[str, str], guard: Optional["ToolGuardrail"] = None
+) -> List[BaseTool]:
     """Build the enabled tools at their pinned versions, in config order.
 
     Unknown tool names or versions are config errors; the message lists what exists.
@@ -208,7 +214,7 @@ def make_tools(crm: CRMData, email_outbox: Path, enabled: Dict[str, str]) -> Lis
             problems.append(f"{name} has no version {version} (available: {sorted(registry[name])})")
     if problems:
         raise ValueError("Invalid tools.enabled in config: " + "; ".join(problems))
-    return [to_langchain_tool(registry[name][version]) for name, version in enabled.items()]
+    return [to_langchain_tool(registry[name][version], guard) for name, version in enabled.items()]
 
 
 def available_tool_versions(crm: CRMData, email_outbox: Path) -> Dict[str, List[str]]:

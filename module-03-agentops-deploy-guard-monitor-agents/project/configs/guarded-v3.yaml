@@ -1,0 +1,19 @@
+# Experiment: the previous default (agent 0.3.0). Prompt v2, least-privilege tools,
+# input guardrail only; no tool guardrail and send_email not exposed.
+# Kept so earlier guarded-v3 results stay reproducible and comparable.
+extends: ../config.yaml
+
+experiment:
+  name: guarded-v3
+  description: Prompt v2, least-privilege tools, input guardrails (policy v1).
+
+agent:
+  version: "0.3.0"
+
+tools:
+  enabled:
+    send_email: null
+
+guardrails:
+  tool:
+    enabled: false

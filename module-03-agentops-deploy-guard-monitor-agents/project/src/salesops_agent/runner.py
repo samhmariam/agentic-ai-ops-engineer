@@ -7,7 +7,9 @@ tokens, cost and tools called.
 
 Runtime controls run here, outside the model: the input guardrail checks the
 request first, and a blocked request is answered from the policy without invoking
-the agent graph at all (no model call, no tool call).
+the agent graph at all (no model call, no tool call). While the agent runs, the
+tool guardrail (wrapped around every tool) checks each proposed call against the
+data access policy using the RunContext set up here (request, role, approvals).
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from typing import Any, Dict, List, Optional
 
 from salesops_agent.agent import SalesOpsAgent, build_agent
 from salesops_agent.config import ensure_output_dirs, model_pricing
+from salesops_agent.guardrails import RunContext, tool_run_context
 from salesops_agent.logging_utils import log_event, setup_logging
 from salesops_agent.tracing import LocalTraceRecorder
 
@@ -35,9 +38,11 @@ class RunResult:
     input_tokens: int
     output_tokens: int
     cost_usd: float
-    tools_called: List[str] = field(default_factory=list)
+    tools_called: List[str] = field(default_factory=list)       # tools that actually executed
     trace_path: Optional[str] = None
-    guardrail: Optional[Dict[str, Any]] = None   # blocking decision, if a guardrail fired
+    guardrail: Optional[Dict[str, Any]] = None   # input-guardrail block decision, if it fired
+    tools_blocked: List[Dict[str, Any]] = field(default_factory=list)  # tool calls the policy refused
+    role: Optional[str] = None
 
     @property
     def blocked(self) -> bool:
@@ -48,7 +53,12 @@ class RunResult:
 
 
 def run_question(
-    cfg: dict[str, Any], question: str, source: str = "cli", agent: Optional[SalesOpsAgent] = None
+    cfg: dict[str, Any],
+    question: str,
+    source: str = "cli",
+    agent: Optional[SalesOpsAgent] = None,
+    role: Optional[str] = None,
+    approvals: Optional[set[str]] = None,
 ) -> RunResult:
     """Run one question, recording a trace and a structured log entry.
 
@@ -58,10 +68,15 @@ def run_question(
     ensure_output_dirs(cfg)
     logger = setup_logging(cfg)
     agent = agent or build_agent(cfg)
+    if agent.tool_guard is not None:
+        roles = agent.tool_guard.policy.roles
+        if role is not None and role not in roles:
+            raise ValueError(f"Unknown role {role!r}; policy roles: {roles}")
+        role = role or agent.tool_guard.policy.default_role
     run_id = uuid.uuid4().hex[:12]
     recorder = LocalTraceRecorder(run_id, cfg["tracing"].get("max_payload_chars", 2000))
 
-    log_event(logger, "run_started", run_id=run_id, source=source, versions=agent.manifest)
+    log_event(logger, "run_started", run_id=run_id, source=source, role=role, versions=agent.manifest)
 
     answer, error, guardrail = "", None, None
     t0 = time.perf_counter()
@@ -73,16 +88,26 @@ def run_question(
             answer = decision.response
             log_event(logger, "guardrail_blocked", level=logging.WARNING, run_id=run_id, source=source,
                       stage=decision.stage, rule_id=decision.rule_id, category=decision.category)
+    ctx = RunContext(
+        run_id=run_id, request=question, role=role, approvals=set(approvals or ()), logger=logger,
+        on_block=lambda b: recorder.record_guardrail({"stage": "tool", "allowed": False, **b}, 0.0),
+    )
     if guardrail is None:
         try:
-            result = agent.graph.invoke(
-                {"messages": [{"role": "user", "content": question}]},
-                config={"callbacks": [recorder], "run_name": "salesops_agent", "metadata": {"run_id": run_id}},
-            )
+            with tool_run_context(ctx):
+                result = agent.graph.invoke(
+                    {"messages": [{"role": "user", "content": question}]},
+                    config={"callbacks": [recorder], "run_name": "salesops_agent", "metadata": {"run_id": run_id}},
+                )
             answer = result["messages"][-1].content
         except Exception as exc:  # surface failures as data, not crashes
             error = f"{type(exc).__name__}: {exc}"
     latency = round(time.perf_counter() - t0, 3)
+    tools_blocked = [{k: b.get(k) for k in ("tool", "reason", "rule")} for b in ctx.blocked]
+    tools_executed = list(recorder.tools_called)
+    for blocked in tools_blocked:           # attempted-but-refused calls did not execute
+        if blocked["tool"] in tools_executed:
+            tools_executed.remove(blocked["tool"])
 
     usage = recorder.token_usage
     pricing = model_pricing(cfg)
@@ -100,6 +125,8 @@ def run_question(
             latency_s=latency,
             token_usage=usage,
             guardrail=guardrail,
+            tools_blocked=tools_blocked,
+            role=role,
         ))
 
     result = RunResult(
@@ -112,9 +139,11 @@ def run_question(
         input_tokens=usage["input_tokens"],
         output_tokens=usage["output_tokens"],
         cost_usd=round(cost, 6),
-        tools_called=recorder.tools_called,
+        tools_called=tools_executed,
         trace_path=trace_path,
         guardrail=guardrail,
+        tools_blocked=tools_blocked,
+        role=role,
     )
     manifest = agent.manifest
     log_event(logger, "run_completed", source=source, experiment=manifest["experiment"],

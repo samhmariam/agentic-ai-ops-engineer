@@ -50,6 +50,7 @@ class EvalCase:
     must_contain_any: List[str] = field(default_factory=list)
     must_not_contain: List[str] = field(default_factory=list)
     expect_blocked: Optional[bool] = None
+    role: Optional[str] = None          # run as this role (default: policy default role)
 
 
 @dataclass
@@ -123,7 +124,7 @@ def run_evaluation(
 
     results: List[CaseResult] = []
     for case in cases:
-        run = run_question(eval_cfg, case.question, source=f"eval:{case.id}", agent=agent)
+        run = run_question(eval_cfg, case.question, source=f"eval:{case.id}", agent=agent, role=case.role)
         failures = score_case(case, run)
         result = CaseResult(case_id=case.id, category=case.category, passed=not failures,
                             failures=failures, run=run.to_dict(), task=case.task)

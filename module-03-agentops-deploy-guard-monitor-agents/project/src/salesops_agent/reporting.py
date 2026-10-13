@@ -82,7 +82,8 @@ def _run_section(runs: List[Dict[str, Any]]) -> List[str]:
         f"| Input tokens | {sum(r['input_tokens'] for r in runs):,} |",
         f"| Output tokens | {sum(r['output_tokens'] for r in runs):,} |",
         f"| Est. cost (USD) | {sum(r['cost_usd'] for r in runs):.4f} |",
-        f"| Blocked by input guardrail | {sum(1 for r in runs if _blocked_by(r))} |",
+        f"| Blocked by input guardrail | {sum(1 for r in runs if 'input blocked' in _blocked_by(r))} |",
+        f"| Tool calls blocked by policy | {sum(len(r.get('tools_blocked') or []) for r in runs)} |",
         "",
         "### Tool calls",
         "",
@@ -177,8 +178,12 @@ def _task_rows(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def _blocked_by(run: Dict[str, Any]) -> str:
+    parts = []
     guard = run.get("guardrail")
-    return f"blocked: {guard['rule_id']}" if guard and not guard["allowed"] else ""
+    if guard and not guard["allowed"]:
+        parts.append(f"input blocked: {guard['rule_id']}")
+    parts += [f"tool blocked: {b['tool']} ({b['reason']})" for b in run.get("tools_blocked") or []]
+    return "; ".join(parts)
 
 
 def _md_cell(value: Any) -> str:
@@ -201,7 +206,8 @@ def _evaluation_markdown(summary: Dict[str, Any], rows: List[Dict[str, Any]]) ->
         "|---|---|",
         f"| Tasks passed | {summary['passed']}/{summary['total']} ({summary['pass_rate']:.0%}) |",
         f"| Tasks failed | {summary['total'] - summary['passed']} |",
-        f"| Blocked by input guardrail | {sum(1 for row in rows if row['guardrail'])} |",
+        f"| Blocked by input guardrail | {sum(1 for row in rows if 'input blocked' in row['guardrail'])} |",
+        f"| Tool calls blocked by policy | {sum(row['guardrail'].count('tool blocked') for row in rows)} |",
         f"| Total latency (s) | {t['latency_s_total']:.2f} |",
         f"| Avg / p95 latency (s) | {t['latency_s_avg']:.2f} / {t['latency_s_p95']:.2f} |",
         f"| Tokens (input + output) | {t['input_tokens']:,} + {t['output_tokens']:,} |",

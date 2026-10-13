@@ -97,7 +97,7 @@ class LocalTraceRecorder(BaseCallbackHandler):
     def record_guardrail(self, decision: Dict[str, Any], duration_ms: float) -> None:
         """Record a guardrail check as its own span (rule and category, never the text)."""
         self.spans.append({
-            "span_id": f"guardrail-{decision['stage']}",
+            "span_id": f"guardrail-{decision['stage']}-{len(self.spans)}",
             "parent_span_id": None,
             "kind": "guardrail",
             "name": f"{decision['stage']}_guardrail",
@@ -105,7 +105,7 @@ class LocalTraceRecorder(BaseCallbackHandler):
             "end_time": _now(),
             "duration_ms": round(duration_ms, 3),
             "status": "allowed" if decision["allowed"] else "blocked",
-            **{k: decision[k] for k in ("rule_id", "category") if decision.get(k)},
+            **{k: decision[k] for k in ("rule_id", "category", "tool", "reason") if decision.get(k)},
         })
 
     # -- results ------------------------------------------------------------

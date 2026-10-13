@@ -1,0 +1,14 @@
+# Experiment: demonstrates that the tool/action guardrail blocks forbidden calls in
+# code, not through model behaviour. Everything else is the prototype: prompt v1
+# ("you may use internal tools"), every tool exposed including the restricted
+# HR/financial tools and send_email, and no input guardrail. The model is free to
+# attempt forbidden calls; only the tool guardrail stands in the way.
+extends: baseline-v1.yaml
+
+experiment:
+  name: tool-guard-only
+  description: Prototype (prompt v1, all tools, no input guardrail) + tool/action guardrail v1.
+
+guardrails:
+  tool:
+    enabled: true

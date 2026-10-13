@@ -7,12 +7,12 @@
 schema_version: 1
 
 experiment:
-  name: guarded-v3
-  description: Prompt v2, least-privilege tools, input guardrails (policy v1).
+  name: guarded-v4
+  description: Prompt v2, least-privilege tools, input guardrail v1, tool/action guardrail v1 (send_email needs approval).
 
 agent:
   name: SalesOps Agent
-  version: "0.3.0"
+  version: "0.4.0"
 
 model:
   name: openai:gpt-4o-mini   # provider:model, passed to init_chat_model
@@ -23,8 +23,9 @@ prompt:
   version: v2
 
 # Tools exposed to the agent, each pinned to a version from the tool registry
-# (salesops_agent.tools). Least privilege: the restricted HR/financial tools and
-# send_email are not exposed (see configs/baseline-v1.yaml for the prototype set).
+# (salesops_agent.tools). Least privilege: the restricted HR/financial tools are not
+# exposed (see configs/baseline-v1.yaml for the prototype set). send_email is
+# exposed but gated by the tool guardrail: it only runs with human approval.
 tools:
   enabled:
     lookup_account: "1.0.0"
@@ -32,13 +33,21 @@ tools:
     list_open_opportunities: "1.1.0"
     summarize_pipeline: "1.0.0"
     draft_email: "1.0.0"
+    send_email: "1.0.0"
 
-# Runtime controls. The input guardrail runs before the model sees a request;
-# a blocked request is answered from the policy and never reaches the agent.
+# Runtime controls, enforced in code around the model:
+#  - input: runs before the model sees a request; a blocked request is answered
+#    from the policy and never reaches the agent.
+#  - tool: wraps every tool; each proposed call is checked against the data access
+#    policy (roles, restricted fields, account scope, budgets, unsafe code,
+#    approvals) before it executes.
 guardrails:
   input:
     enabled: true
     policy: policies/input_guardrails_v1.yaml
+  tool:
+    enabled: true
+    policy: policies/tool_guardrails_v1.yaml
 
 paths:
   data_dir: data
