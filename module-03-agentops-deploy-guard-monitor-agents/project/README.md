@@ -85,7 +85,8 @@ src/salesops_agent/
   evaluation.py          eval harness -> reports/eval_<experiment>_<ts>.json
   comparison.py          diff two eval results -> reports/compare_<a>_vs_<b>_<ts>.md
   reporting.py           per-experiment Markdown report from logs + latest eval
-  cli.py                 `salesops ask | eval | compare | experiments | report | versions`
+  cli.py                 `salesops-agent ask | eval | compare | experiments | report | versions`
+  __main__.py            `python -m salesops_agent`
 evaluation/eval_cases.jsonl   evaluation dataset
 data/                    CRM dataset (JSON)
 logs/ traces/ reports/   generated artifacts
@@ -101,13 +102,32 @@ cp .env.example .env          # add OPENAI_API_KEY (and OPENAI_BASE_URL if using
 uv sync                       # creates .venv with Python 3.12 from uv.lock
 
 uv run pytest                                   # offline tests
-uv run salesops ask "Summarize the account risk for TechStart Inc."
-uv run salesops eval                            # baseline; --case E005 for one case
-uv run salesops report                          # writes reports/report_<experiment>_<ts>.md
-uv run salesops versions                        # versions in use; --json for the full manifest
+uv run salesops-agent ask "Summarize the account risk for TechStart Inc."
+uv run salesops-agent eval                      # baseline; --case E005 for one case
+uv run salesops-agent report                    # writes reports/report_<experiment>_<ts>.md
+uv run salesops-agent versions                  # versions in use; --json for the full manifest
 ```
 
 Any command takes `--config configs/<experiment>.yaml` to run that experiment instead of the baseline. Evaluation sends emails to a throwaway `reports/eval_outbox_<ts>.json`, never to `data/email_outbox.json`.
+
+## Local Agent Entry Point
+
+`salesops-agent` is installed by `uv sync`. It has a short alias, `salesops`, and can also be run with `uv run python -m salesops_agent`.
+
+```bash
+uv run salesops-agent ask "What is happening with GlobalRetail Ltd's renewal opportunity?"
+```
+
+`ask` runs one question end to end:
+
+1. **Load the agent configuration:** reads `config.yaml` (or `--config`), merges `extends`, and validates it against the config schema.
+2. **Load the versioned prompt:** looks up the configured version in `prompts/registry.yaml` and checks the file against its registered SHA-256.
+3. **Initialize the tools:** loads the CRM data and validates it against the record schemas, then builds each tool at the version pinned in config.
+4. **Invoke the agent:** runs the LangChain agent with a trace recorder attached.
+5. **Return the final answer:** prints it to stdout. Run details (run id, experiment, latency, tokens, tools called, log and trace paths) go to stderr, so `> answer.txt` captures only the answer. Use `--json` for the full run result.
+6. **Generate logs and traces:** writes `run_started` (with the version manifest) and `run_completed` events to `logs/agent.jsonl`, and every model and tool call to `traces/<run_id>.json`.
+
+Exit codes: `0` success, `1` failed run or setup error (missing `OPENAI_API_KEY`, invalid config, prompt hash mismatch) with a one-line message, `2` usage error such as an empty question. Example questions: the account-risk, renewal, pipeline and lookup prompts in `evaluation/eval_cases.jsonl`.
 
 ## Versioning
 
@@ -130,13 +150,13 @@ All of these are collected into one **version manifest** (`salesops versions --j
 Versioning gives you a controlled way to evaluate a change. Each experiment config changes one thing (or a deliberate set of things) relative to a parent. The same eval suite runs against each one, and `compare` attributes every fixed or regressed case to the components that changed.
 
 ```bash
-uv run salesops experiments                                    # list configs
-uv run salesops eval --config config.yaml \
+uv run salesops-agent experiments                                    # list configs
+uv run salesops-agent eval --config config.yaml \
                      --config configs/prompt-v2.yaml \
                      --config configs/candidate-v2.yaml        # one eval result per experiment
-uv run salesops compare baseline-v1 prompt-v2                  # effect of the prompt alone
-uv run salesops compare prompt-v2 candidate-v2                 # effect of the toolset change
-uv run salesops compare baseline-v1 candidate-v2 --fail-on-regression   # release gate (exit 1 on regression)
+uv run salesops-agent compare baseline-v1 prompt-v2                  # effect of the prompt alone
+uv run salesops-agent compare prompt-v2 candidate-v2                 # effect of the toolset change
+uv run salesops-agent compare baseline-v1 candidate-v2 --fail-on-regression   # release gate (exit 1 on regression)
 ```
 
 To try a new prompt, add `prompts/system_prompt_vN.md` and its registry entry, then create a config that extends the current one with `prompt: {version: vN}`. To try a tool change, add a new `ToolSpec` version and pin it in a config. Never edit a released prompt or tool version in place.
