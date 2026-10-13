@@ -22,3 +22,14 @@ reports/eval_outbox_*.json
 # Output-guardrail review queue: withheld responses may contain restricted content
 review/*.jsonl
 reports/eval_review_queue_*.jsonl
+
+# Generated run artifacts: one trace per agent run, an append-only log, and
+# timestamped eval/report/compare files per evaluation. They stay on disk for local
+# use (salesops-agent compare, reports) but are not committed. A curated set is
+# committed instead: traces/examples/, logs/examples/, reports/results/,
+# reports/comparisons/ and reports/evaluation_report.*
+traces/*.json
+logs/*.jsonl
+reports/eval_*.json
+reports/report_*.md
+reports/compare_*.md

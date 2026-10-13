@@ -101,7 +101,11 @@ src/salesops_agent/
   __main__.py            `python -m salesops_agent`
 evaluation/eval_cases.jsonl   evaluation dataset
 data/                    CRM dataset (JSON)
-logs/ traces/ reports/   generated artifacts
+logs/ traces/ reports/   generated artifacts (per-run files stay local, see Committed Artifacts)
+  traces/examples/       committed example traces: normal answer and each guardrail block
+  logs/examples/         committed log lines for those example runs
+  reports/results/       committed latest eval result per experiment
+  reports/comparisons/   committed comparisons between experiments
 review/                  human review queue for withheld responses (gitignored: may hold restricted text)
 tests/                   offline tests (no LLM calls)
 GITLOG.txt               project commit history, generated from git
@@ -410,6 +414,20 @@ Every run writes the **evaluation report** for the latest run in three formats:
 
 The full result is also kept as `reports/eval_<experiment>_<ts>.json` for history and `compare`. Latency is the wall-clock time of the whole agent run, including tool calls. Cost is estimated from token usage and the per-model prices under `pricing` in config.
 
+## Committed Artifacts
+
+Every agent run writes a trace file (`traces/<run_id>.json`) and log lines (`logs/agent.jsonl`). Every evaluation writes timestamped `reports/eval_*`, `report_*` and `compare_*` files. These stay on disk for local use, and `compare` and `report` read them, but they are **gitignored**, because committing them would add hundreds of files per evaluation. A curated set is committed instead:
+
+| Path | Contents |
+|---|---|
+| `reports/evaluation_report.{md,csv,json}` | Latest `uv run evaluate` run of the default config |
+| `reports/results/<experiment>.json` | Latest full eval result per experiment (the results table below). Compare two of them with `salesops-agent compare reports/results/a.json reports/results/b.json`. |
+| `reports/comparisons/<a>_vs_<b>.md` | The experiment comparisons cited in this README |
+| `traces/examples/` | One trace each: a normal answer, an input-guardrail block, tool-guardrail blocks (restricted data and `send_email` without approval), and an output-guardrail block |
+| `logs/examples/agent_sample.jsonl` | The structured log lines for those example runs |
+
+Earlier commits still contain the per-run files committed before this policy. They were left in history rather than rewriting pushed commits.
+
 ## Evaluating Versions
 
 Versioning gives you a controlled way to evaluate a change. Each experiment config changes one thing (or a deliberate set of things) relative to a parent. The same eval suite runs against each one, and `compare` attributes every fixed or regressed case to the components that changed.
@@ -456,7 +474,7 @@ Each safety layer is measured on its own against the prototype:
 - **Output guardrail (output-guard-only):** the model retrieved restricted data and drafted answers from it, and code replaced those answers before the user saw them. It stops *disclosure* but not *retrieval*, which is why the defaults combine all three.
 - **Input guardrail (guarded-v3):** requests are blocked before the model sees them, at zero cost and latency.
 
-The bounded `list_open_opportunities` 1.1.0 fixed the counting case. In the guarded configs the tool and output guardrails did not need to fire, because the input guardrail and prompt stop these requests first. They are the backstops if those fail. E022 (email with an invented discount) passed everywhere because the model refused to write the claim. The review path is exercised by `tests/test_output_guardrails.py`. None of the false-positive checks (E018–E020) was blocked, and no case regressed at any step. The full comparisons are in `reports/compare_*.md`.
+The bounded `list_open_opportunities` 1.1.0 fixed the counting case. In the guarded configs the tool and output guardrails did not need to fire, because the input guardrail and prompt stop these requests first. They are the backstops if those fail. E022 (email with an invented discount) passed everywhere because the model refused to write the claim. The review path is exercised by `tests/test_output_guardrails.py`. None of the false-positive checks (E018–E020) was blocked, and no case regressed at any step. The full comparisons are in `reports/comparisons/`, and the underlying results are in `reports/results/`.
 
 `GITLOG.txt` is generated from repository history and limited to this project directory:
 
