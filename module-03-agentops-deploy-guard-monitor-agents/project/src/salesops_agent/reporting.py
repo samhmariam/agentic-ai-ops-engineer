@@ -58,7 +58,7 @@ def _p95(values: List[float]) -> float:
 
 
 def _run_section(runs: List[Dict[str, Any]]) -> List[str]:
-    lines = ["## Run telemetry", ""]
+    lines = ["## Run telemetry (this experiment, all logged runs)", ""]
     if not runs:
         return lines + ["No runs logged yet.", ""]
     latencies = [r["latency_s"] for r in runs]
@@ -117,7 +117,8 @@ def _eval_section(ev: Optional[Dict[str, Any]]) -> List[str]:
 def build_report(cfg: dict[str, Any]) -> Path:
     reports_dir = cfg["paths"]["reports_dir"]
     reports_dir.mkdir(parents=True, exist_ok=True)
-    runs = load_run_events(cfg["paths"]["logs_dir"] / cfg["logging"]["file"])
+    runs = [r for r in load_run_events(cfg["paths"]["logs_dir"] / cfg["logging"]["file"])
+            if r.get("experiment") == cfg["experiment"]["name"]]
     now = datetime.now(timezone.utc)
     ev = latest_eval(reports_dir, experiment=cfg["experiment"]["name"])
 

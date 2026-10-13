@@ -96,7 +96,7 @@ def run_question(
         trace_path=trace_path,
     )
     manifest = agent.manifest
-    log_event(logger, "run_completed", source=source,
+    log_event(logger, "run_completed", source=source, experiment=manifest["experiment"],
               agent_version=manifest["agent_version"], prompt_version=manifest["prompt_version"],
               model=manifest["model"], git_commit=manifest["git"]["commit"],
               **{k: v for k, v in result.to_dict().items() if k not in ("question", "answer")})
