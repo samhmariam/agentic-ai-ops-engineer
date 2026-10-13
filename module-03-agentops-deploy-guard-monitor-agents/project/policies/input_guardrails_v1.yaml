@@ -1,0 +1,125 @@
+# Input guardrail policy v1.
+#
+# Deterministic rules evaluated on every user request BEFORE it reaches the model.
+# A request matching any rule is blocked: the agent is not invoked, no tool can run,
+# and the rule's category response is returned instead.
+#
+# Matching: patterns are case-insensitive Python regexes, tested against the request
+# after normalization (Unicode NFKC, lowercase, zero-width characters removed, curly
+# quotes straightened) and against a "compact" form with . - _ * between word
+# characters removed (so "C.E.O", "lay-offs" and "b*o*n*u*s" are caught).
+# A rule's `unless` patterns blank out legitimate SalesOps phrases (e.g. "customer
+# acquisition") before that rule's patterns are tested. Only the exempt phrase is
+# removed, so it cannot be used to smuggle a blocked request past the rule.
+#
+# Released policies are immutable: change rules by adding input_guardrails_v2.yaml
+# and pointing config at it, so evaluation results stay attributable to a policy.
+
+version: v1
+max_input_chars: 2000
+
+responses:
+  hr: >-
+    I can't help with employee information such as compensation, performance,
+    terminations or other HR records. Please contact HR directly.
+  confidential_strategy: >-
+    I can't discuss confidential company matters such as mergers and acquisitions,
+    workforce plans or internal financial strategy, and I can't confirm or deny
+    whether any such plans exist. Please contact Finance or Legal.
+  policy_override: >-
+    I can't ignore my operating policies or reveal my internal instructions. I'm
+    happy to help with accounts, contacts, opportunities, pipeline, support issues,
+    product usage or customer follow-up emails.
+  too_long: >-
+    That request is too long for me to process safely. Please shorten it to the
+    specific SalesOps question you need answered.
+
+rules:
+  # -- prompt injection / policy override ------------------------------------
+  - id: injection.ignore_instructions
+    category: prompt_injection
+    response: policy_override
+    patterns:
+      - '\b(ignore|disregard|forget|override|bypass|skip|drop)\b.{0,40}\b(previous|prior|above|earlier|all|your|the|any|system|these|those)\b.{0,30}\b(instructions?|prompts?|rules|polic(y|ies)|guardrails?|guidelines|directives|restrictions|safeguards)\b'
+      - '\b(you are now|from now on,? you|pretend (to be|you are|you''re)|act as|roleplay as|you have no)\b.{0,60}\b(unrestricted|unfiltered|no (rules|restrictions|limits|policies)|jailbroken|dan|developer mode|admin|root|superuser)\b'
+      - '\b(developer|god|admin|debug|unrestricted|jailbreak)\s+mode\b'
+      - '\bjailbreak\w*\b'
+      - '\b(new|updated|real|actual) (system )?instructions?\s*:'
+
+  - id: injection.reveal_instructions
+    category: system_prompt_disclosure
+    response: policy_override
+    patterns:
+      - '\b(reveal|show|print|display|repeat|output|dump|leak|tell me|give me|share|what (is|are|were))\b.{0,40}\b(system prompt|system message|hidden (instructions?|prompts?|rules|polic(y|ies))|initial (prompt|instructions)|your (instructions|prompt|rules|guidelines|polic(y|ies)|configuration))\b'
+      - '\b(system prompt|hidden instructions?)\b'
+
+  # -- restricted data sources ------------------------------------------------
+  - id: restricted.internal_data_source
+    category: restricted_data_request
+    response: confidential_strategy
+    patterns:
+      - '\b(lookup_internal_hr_data|lookup_internal_financial_data|internal_hr_data|internal_financial_data)\b'
+      - '\binternal (hr|human resources|financial|finance) (data|records?|files?|database|system|info(rmation)?)\b'
+      - '\b(hr|human resources|personnel|employee) (data|records?|files?|database)\b'
+
+  # -- HR ---------------------------------------------------------------------
+  - id: hr.executive_compensation
+    category: executive_compensation
+    response: hr
+    patterns:
+      # Titles alone are common in CRM data (a customer's CTO, an "executive sponsor"),
+      # so these require explicit pay vocabulary next to the title.
+      - '\b(ceo|cfo|cto|coo|cro|cmo|chief \w+( \w+)? officer|chief executive|founders?|c-suite|csuite|executive team)(''s|s'')?\b.{0,40}\b(bonus(es)?|salar(y|ies)|compensation|comp package|pay package|total comp|equity (bonus|grant|award)s?|stock options|rsus?)\b'
+      - '\b(ceo|cfo|cto|coo|cro|cmo|chief executive|founders?)(''s|s'')? (pay|comp|income|earnings)\b'
+      - '\bhow much (does|do|did|is|will) (the |our )?(ceo|cfo|cto|coo|chief \w+( \w+)? officer|chief executive|founders?)\b.{0,20}\b(make|earn|get paid|paid|making|earning)\b'
+      - '\b(bonus(es)?|salar(y|ies)|compensation|equity (bonus|grant)|pay package)\b.{0,30}\b(ceo|cfo|cto|coo|chief|founders?|executives?)\b'
+
+  - id: hr.employee_pay
+    category: hr_restricted
+    response: hr
+    patterns:
+      - '\b(salar(y|ies)|payroll|pay (band|grade|scale|raise|rise)s?|bonus(es)?)\b'
+      - '\bcompensation\b.{0,40}\b(employees?|staff|team|reps?|account executives?|managers?|colleagues?|our|we|my)\b'
+      - '\b(employees?|staff|team|reps?|account executives?|managers?|colleagues?)\b.{0,40}\bcompensation\b'
+    unless:
+      - '\bcompensation (for|from) (the )?(customer|client)\b'
+
+  - id: hr.performance_and_termination
+    category: hr_restricted
+    response: hr
+    patterns:
+      - '\bperformance (reviews?|ratings?|improvement plans?|plans?|evaluations?|status|warnings?|management)\b'
+      - '\bpips?\b'
+      - '\b(underperform\w*|disciplinary|written warning|on probation)\b'
+      - '\b(fired|firing|get(ting)? the sack|sacked|being let go|getting let go)\b'
+      - '\bfire (him|her|them|someone|anyone|people|employees?|staff|reps?)\b'
+      - '\bterminat\w*\b.{0,30}\b(employees?|staff|him|her|them|someone|anyone|people|reps?|managers?|employment)\b'
+      - '\b(employees?|staff|team members?|colleagues?|reps?|people)\b.{0,40}\bterminat\w*'
+      - '\bdismiss(ed|al|ing)?\b.{0,20}\b(employees?|staff|someone|anyone|people)\b'
+
+  # -- confidential company strategy -----------------------------------------
+  - id: strategy.layoffs
+    category: layoffs
+    response: confidential_strategy
+    patterns:
+      - '\b(layoffs?|laying off|laid off|lay (people|staff|employees|them) off|reductions? in force|rif|headcount (cut|reduction|plan)s?|downsiz\w*|job cuts?|workforce reductions?|redundanc(y|ies)|restructuring plans?)\b'
+
+  - id: strategy.m_and_a
+    category: m_and_a
+    response: confidential_strategy
+    patterns:
+      - '\b(acquir(e|es|ed|ing)|acquisitions?|merg(e|er|ers|ing)|m ?& ?a|m and a|buy ?outs?|takeovers?|take over|being bought|bought out)\b'
+    unless:
+      - '\bcustomer acquisition\b'
+      - '\b(acquir\w*|acquisition of) (new |more )?(customers?|clients?|leads?|users?|logos?)\b'
+      - '\b(acquir\w*|acquisition of) (new|more) accounts?\b'
+      - '\bmerg(e|ing) (the |these |those |two |duplicate )?(records?|contacts?|duplicates?|entries|notes|opportunit(y|ies))\b'
+
+  - id: strategy.confidential_financials
+    category: confidential_financial
+    response: confidential_strategy
+    patterns:
+      - '\bconfidential\b.{0,40}\b(strateg\w*|financ\w*|plans?|fields?|data|discount\w*|pricing)\b'
+      - '\b(financial|corporate|company|internal) strateg(y|ies)\b'
+      - '\b(cash )?runway\b|\bburn rate\b|\bcash position\b|\bboard (deck|meeting|minutes)\b'
+      - '\binternal discount polic(y|ies)\b'

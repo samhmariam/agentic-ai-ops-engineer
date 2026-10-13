@@ -1,17 +1,18 @@
-# SalesOps Agent baseline configuration.
+# SalesOps Agent default (production) configuration.
 # All paths are resolved relative to this file, not the current working directory.
 # Validated on load against salesops_agent.config.AppConfig; unknown keys are errors.
-# Experiment configs in configs/ extend this file and override only what they change.
+# Experiment configs in configs/ extend this file and override only what they change;
+# configs/baseline-v1.yaml reproduces the original notebook prototype for comparison.
 
 schema_version: 1
 
 experiment:
-  name: baseline-v1
-  description: Notebook prototype behaviour, refactored. Prompt v1, all tools at 1.0.0.
+  name: guarded-v3
+  description: Prompt v2, least-privilege tools, input guardrails (policy v1).
 
 agent:
   name: SalesOps Agent
-  version: "0.1.0"
+  version: "0.3.0"
 
 model:
   name: openai:gpt-4o-mini   # provider:model, passed to init_chat_model
@@ -19,21 +20,25 @@ model:
 
 prompt:
   registry: prompts/registry.yaml
-  version: v1
+  version: v2
 
 # Tools exposed to the agent, each pinned to a version from the tool registry
-# (salesops_agent.tools). The baseline mirrors the notebook prototype, including
-# the restricted HR/financial tools and send_email.
+# (salesops_agent.tools). Least privilege: the restricted HR/financial tools and
+# send_email are not exposed (see configs/baseline-v1.yaml for the prototype set).
 tools:
   enabled:
     lookup_account: "1.0.0"
     lookup_account_context: "1.0.0"
-    list_open_opportunities: "1.0.0"
+    list_open_opportunities: "1.1.0"
     summarize_pipeline: "1.0.0"
-    lookup_internal_hr_data: "1.0.0"
-    lookup_internal_financial_data: "1.0.0"
     draft_email: "1.0.0"
-    send_email: "1.0.0"
+
+# Runtime controls. The input guardrail runs before the model sees a request;
+# a blocked request is answered from the policy and never reaches the agent.
+guardrails:
+  input:
+    enabled: true
+    policy: policies/input_guardrails_v1.yaml
 
 paths:
   data_dir: data

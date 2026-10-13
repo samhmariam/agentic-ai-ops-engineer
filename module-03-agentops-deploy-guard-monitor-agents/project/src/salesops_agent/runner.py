@@ -4,14 +4,19 @@
 gets the same treatment: a run_id, a local trace file, a `run_started` log line
 carrying the full version manifest, and a `run_completed` log line with latency,
 tokens, cost and tools called.
+
+Runtime controls run here, outside the model: the input guardrail checks the
+request first, and a blocked request is answered from the policy without invoking
+the agent graph at all (no model call, no tool call).
 """
 
 from __future__ import annotations
 
+import logging
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from salesops_agent.agent import SalesOpsAgent, build_agent
 from salesops_agent.config import ensure_output_dirs, model_pricing
@@ -32,6 +37,11 @@ class RunResult:
     cost_usd: float
     tools_called: List[str] = field(default_factory=list)
     trace_path: Optional[str] = None
+    guardrail: Optional[Dict[str, Any]] = None   # blocking decision, if a guardrail fired
+
+    @property
+    def blocked(self) -> bool:
+        return bool(self.guardrail and not self.guardrail["allowed"])
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -53,16 +63,25 @@ def run_question(
 
     log_event(logger, "run_started", run_id=run_id, source=source, versions=agent.manifest)
 
-    answer, error = "", None
+    answer, error, guardrail = "", None, None
     t0 = time.perf_counter()
-    try:
-        result = agent.graph.invoke(
-            {"messages": [{"role": "user", "content": question}]},
-            config={"callbacks": [recorder], "run_name": "salesops_agent", "metadata": {"run_id": run_id}},
-        )
-        answer = result["messages"][-1].content
-    except Exception as exc:  # surface failures as data, not crashes
-        error = f"{type(exc).__name__}: {exc}"
+    if agent.input_guard is not None:
+        decision = agent.input_guard.check(question)
+        recorder.record_guardrail(decision.to_dict(), (time.perf_counter() - t0) * 1000)
+        if not decision.allowed:
+            guardrail = decision.to_dict()
+            answer = decision.response
+            log_event(logger, "guardrail_blocked", level=logging.WARNING, run_id=run_id, source=source,
+                      stage=decision.stage, rule_id=decision.rule_id, category=decision.category)
+    if guardrail is None:
+        try:
+            result = agent.graph.invoke(
+                {"messages": [{"role": "user", "content": question}]},
+                config={"callbacks": [recorder], "run_name": "salesops_agent", "metadata": {"run_id": run_id}},
+            )
+            answer = result["messages"][-1].content
+        except Exception as exc:  # surface failures as data, not crashes
+            error = f"{type(exc).__name__}: {exc}"
     latency = round(time.perf_counter() - t0, 3)
 
     usage = recorder.token_usage
@@ -80,6 +99,7 @@ def run_question(
             error=error,
             latency_s=latency,
             token_usage=usage,
+            guardrail=guardrail,
         ))
 
     result = RunResult(
@@ -94,6 +114,7 @@ def run_question(
         cost_usd=round(cost, 6),
         tools_called=recorder.tools_called,
         trace_path=trace_path,
+        guardrail=guardrail,
     )
     manifest = agent.manifest
     log_event(logger, "run_completed", source=source, experiment=manifest["experiment"],

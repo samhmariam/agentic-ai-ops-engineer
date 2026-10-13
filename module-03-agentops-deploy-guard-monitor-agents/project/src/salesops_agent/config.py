@@ -90,6 +90,15 @@ class TracingSection(_Section):
     max_payload_chars: int = Field(default=2000, ge=100)
 
 
+class InputGuardrailSection(_Section):
+    enabled: bool
+    policy: Path
+
+
+class GuardrailsSection(_Section):
+    input: InputGuardrailSection
+
+
 class Price(_Section):
     input: float = Field(ge=0.0)
     output: float = Field(ge=0.0)
@@ -103,6 +112,7 @@ class AppConfig(_Section):
     prompt: PromptSection
     tools: ToolsSection
     paths: PathsSection
+    guardrails: GuardrailsSection
     logging: LoggingSection
     tracing: TracingSection = TracingSection()
     pricing: Dict[str, Price] = {}
@@ -125,13 +135,20 @@ def deep_merge(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
     return merged
 
 
+# File references outside `paths` that are resolved relative to the declaring file.
+_PATH_FIELDS = [("prompt", "registry"), ("guardrails", "input", "policy")]
+
+
 def _resolve_relative_paths(raw: Dict[str, Any], base_dir: Path) -> None:
     for key, value in (raw.get("paths") or {}).items():
         if value is not None:
             raw["paths"][key] = str(base_dir / value)
-    prompt = raw.get("prompt") or {}
-    if prompt.get("registry") is not None:
-        prompt["registry"] = str(base_dir / prompt["registry"])
+    for *parents, leaf in _PATH_FIELDS:
+        section = raw
+        for key in parents:
+            section = section.get(key) if isinstance(section, dict) else None
+        if isinstance(section, dict) and section.get(leaf) is not None:
+            section[leaf] = str(base_dir / section[leaf])
 
 
 def _load_raw(path: Path, chain: List[Path]) -> Dict[str, Any]:

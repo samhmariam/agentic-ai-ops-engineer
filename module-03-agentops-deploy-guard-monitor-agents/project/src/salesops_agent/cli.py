@@ -72,11 +72,15 @@ def ask(question, config_path, as_json):
         raise click.ClickException(f"Run {result.run_id} failed: {result.error} (trace: {result.trace_path})")
     if not as_json:
         log_path = cfg["paths"]["logs_dir"] / cfg["logging"]["file"]
+        guard_line = ""
+        if result.blocked:
+            g = result.guardrail
+            guard_line = f"[input guardrail: blocked by {g['rule_id']} ({g['category']}); agent not invoked]\n"
         click.echo(
             f"\n[run {result.run_id} | {cfg['experiment']['name']} | {result.latency_s:.1f}s | "
             f"{result.input_tokens}+{result.output_tokens} tokens | "
             f"tools: {', '.join(result.tools_called) or 'none'}]\n"
-            f"[log: {log_path}]\n[trace: {result.trace_path}]",
+            f"{guard_line}[log: {log_path}]\n[trace: {result.trace_path}]",
             err=True,
         )
 

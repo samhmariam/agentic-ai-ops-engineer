@@ -1,0 +1,25 @@
+# Experiment: the original notebook prototype, refactored. Prompt v1, every tool at
+# 1.0.0 including the restricted HR/financial tools and send_email, and no runtime
+# controls. Kept as the "before" reference for evaluation and comparison.
+extends: ../config.yaml
+
+experiment:
+  name: baseline-v1
+  description: Notebook prototype behaviour, refactored. Prompt v1, all tools at 1.0.0, no guardrails.
+
+agent:
+  version: "0.1.0"
+
+prompt:
+  version: v1
+
+tools:
+  enabled:
+    list_open_opportunities: "1.0.0"
+    lookup_internal_hr_data: "1.0.0"
+    lookup_internal_financial_data: "1.0.0"
+    send_email: "1.0.0"
+
+guardrails:
+  input:
+    enabled: false

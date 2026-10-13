@@ -26,6 +26,12 @@ def cfg():
 
 
 @pytest.fixture(scope="module")
+def baseline_cfg():
+    """The prototype snapshot: prompt v1, every tool including restricted ones, no guardrails."""
+    return load_config(PROJECT_ROOT / "configs" / "baseline-v1.yaml")
+
+
+@pytest.fixture(scope="module")
 def crm(cfg):
     return CRMData(cfg["paths"]["data_dir"])
 
@@ -74,6 +80,7 @@ def _raw_config_with_absolute_paths(cfg):
     raw = yaml.safe_load(open(cfg["config_path"], encoding="utf-8"))
     raw["paths"] = {k: str(v) for k, v in cfg["paths"].items()}
     raw["prompt"]["registry"] = str(cfg["prompt"]["registry"])
+    raw["guardrails"]["input"]["policy"] = str(cfg["guardrails"]["input"]["policy"])
     return raw
 
 
@@ -85,7 +92,7 @@ def _write_config(tmp_path, raw):
 
 def test_prompt_is_versioned(cfg):
     prompt = load_system_prompt(cfg)
-    assert prompt.version == "v1"
+    assert prompt.version == cfg["prompt"]["version"]
     assert "SalesOps Agent for UdaCenture" in prompt.text
     assert len(prompt.sha256) == 64
 
@@ -110,7 +117,7 @@ def with_prompt(cfg, registry, version=None):
 
 def test_edited_prompt_fails_hash_check(cfg, tmp_path):
     tmp_cfg = _copy_prompts(cfg, tmp_path)
-    (tmp_path / "system_prompt_v1.md").write_text("You are a different agent.", encoding="utf-8")
+    (tmp_path / load_system_prompt(cfg).path.name).write_text("You are a different agent.", encoding="utf-8")
     with pytest.raises(ValueError, match="immutable"):
         load_system_prompt(tmp_cfg)
 
@@ -183,10 +190,10 @@ def test_draft_and_send_email_use_configured_outbox(cfg, crm, tmp_path):
     assert json.loads(outbox.read_text())[0]["status"] == "sent"
 
 
-def test_every_tool_is_versioned_with_risk_metadata(cfg, crm, tmp_path):
-    tools = make_tools(crm, tmp_path / "o.json", cfg["tools"]["enabled"])
+def test_every_tool_is_versioned_with_risk_metadata(baseline_cfg, crm, tmp_path):
+    tools = make_tools(crm, tmp_path / "o.json", baseline_cfg["tools"]["enabled"])
     versions = tool_versions(tools)
-    assert set(versions) == set(cfg["tools"]["enabled"])
+    assert set(versions) == set(baseline_cfg["tools"]["enabled"])
     assert all(v == "1.0.0" for v in versions.values())
     by_name = {t.name: t.metadata for t in tools}
     assert by_name["send_email"]["side_effect"] is True
@@ -253,14 +260,14 @@ def test_report_builds_without_runs(cfg, tmp_path):
 def test_version_manifest_pins_everything(cfg):
     manifest = describe_versions(cfg)
     assert manifest["agent_version"] == cfg["agent"]["version"]
-    assert manifest["prompt_version"] == "v1"
+    assert manifest["prompt_version"] == cfg["prompt"]["version"]
     assert manifest["prompt_sha256"] == load_system_prompt(cfg).sha256
     assert manifest["config_sha256"] == cfg["config_sha256"]
     assert manifest["config_schema_version"] == 1
     assert manifest["data_schema_version"] == "1.0"
     assert set(manifest["tools"]) == set(cfg["tools"]["enabled"])
     assert set(manifest["git"]) == {"commit", "dirty"}
-    assert any(line.startswith("prompt v1 (") for line in short_manifest(manifest))
+    assert any(line.startswith(f"prompt {cfg['prompt']['version']} (") for line in short_manifest(manifest))
 
 
 def test_report_includes_eval_versions(cfg, tmp_path):
@@ -272,7 +279,7 @@ def test_report_includes_eval_versions(cfg, tmp_path):
     (reports / "eval_20260101T000000Z.json").write_text(json.dumps(ev), encoding="utf-8")
     text = build_report(with_overrides(cfg, logs_dir=tmp_path / "logs", reports_dir=reports)).read_text(encoding="utf-8")
     assert "## Versions under evaluation" in text
-    assert f"prompt v1 ({manifest['prompt_sha256'][:12]})" in text
+    assert f"prompt {manifest['prompt_version']} ({manifest['prompt_sha256'][:12]})" in text
 
 
 def test_extends_merges_overrides_and_removes(cfg, tmp_path):
@@ -284,16 +291,17 @@ def test_extends_merges_overrides_and_removes(cfg, tmp_path):
         "extends: ../config.yaml\n"
         "experiment: {name: exp-a}\n"
         "model: {temperature: 0.5}\n"
-        "tools:\n  enabled:\n    lookup_internal_hr_data: null\n    list_open_opportunities: '1.1.0'\n"
+        "tools:\n  enabled:\n    draft_email: null\n    send_email: '1.0.0'\n    list_open_opportunities: '1.0.0'\n"
         "paths: {reports_dir: out}\n",
         encoding="utf-8",
     )
     merged = load_config(child)
     assert merged["experiment"]["name"] == "exp-a"
     assert merged["model"] == {"name": cfg["model"]["name"], "temperature": 0.5}
-    assert "lookup_internal_hr_data" not in merged["tools"]["enabled"]
-    assert merged["tools"]["enabled"]["list_open_opportunities"] == "1.1.0"
-    assert merged["tools"]["enabled"]["send_email"] == "1.0.0"
+    assert "draft_email" not in merged["tools"]["enabled"]                     # removed
+    assert merged["tools"]["enabled"]["list_open_opportunities"] == "1.0.0"   # overridden
+    assert merged["tools"]["enabled"]["send_email"] == "1.0.0"                # added
+    assert merged["tools"]["enabled"]["lookup_account"] == "1.0.0"            # inherited
     # child-relative path resolves against the child file; inherited ones are untouched
     assert merged["paths"]["reports_dir"] == child_dir / "out"
     assert merged["paths"]["data_dir"] == cfg["paths"]["data_dir"]
@@ -346,8 +354,8 @@ def _eval(experiment, ts, outcomes, manifest=None, dataset_sha="abc"):
             "total": len(results), "passed": passed, "pass_rate": passed / len(results), "results": results}
 
 
-def test_compare_reports_fixes_regressions_and_version_changes(cfg):
-    base_m = describe_versions(cfg)
+def test_compare_reports_fixes_regressions_and_version_changes(baseline_cfg):
+    base_m = describe_versions(baseline_cfg)
     cand_m = copy.deepcopy(base_m)
     cand_m.update(experiment="cand", prompt_version="v2", prompt_sha256="f" * 64)
     cand_m["tools"]["list_open_opportunities"] = "1.1.0"

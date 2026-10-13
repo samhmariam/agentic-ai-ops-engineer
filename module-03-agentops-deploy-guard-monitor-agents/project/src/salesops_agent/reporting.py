@@ -82,6 +82,7 @@ def _run_section(runs: List[Dict[str, Any]]) -> List[str]:
         f"| Input tokens | {sum(r['input_tokens'] for r in runs):,} |",
         f"| Output tokens | {sum(r['output_tokens'] for r in runs):,} |",
         f"| Est. cost (USD) | {sum(r['cost_usd'] for r in runs):.4f} |",
+        f"| Blocked by input guardrail | {sum(1 for r in runs if _blocked_by(r))} |",
         "",
         "### Tool calls",
         "",
@@ -151,7 +152,7 @@ def build_report(cfg: dict[str, Any]) -> Path:
 EVALUATION_REPORT_STEM = "evaluation_report"
 CSV_COLUMNS = [
     "task_id", "task", "category", "status", "latency_s", "input_tokens",
-    "output_tokens", "cost_usd", "tools_called", "failure_reason",
+    "output_tokens", "cost_usd", "tools_called", "guardrail", "failure_reason",
 ]
 
 
@@ -169,9 +170,15 @@ def _task_rows(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "output_tokens": run["output_tokens"],
             "cost_usd": run["cost_usd"],
             "tools_called": " ".join(run["tools_called"]),
+            "guardrail": _blocked_by(run),
             "failure_reason": "; ".join(r["failures"]),
         })
     return rows
+
+
+def _blocked_by(run: Dict[str, Any]) -> str:
+    guard = run.get("guardrail")
+    return f"blocked: {guard['rule_id']}" if guard and not guard["allowed"] else ""
 
 
 def _md_cell(value: Any) -> str:
@@ -194,6 +201,7 @@ def _evaluation_markdown(summary: Dict[str, Any], rows: List[Dict[str, Any]]) ->
         "|---|---|",
         f"| Tasks passed | {summary['passed']}/{summary['total']} ({summary['pass_rate']:.0%}) |",
         f"| Tasks failed | {summary['total'] - summary['passed']} |",
+        f"| Blocked by input guardrail | {sum(1 for row in rows if row['guardrail'])} |",
         f"| Total latency (s) | {t['latency_s_total']:.2f} |",
         f"| Avg / p95 latency (s) | {t['latency_s_avg']:.2f} / {t['latency_s_p95']:.2f} |",
         f"| Tokens (input + output) | {t['input_tokens']:,} + {t['output_tokens']:,} |",
@@ -201,11 +209,11 @@ def _evaluation_markdown(summary: Dict[str, Any], rows: List[Dict[str, Any]]) ->
         "",
         "## Tasks",
         "",
-        "| ID | Task | Category | Result | Latency (s) | Est. cost (USD) | Failure reason |",
-        "|---|---|---|---|---|---|---|",
+        "| ID | Task | Category | Result | Latency (s) | Est. cost (USD) | Guardrail | Failure reason |",
+        "|---|---|---|---|---|---|---|---|",
         *[
             f"| {row['task_id']} | {_md_cell(row['task'])} | {row['category']} | {row['status']} | "
-            f"{row['latency_s']:.2f} | {row['cost_usd']:.6f} | {_md_cell(row['failure_reason'])} |"
+            f"{row['latency_s']:.2f} | {row['cost_usd']:.6f} | {row['guardrail']} | {_md_cell(row['failure_reason'])} |"
             for row in rows
         ],
         "",

@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from salesops_agent.reporting import experiment_of, latest_eval
+from salesops_agent.versions import _guard_text
 
 ABSENT = "—"
 
@@ -55,6 +56,7 @@ def flatten_versions(manifest: Dict[str, Any]) -> Dict[str, str]:
         "config": f"schema v{manifest.get('config_schema_version', '?')} ({manifest.get('config_sha256', '')[:12]})",
         "data schema": str(manifest.get("data_schema_version", ABSENT)),
         "model": f"{manifest.get('model', ABSENT)} @ t={manifest.get('temperature', '?')}",
+        "input guardrail": _guard_text((manifest.get("guardrails") or {}).get("input")),
         "git": (manifest.get("git") or {}).get("commit") or ABSENT,
     }
     for name, version in (manifest.get("tools") or {}).items():

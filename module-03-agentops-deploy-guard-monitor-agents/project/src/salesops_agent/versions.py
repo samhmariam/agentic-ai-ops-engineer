@@ -17,7 +17,7 @@ from salesops_agent.prompts import Prompt
 from salesops_agent.schemas import DATA_SCHEMA_VERSION
 
 # Paths whose uncommitted changes would make a run irreproducible from its commit.
-_VERSIONED_PATHS = ["src", "prompts", "config.yaml", "configs", "evaluation", "pyproject.toml", "uv.lock"]
+_VERSIONED_PATHS = ["src", "prompts", "policies", "config.yaml", "configs", "evaluation", "pyproject.toml", "uv.lock"]
 
 
 def _git(*args: str) -> Optional[str]:
@@ -38,7 +38,9 @@ def git_revision() -> Dict[str, Any]:
     return {"commit": commit, "dirty": bool(status)}
 
 
-def build_manifest(cfg: dict[str, Any], prompt: Prompt, tool_versions: Dict[str, str]) -> Dict[str, Any]:
+def build_manifest(
+    cfg: dict[str, Any], prompt: Prompt, tool_versions: Dict[str, str], guardrails: Dict[str, Any]
+) -> Dict[str, Any]:
     return {
         "experiment": cfg["experiment"]["name"],
         "agent_version": cfg["agent"]["version"],
@@ -50,6 +52,7 @@ def build_manifest(cfg: dict[str, Any], prompt: Prompt, tool_versions: Dict[str,
         "model": cfg["model"]["name"],
         "temperature": cfg["model"]["temperature"],
         "tools": tool_versions,
+        "guardrails": guardrails,
         "git": git_revision(),
     }
 
@@ -66,5 +69,14 @@ def short_manifest(manifest: Dict[str, Any]) -> List[str]:
         f"data schema {manifest['data_schema_version']}",
         f"model {manifest['model']} (temperature {manifest['temperature']})",
         "tools " + ", ".join(f"{name}@{ver}" for name, ver in manifest["tools"].items()),
+        "input guardrail " + _guard_text(manifest.get("guardrails", {}).get("input")),
         f"git {git_text}",
     ]
+
+
+def _guard_text(guard: Optional[Dict[str, Any]]) -> str:
+    if not guard:
+        return "n/a"
+    if not guard.get("enabled"):
+        return "disabled"
+    return f"policy {guard['policy_version']} ({guard['policy_sha256'][:12]}, {guard['rules']} rules)"

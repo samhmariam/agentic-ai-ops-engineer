@@ -1,6 +1,6 @@
-# Experiment: change only the prompt. Same tools and versions as the baseline,
+# Experiment: change only the prompt. Same tools and versions as baseline-v1,
 # so any eval difference is attributable to prompt v2 alone.
-extends: ../config.yaml
+extends: baseline-v1.yaml
 
 experiment:
   name: prompt-v2
