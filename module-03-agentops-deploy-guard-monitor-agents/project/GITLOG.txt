@@ -1,0 +1,8 @@
+* be089e8 (HEAD -> main) Record v1 baseline evaluation with version manifest
+* 6afcacf Record a version manifest in logs, traces and eval results
+* a51a979 Refactor tools into typed, versioned tool specs with data schemas
+* f6d603f Validate config.yaml against a versioned schema
+* 669f1d6 Version prompts with a hash-verified prompt registry
+* 9b11d00 (origin/main, origin/HEAD) Refactor SalesOps prototype into reproducible Python project
+* 7367bed Refresh project starter and add OpenAI integration
+* 958136a Add AgentOps project starter scaffold
