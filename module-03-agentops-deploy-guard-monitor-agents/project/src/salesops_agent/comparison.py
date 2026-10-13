@@ -89,9 +89,9 @@ def _delta(metric: str, base: float, cand: float) -> str:
     diff = cand - base
     if metric == "pass rate":
         return f"{diff * 100:+.0f} pts"
-    if base:
-        return f"{diff:+,.4g} ({diff / base:+.0%})"
-    return f"{diff:+,.4g}"
+    sign = "+" if diff >= 0 else "-"
+    text = sign + _fmt(metric, abs(diff))
+    return f"{text} ({diff / base:+.0%})" if base else text
 
 
 def compare(base: Dict[str, Any], cand: Dict[str, Any]) -> Comparison:
