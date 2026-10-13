@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from salesops_agent.data import CRMData, load_json
 from salesops_agent.schemas import (
     AccountQuery,
+    AnalysisInput,
     DraftEmailInput,
     InternalDataQuery,
     NoArgs,
@@ -34,6 +35,7 @@ from salesops_agent.schemas import (
 
 if TYPE_CHECKING:
     from salesops_agent.guardrails.tool import ToolGuardrail
+    from salesops_agent.sandbox import Sandbox
 
 CLOSED_STAGES = {"Closed Won", "Closed Lost"}
 _OUTBOX_LOCK = threading.Lock()
@@ -62,7 +64,7 @@ class ToolSpec:
 ToolRegistry = Dict[str, Dict[str, ToolSpec]]   # name -> version -> spec
 
 
-def build_tool_specs(crm: CRMData, email_outbox: Path) -> ToolRegistry:
+def build_tool_specs(crm: CRMData, email_outbox: Path, sandbox: Optional["Sandbox"] = None) -> ToolRegistry:
     """Every version of every tool. Released versions are never edited: a behaviour
     or schema change is added as a new ToolSpec with a bumped version, and configs
     choose which version to run."""
@@ -144,6 +146,20 @@ def build_tool_specs(crm: CRMData, email_outbox: Path) -> ToolRegistry:
             "status": "drafted",
         }
 
+    def run_analysis(code: str) -> Dict[str, Any]:
+        if sandbox is None:
+            return {"status": "error", "error_type": "unavailable", "message": "the analysis sandbox is not configured"}
+        return sandbox.run(code)
+
+    analysis_description = (
+        "Run a short Python analysis over approved CRM data in an isolated sandbox, e.g. totals by stage, "
+        "counts, averages, rankings, or comparing health scores with renewal dates. `data` is a dict of "
+        "lists of records: " + (sandbox.schema_hint() if sandbox else "accounts, opportunities, ...") + ". "
+        "REFERENCE_DATE (YYYY-MM-DD) is the data snapshot date. Assign a small JSON-serializable answer "
+        "to `result`. Allowed imports: " + (", ".join(sandbox.policy.allowed_modules) if sandbox else "none")
+        + ". No files, network, dunder attributes, eval/exec/open, or internal HR/financial data."
+    )
+
     def send_email(to: str, subject: str, body: str) -> Dict[str, Any]:
         message = {"to": to, "subject": subject, "body": body, "status": "sent"}
         with _OUTBOX_LOCK:   # read-modify-write; parallel evaluation runs share one outbox
@@ -180,6 +196,8 @@ def build_tool_specs(crm: CRMData, email_outbox: Path) -> ToolRegistry:
         ToolSpec("draft_email", "1.0.0",
                  "Draft a follow-up email for an account's primary contact.",
                  DraftEmailInput, "crm", False, draft_email),
+        ToolSpec("run_analysis", "1.0.0", analysis_description,
+                 AnalysisInput, "crm", False, run_analysis),
         ToolSpec("send_email", "1.0.0",
                  "Fake-send an email by appending it to a local JSON outbox.",
                  SendEmailInput, "crm", True, send_email),
@@ -202,13 +220,17 @@ def to_langchain_tool(spec: ToolSpec, guard: Optional["ToolGuardrail"] = None) -
 
 
 def make_tools(
-    crm: CRMData, email_outbox: Path, enabled: Dict[str, str], guard: Optional["ToolGuardrail"] = None
+    crm: CRMData,
+    email_outbox: Path,
+    enabled: Dict[str, str],
+    guard: Optional["ToolGuardrail"] = None,
+    sandbox: Optional["Sandbox"] = None,
 ) -> List[BaseTool]:
     """Build the enabled tools at their pinned versions, in config order.
 
     Unknown tool names or versions are config errors; the message lists what exists.
     """
-    registry = build_tool_specs(crm, email_outbox)
+    registry = build_tool_specs(crm, email_outbox, sandbox)
     problems = []
     for name, version in enabled.items():
         if name not in registry:

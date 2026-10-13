@@ -13,6 +13,7 @@ agent:
 tools:
   enabled:
     send_email: null
+    run_analysis: null
 
 guardrails:
   tool:

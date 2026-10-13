@@ -153,6 +153,13 @@ class DraftEmailInput(AccountQuery):
     purpose: str = Field(min_length=1, max_length=500, description="What the follow-up is about.")
 
 
+class AnalysisInput(BaseModel):
+    code: str = Field(
+        min_length=1, max_length=4000,
+        description="Python snippet. Read the approved CRM datasets from `data`; assign the answer to `result`.",
+    )
+
+
 class SendEmailInput(BaseModel):
     to: str = Field(pattern=EMAIL_PATTERN, max_length=254, description="Recipient email address.")
     subject: str = Field(min_length=1, max_length=200)

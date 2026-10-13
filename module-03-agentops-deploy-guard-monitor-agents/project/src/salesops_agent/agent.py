@@ -15,6 +15,7 @@ from salesops_agent.guardrails import (
     load_input_guardrail, load_output_guardrail, load_tool_guardrail,
 )
 from salesops_agent.prompts import Prompt, load_system_prompt
+from salesops_agent.sandbox import load_sandbox
 from salesops_agent.tools import make_tools, tool_versions
 from salesops_agent.versions import build_manifest
 
@@ -41,7 +42,8 @@ def _load_components(cfg: dict[str, Any]) -> _Components:
     """Load prompt, tools (validating data) and guardrails, and compute the version manifest."""
     crm = CRMData(cfg["paths"]["data_dir"])
     tool_guard = load_tool_guardrail(cfg, crm)
-    tools = make_tools(crm, cfg["paths"]["email_outbox"], cfg["tools"]["enabled"], tool_guard)
+    sandbox = load_sandbox(cfg, crm) if "run_analysis" in cfg["tools"]["enabled"] else None
+    tools = make_tools(crm, cfg["paths"]["email_outbox"], cfg["tools"]["enabled"], tool_guard, sandbox)
     prompt = load_system_prompt(cfg)
     input_guard = load_input_guardrail(cfg)
     output_guard = load_output_guardrail(cfg, crm)
@@ -49,6 +51,7 @@ def _load_components(cfg: dict[str, Any]) -> _Components:
         "input": input_guard.describe() if input_guard else {"enabled": False},
         "tool": tool_guard.describe() if tool_guard else {"enabled": False},
         "output": output_guard.describe() if output_guard else {"enabled": False},
+        "sandbox": sandbox.describe() if sandbox else {"enabled": False},
     }
     manifest = build_manifest(cfg, prompt, tool_versions(tools), guardrails)
     return _Components(prompt, tools, input_guard, tool_guard, output_guard, manifest)

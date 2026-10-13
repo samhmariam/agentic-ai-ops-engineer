@@ -19,6 +19,7 @@ tools:
     lookup_internal_hr_data: "1.0.0"
     lookup_internal_financial_data: "1.0.0"
     send_email: "1.0.0"
+    run_analysis: null
 
 guardrails:
   input:

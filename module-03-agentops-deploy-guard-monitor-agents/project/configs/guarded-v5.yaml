@@ -1,0 +1,19 @@
+# Experiment: the previous default (agent 0.5.0). Prompt v2, least-privilege tools,
+# input + tool/action (policy v1) + output guardrails; no run_analysis sandbox tool.
+# Kept so earlier guarded-v5 results stay reproducible and comparable.
+extends: ../config.yaml
+
+experiment:
+  name: guarded-v5
+  description: Prompt v2, least-privilege tools, input + tool/action + output guardrails (v1 policies).
+
+agent:
+  version: "0.5.0"
+
+tools:
+  enabled:
+    run_analysis: null
+
+guardrails:
+  tool:
+    policy: ../policies/tool_guardrails_v1.yaml

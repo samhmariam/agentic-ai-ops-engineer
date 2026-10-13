@@ -1,0 +1,57 @@
+# Sandbox policy v1 for the run_analysis tool.
+#
+# The agent submits a short Python snippet. It is validated statically, then run in
+# a separate, isolated Python process with only the approved CRM datasets as input:
+#   - validation: allowlisted syntax only; no names/attributes starting with "_";
+#     no frame/code/generator internals; no str.format; imports from the allowlist
+#   - execution: `python -I -S -B` subprocess, empty temporary working directory,
+#     stripped environment (no API keys or proxies), restricted builtins (no eval,
+#     exec, open, getattr, __import__ ...), allowed modules exposed as proxies that
+#     contain no sub-modules, socket functions disabled
+#   - limits: wall-clock timeout; CPU and memory caps where the OS supports them
+#   - input: only the datasets/fields listed below; HR and financial data never enter
+#   - output: the snippet must assign `result`; returned as JSON, size-limited
+#
+# Released policies are immutable: add sandbox_v2.yaml to change limits or allowlists.
+
+version: v1
+
+limits:
+  timeout_s: 5            # wall clock; the process is killed when exceeded
+  cpu_s: 5                # RLIMIT_CPU (POSIX only)
+  memory_mb: 256          # RLIMIT_AS (POSIX only)
+  max_code_chars: 4000
+  max_result_chars: 8000  # JSON-encoded result
+  max_stdout_chars: 2000  # captured print() output (truncated beyond this)
+
+allowed_modules: [math, statistics, datetime, collections, itertools, functools, operator, re]
+
+allowed_builtins: [
+  abs, all, any, bool, dict, divmod, enumerate, filter, float, int, isinstance, len, list,
+  map, max, min, print, range, reversed, round, set, sorted, str, sum, tuple, zip,
+  ValueError, KeyError, TypeError, ZeroDivisionError, Exception,
+]
+
+# Rejected by the static validator even though they are not builtins we provide.
+forbidden_names: [
+  eval, exec, compile, open, input, breakpoint, help, exit, quit, globals, locals, vars,
+  getattr, setattr, delattr, hasattr, type, object, memoryview, bytearray, super,
+  classmethod, staticmethod, property, __import__,
+]
+forbidden_attribute_prefixes: ["_", "f_", "gi_", "co_", "cr_", "ag_", "tb_", "im_", "func_"]
+forbidden_attributes: [format, format_map, mro, load_module]
+
+# Snapshot date of the CRM data (day after the latest activity), exposed to the
+# snippet as REFERENCE_DATE so date-relative analysis is reproducible.
+reference_date: "2026-05-20"
+
+# Approved inputs: dataset -> fields copied into the sandbox ("*" = all fields).
+# Contacts are projected without names and email addresses. The internal HR and
+# financial files are not listed and can never be loaded.
+datasets:
+  accounts: ["*"]
+  opportunities: ["*"]
+  activities: ["*"]
+  support_tickets: ["*"]
+  product_usage: ["*"]
+  contacts: [contact_id, account_id, title, is_primary, relationship_status]

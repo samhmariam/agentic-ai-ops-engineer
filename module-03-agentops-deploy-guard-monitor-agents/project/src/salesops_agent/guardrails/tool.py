@@ -66,7 +66,7 @@ class _Strict(BaseModel):
 
 
 class ToolRule(_Strict):
-    scope: Literal["account", "pipeline", "restricted", "action"]
+    scope: Literal["account", "pipeline", "restricted", "action", "analysis"]
     authorized_roles: List[str] = []
     blocked_query_patterns: List[str] = []
     redact_fields: List[str] = []

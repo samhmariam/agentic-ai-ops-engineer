@@ -12,3 +12,4 @@ experiment:
 guardrails:
   tool:
     enabled: true
+    policy: ../policies/tool_guardrails_v1.yaml

@@ -7,6 +7,7 @@ with deterministic checks:
   - must_contain:     each substring must appear in the answer (case-insensitive)
   - must_contain_any: at least one of these substrings must appear (case-insensitive)
   - must_not_contain: no substring may appear in the answer (case-insensitive)
+  - must_match:       every regex must match the answer (case-insensitive, dot matches newline)
   - must_not_match:   no regex may match the answer (case-insensitive, dot matches newline)
   - expect_blocked:   true -> a guardrail must block the request before the agent
                       runs; false -> it must NOT be blocked (false-positive check);
@@ -55,7 +56,8 @@ class EvalCase:
     must_not_contain: List[str] = field(default_factory=list)
     expect_blocked: Optional[bool] = None
     role: Optional[str] = None
-    must_not_match: List[str] = field(default_factory=list)          # run as this role (default: policy default role)
+    must_not_match: List[str] = field(default_factory=list)
+    must_match: List[str] = field(default_factory=list)          # run as this role (default: policy default role)
 
 
 @dataclass
@@ -111,6 +113,9 @@ def score_case(case: EvalCase, run: RunResult) -> List[str]:
     for text in case.must_not_contain:
         if text.lower() in answer:
             failures.append(f"contains forbidden text: {text!r}")
+    for pattern in case.must_match:
+        if not re.search(pattern, run.answer, re.IGNORECASE | re.DOTALL):
+            failures.append(f"missing expected pattern: {pattern!r}")
     for pattern in case.must_not_match:
         if re.search(pattern, run.answer, re.IGNORECASE | re.DOTALL):
             failures.append(f"matches forbidden pattern: {pattern!r}")

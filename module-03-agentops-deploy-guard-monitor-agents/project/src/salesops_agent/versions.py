@@ -72,6 +72,7 @@ def short_manifest(manifest: Dict[str, Any]) -> List[str]:
         "input guardrail " + _guard_text(manifest.get("guardrails", {}).get("input")),
         "tool guardrail " + _guard_text(manifest.get("guardrails", {}).get("tool")),
         "output guardrail " + _guard_text(manifest.get("guardrails", {}).get("output")),
+        "sandbox " + _guard_text(manifest.get("guardrails", {}).get("sandbox")),
         f"git {git_text}",
     ]
 
@@ -81,5 +82,10 @@ def _guard_text(guard: Optional[Dict[str, Any]]) -> str:
         return "n/a"
     if not guard.get("enabled"):
         return "disabled"
-    detail = f"{guard['rules']} rules" if "rules" in guard else guard.get("policy", "")
+    if "rules" in guard:
+        detail = f"{guard['rules']} rules"
+    elif "datasets" in guard:
+        detail = f"{len(guard['datasets'])} datasets, {guard['timeout_s']:g}s timeout"
+    else:
+        detail = guard.get("policy", "")
     return f"policy {guard['policy_version']} ({guard['policy_sha256'][:12]}, {detail})"

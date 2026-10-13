@@ -427,3 +427,10 @@ def test_compare_shows_changed_failure_reasons_for_still_failing_cases():
     cand["results"][0]["failures"] = ["forbidden tool called: x"]
     row = compare(base, cand).case_rows[0]
     assert row[4] == "resolved: contains forbidden text: '2M'"
+
+
+def test_must_match_scoring():
+    case = EvalCase("X", "c", "q", must_match=[r"critical\D{0,15}7\b"])
+    ok = RunResult("r", "q", "Critical: 7, High: 8", True, None, 0, 0, 0, 0.0)
+    bad = RunResult("r", "q", "Critical: 17", True, None, 0, 0, 0, 0.0)
+    assert score_case(case, ok) == [] and score_case(case, bad)[0].startswith("missing expected pattern")

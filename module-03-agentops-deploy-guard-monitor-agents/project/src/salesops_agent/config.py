@@ -114,6 +114,11 @@ class GuardrailsSection(_Section):
     output: OutputGuardrailSection
 
 
+class SandboxSection(_Section):
+    enabled: bool = True
+    policy: Path
+
+
 class Price(_Section):
     input: float = Field(ge=0.0)
     output: float = Field(ge=0.0)
@@ -128,6 +133,7 @@ class AppConfig(_Section):
     tools: ToolsSection
     paths: PathsSection
     guardrails: GuardrailsSection
+    sandbox: SandboxSection
     logging: LoggingSection
     tracing: TracingSection = TracingSection()
     pricing: Dict[str, Price] = {}
@@ -156,6 +162,7 @@ _PATH_FIELDS = [
     ("guardrails", "input", "policy"),
     ("guardrails", "tool", "policy"),
     ("guardrails", "output", "policy"),
+    ("sandbox", "policy"),
 ]
 
 

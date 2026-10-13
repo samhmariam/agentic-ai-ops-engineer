@@ -10,6 +10,12 @@ experiment:
 agent:
   version: "0.4.0"
 
+tools:
+  enabled:
+    run_analysis: null
+
 guardrails:
+  tool:
+    policy: ../policies/tool_guardrails_v1.yaml
   output:
     enabled: false

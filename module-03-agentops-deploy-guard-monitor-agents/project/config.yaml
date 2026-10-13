@@ -7,12 +7,12 @@
 schema_version: 1
 
 experiment:
-  name: guarded-v5
-  description: Prompt v2, least-privilege tools, input + tool/action + output guardrails (v1 policies).
+  name: guarded-v6
+  description: guarded-v5 + run_analysis sandbox tool (sandbox policy v1, tool policy v2).
 
 agent:
   name: SalesOps Agent
-  version: "0.5.0"
+  version: "0.6.0"
 
 model:
   name: openai:gpt-4o-mini   # provider:model, passed to init_chat_model
@@ -36,6 +36,7 @@ tools:
     summarize_pipeline: "1.0.0"
     draft_email: "1.0.0"
     send_email: "1.0.0"
+    run_analysis: "1.0.0"     # sandboxed analysis over approved CRM data (see sandbox below)
 
 # Runtime controls, enforced in code around the model:
 #  - input: runs before the model sees a request; a blocked request is answered
@@ -52,7 +53,7 @@ guardrails:
     policy: policies/input_guardrails_v1.yaml
   tool:
     enabled: true
-    policy: policies/tool_guardrails_v1.yaml
+    policy: policies/tool_guardrails_v2.yaml
   output:
     enabled: true
     policy: policies/output_guardrails_v1.yaml
@@ -65,6 +66,12 @@ paths:
   reports_dir: reports
   eval_cases: evaluation/eval_cases.jsonl
   review_queue: review/review_queue.jsonl   # responses withheld for human review
+
+# Sandboxed code execution for run_analysis: isolated process, allowlisted syntax and
+# imports, approved CRM datasets only, time/size limits (policies/sandbox_v1.yaml).
+sandbox:
+  enabled: true
+  policy: policies/sandbox_v1.yaml
 
 logging:
   file: agent.jsonl   # inside paths.logs_dir
