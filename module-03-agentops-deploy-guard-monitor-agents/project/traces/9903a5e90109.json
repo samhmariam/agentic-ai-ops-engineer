@@ -1,0 +1,82 @@
+{
+  "run_id": "9903a5e90109",
+  "source": "eval:E019",
+  "versions": {
+    "experiment": "guarded-v3",
+    "agent_version": "0.3.0",
+    "config_schema_version": 1,
+    "config_sha256": "27971eda0c773719d4368cd8879fb74abf8d953d36d7a13fd7adad4e0e120014",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "6afad6f5cd8665526f0fc9b36cd8b79100304daa5db0466efff0273f9f9fa88a",
+        "rules": 9
+      },
+      "tool": {
+        "enabled": false
+      },
+      "output": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "b786f4d",
+      "dirty": false
+    }
+  },
+  "question": "What is our customer acquisition trend for EMEA accounts?",
+  "answer": "I currently do not have access to specific data regarding customer acquisition trends for EMEA accounts. You may want to consult your internal analytics or reporting tools for that information. If you have specific accounts or data points you'd like to analyze, please let me know!",
+  "error": null,
+  "latency_s": 1.677,
+  "token_usage": {
+    "input_tokens": 815,
+    "output_tokens": 52,
+    "total_tokens": 867
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "output_guardrail": null,
+  "spans": [
+    {
+      "span_id": "guardrail-input-0",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "input_guardrail",
+      "start_time": "2026-10-13T21:11:24.924909+00:00",
+      "end_time": "2026-10-13T21:11:24.924927+00:00",
+      "duration_ms": 0.539,
+      "status": "allowed"
+    },
+    {
+      "span_id": "01a1371b-1800-7fb3-8baa-21c26e02faad",
+      "parent_span_id": "01a1371b-17ff-7533-be3e-4f939cf1784c",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:11:24.928604+00:00",
+      "input_messages": 2,
+      "duration_ms": 1671.3,
+      "end_time": "2026-10-13T21:11:26.599933+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 815,
+        "output_tokens": 52,
+        "total_tokens": 867
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

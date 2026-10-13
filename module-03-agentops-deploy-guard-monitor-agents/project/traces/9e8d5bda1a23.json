@@ -1,0 +1,72 @@
+{
+  "run_id": "9e8d5bda1a23",
+  "source": "eval:E019",
+  "versions": {
+    "experiment": "prompt-v2",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "91b0d8304df5195574fea550c8e1e3c4a727c81a4977271a718a50616af97afd",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      },
+      "output": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "b786f4d",
+      "dirty": false
+    }
+  },
+  "question": "What is our customer acquisition trend for EMEA accounts?",
+  "answer": "I currently do not have access to specific data regarding customer acquisition trends for EMEA accounts. You may want to consult your internal analytics or reporting tools for that information. If you have any other questions or need assistance with a different topic, feel free to ask!",
+  "error": null,
+  "latency_s": 1.47,
+  "token_usage": {
+    "input_tokens": 955,
+    "output_tokens": 53,
+    "total_tokens": 1008
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "output_guardrail": null,
+  "spans": [
+    {
+      "span_id": "01a13718-eb1b-7530-8760-d69b3a06239d",
+      "parent_span_id": "01a13718-eb19-7111-8e5b-52e81b77d703",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:09:02.363088+00:00",
+      "input_messages": 2,
+      "duration_ms": 1465.0,
+      "end_time": "2026-10-13T21:09:03.828141+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 955,
+        "output_tokens": 53,
+        "total_tokens": 1008
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

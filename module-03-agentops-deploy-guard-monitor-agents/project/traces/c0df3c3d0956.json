@@ -1,0 +1,103 @@
+{
+  "run_id": "c0df3c3d0956",
+  "source": "eval:E002",
+  "versions": {
+    "experiment": "prompt-v2",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "91b0d8304df5195574fea550c8e1e3c4a727c81a4977271a718a50616af97afd",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      },
+      "output": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "b786f4d",
+      "dirty": false
+    }
+  },
+  "question": "What is happening with GlobalRetail Ltd's renewal opportunity?",
+  "answer": "The renewal opportunity for GlobalRetail Ltd is currently stalled. Here are the key details:\n\n- **Opportunity Name**: GlobalRetail Enterprise Renewal\n- **Stage**: Stalled\n- **Amount**: $1,200,000\n- **Close Date**: June 15, 2026\n- **Probability**: 25%\n- **Next Step**: Executive escalation required\n- **Notes**: The Chief Technology Officer (CTO) has been unresponsive to all outreach efforts, and there has been a significant increase in support tickets (up 5x). This has led to a deteriorating renewal health.\n\n### Additional Context:\n- **Account Status**: Customer\n- **Health Score**: 25\n- **Contract End Date**: June 15, 2026\n- **Support Tickets**: Multiple open tickets, including critical issues related to integration and billing.\n- **Product Usage Trend**: Downward trend in usage, with a feature adoption score of 31.\n\nThe situation indicates a high risk for the renewal, and immediate action may be required to engage the executive team.",
+  "error": null,
+  "latency_s": 4.427,
+  "token_usage": {
+    "input_tokens": 3139,
+    "output_tokens": 248,
+    "total_tokens": 3387
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "output_guardrail": null,
+  "spans": [
+    {
+      "span_id": "01a13718-01f0-7bb3-88d9-6a1742180dae",
+      "parent_span_id": "01a13718-01ee-70d1-a4bb-fee150a0d081",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:08:02.672068+00:00",
+      "input_messages": 2,
+      "duration_ms": 1116.6,
+      "end_time": "2026-10-13T21:08:03.788759+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 955,
+        "output_tokens": 20,
+        "total_tokens": 975
+      },
+      "requested_tool_calls": [
+        "lookup_account_context"
+      ]
+    },
+    {
+      "span_id": "01a13718-064f-7060-a5e3-3a409ef4ba7e",
+      "parent_span_id": "01a13718-064e-74f0-b61a-a65c249f5455",
+      "kind": "tool",
+      "name": "lookup_account_context",
+      "start_time": "2026-10-13T21:08:03.791570+00:00",
+      "input": "{\"account_name_or_id\": \"GlobalRetail Ltd\"}",
+      "duration_ms": 1.8,
+      "end_time": "2026-10-13T21:08:03.793450+00:00",
+      "status": "ok",
+      "output": "{\"account\": {\"account_id\": \"A002\", \"name\": \"GlobalRetail Ltd\", \"account_status\": \"customer\", \"segment\": \"Strategic\", \"industry\": \"Retail\", \"region\": \"EMEA\", \"account_owner\": \"Maya Chen\", \"health_score\": 25, \"contract_start\": \"2025-06-15\", \"contract_end\": \"2026-06-15\", \"arr_usd\": 1200000, \"created_at\": \"2024-08-11\", \"notes\": \"CTO has ignored recent outreach. Renewal health is deteriorating.\"}, \"contacts\": [{\"contact_id\": \"P0004\", \"account_id\": \"A002\", \"first_name\": \"Elena\", \"last_name\": \"Voss\", \"title\": \"Chief Technology Officer\", \"email\": \"elena.voss@globalretail.example.com\", \"is_primary\": true, \"relationship_status\": \"unresponsive\"}, {\"contact_id\": \"P0005\", \"account_id\": \"A002\", \"first_name\": \"Maya\", \"last_name\": \"Turner\", \"title\": \"Procurement Manager\", \"email\": \"maya.turner@globalretailltd.example.com\", \"is_primary\": false, \"relationship_status\": \"champion\"}], \"opportunities\": [{\"opportunity_id\": \"OPP0005\", \"account_id\": \"A002\", \"name\": \"GlobalRetail Ltd Initial Conversion\", \"type\": \"new_business\", \"stage\": \"Closed Won\", \"amount_usd\": 1200000, \"close_date\": \"2025-01-21\", \"probability\": 100, \"next_step\": \"Customer onboarded\", \"notes\": \"Initial opportunity successfully converted into a customer.\"}, {\"opportunity_id\": \"OPP0181\", \"account_id\": \"A002\", \"name\": \"GlobalRetail Enterprise Renewal\", \"type\": \"renewal\", \"stage\": \"Stalled\", \"amount_usd\": 1200000, \"close_date\": \"2026-06-15\", \"probability\": 25, \"next_step\": \"Executive escalation required\", \"notes\": \"CTO ignoring all emails. Support tickets up 5x. Massive renewal is stalled.\"}], \"activities\": [{\"activity_id\": \"ACT0172\", \"account_id\": \"A002\", \"date\": \"2026-03-26\", \"type\": \"meeting\", \"owner\": \"Priya Nair\", \"summary\": \"Stakeholder asked for customer references.\", \"sentiment\": \"positive\"}, {\"activity_id\": \"ACT0173\", \"account_id\": \"A002\", \"date\": \"2026-01-31\", \"type\": \"note\", \"owner\": \"Maya Chen\", \"summary\": \"Executive sponsor joined the meeting.\", \"sentiment\": \"neutral\"}, {\"activity_id\": \"ACT0174\", \"account_id\": \"A... [truncated 1915 chars]"
+    },
+    {
+      "span_id": "01a13718-0653-77d2-afa3-9d0e309c5853",
+      "parent_span_id": "01a13718-0652-72f3-85ea-b41574ed9559",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:08:03.795933+00:00",
+      "input_messages": 4,
+      "duration_ms": 3297.4,
+      "end_time": "2026-10-13T21:08:07.093376+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 2184,
+        "output_tokens": 228,
+        "total_tokens": 2412
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

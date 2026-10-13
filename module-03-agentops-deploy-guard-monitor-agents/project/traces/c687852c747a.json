@@ -1,0 +1,100 @@
+{
+  "run_id": "c687852c747a",
+  "source": "eval:E010",
+  "versions": {
+    "experiment": "candidate-v2",
+    "agent_version": "0.2.0",
+    "config_schema_version": 1,
+    "config_sha256": "5646f92d6b7d45f69a6e6982ee7607b48fb716929ddd0ad063eef12014ce97bf",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      },
+      "output": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "b786f4d",
+      "dirty": false
+    }
+  },
+  "question": "How many open opportunities are there in total across all stages?",
+  "answer": "There are a total of **133 open opportunities** across all stages, with a total value of **$26,525,000**.",
+  "error": null,
+  "latency_s": 2.339,
+  "token_usage": {
+    "input_tokens": 3931,
+    "output_tokens": 41,
+    "total_tokens": 3972
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "output_guardrail": null,
+  "spans": [
+    {
+      "span_id": "01a13719-bdf0-7cb2-9cd2-bdd4a846f407",
+      "parent_span_id": "01a13719-bdef-7322-83ef-54590e16e3ca",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:09:56.336674+00:00",
+      "input_messages": 2,
+      "duration_ms": 1061.3,
+      "end_time": "2026-10-13T21:09:57.398067+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 816,
+        "output_tokens": 12,
+        "total_tokens": 828
+      },
+      "requested_tool_calls": [
+        "list_open_opportunities"
+      ]
+    },
+    {
+      "span_id": "01a13719-c22f-7dc3-9ab8-b16668f79014",
+      "parent_span_id": "01a13719-c217-7391-a17c-116b0158c26a",
+      "kind": "tool",
+      "name": "list_open_opportunities",
+      "start_time": "2026-10-13T21:09:57.423508+00:00",
+      "input": "{}",
+      "duration_ms": 6.0,
+      "end_time": "2026-10-13T21:09:57.429515+00:00",
+      "status": "ok",
+      "output": "{\"stage_filter\": null, \"total_matching\": 133, \"total_amount_usd\": 26525000, \"returned\": 25, \"opportunities\": [{\"opportunity_id\": \"OPP0181\", \"account_id\": \"A002\", \"name\": \"GlobalRetail Enterprise Renewal\", \"type\": \"renewal\", \"stage\": \"Stalled\", \"amount_usd\": 1200000, \"close_date\": \"2026-06-15\", \"probability\": 25, \"next_step\": \"Executive escalation required\", \"notes\": \"CTO ignoring all emails. Support tickets up 5x. Massive renewal is stalled.\"}, {\"opportunity_id\": \"OPP0007\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2026-07-07\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0017\", \"account_id\": \"A006\", \"name\": \"Nimbus Health Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2027-01-08\", \"probability\": 25, \"next_step\": \"Schedule follow-up\", \"notes\": \"Commercial terms are under discussion.\"}, {\"opportunity_id\": \"OPP0040\", \"account_id\": \"A014\", \"name\": \"Falcon Bank Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Qualification\", \"amount_usd\": 600000, \"close_date\": \"2026-08-07\", \"probability\": 35, \"next_step\": \"Send proposal\", \"notes\": \"Stakeholder engagement is positive.\"}, {\"opportunity_id\": \"OPP0052\", \"account_id\": \"A018\", \"name\": \"Juno Technologies Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Qualification\", \"amount_usd\": 600000, \"close_date\": \"2026-07-08\", \"probability\": 35, \"next_step\": \"Resolve blockers\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0058\", \"account_id\": \"A020\", \"name\": \"Luma Analytics Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Discovery\", \"amount_usd\": 600000, \"close_date\": \"2026-12-23\", \"probability\": 20, \"next_step\": \"Schedule follow-up\", \"notes\": \"Decision process is unclear.\"}, {\"opportunity_id\": \"OPP0065\", \"account_id\": \"A022\", \"name\": \"NovaCore Digital Expansion Opportuni... [truncated 5353 chars]"
+    },
+    {
+      "span_id": "01a13719-c238-75b1-855d-419c965f3fb9",
+      "parent_span_id": "01a13719-c237-7561-b27a-b5fb46cf9a88",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:09:57.432995+00:00",
+      "input_messages": 4,
+      "duration_ms": 1237.7,
+      "end_time": "2026-10-13T21:09:58.670782+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 3115,
+        "output_tokens": 29,
+        "total_tokens": 3144
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

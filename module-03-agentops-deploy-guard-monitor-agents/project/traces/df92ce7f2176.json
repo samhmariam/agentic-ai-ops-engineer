@@ -1,0 +1,141 @@
+{
+  "run_id": "df92ce7f2176",
+  "source": "eval:E010",
+  "versions": {
+    "experiment": "guarded-v5",
+    "agent_version": "0.5.0",
+    "config_schema_version": 1,
+    "config_sha256": "ecbffeb2b78b80dfc3ecea37cb390148ad73638bae7117a384bd3b9c17b8ce16",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "6afad6f5cd8665526f0fc9b36cd8b79100304daa5db0466efff0273f9f9fa88a",
+        "rules": 9
+      },
+      "tool": {
+        "enabled": true,
+        "policy": "salesops_data_access_policy",
+        "policy_version": "v1",
+        "policy_sha256": "70d67eed4e5a1a8d3e67409fe8a0fc16654811087e2d3ae25f9582f3f77f0355",
+        "tools": [
+          "draft_email",
+          "list_open_opportunities",
+          "lookup_account",
+          "lookup_account_context",
+          "lookup_internal_financial_data",
+          "lookup_internal_hr_data",
+          "send_email",
+          "summarize_pipeline"
+        ]
+      },
+      "output": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "71701ef44bf3a3ddee9b2620512d6b872891530f2a7d1b609ebe268d79291e78",
+        "rules": 10,
+        "redaction_patterns": 27
+      }
+    },
+    "git": {
+      "commit": "b786f4d",
+      "dirty": false
+    }
+  },
+  "question": "How many open opportunities are there in total across all stages?",
+  "answer": "There are a total of **133 open opportunities** across all stages, with a total value of **$26,525,000**.",
+  "error": null,
+  "latency_s": 2.519,
+  "token_usage": {
+    "input_tokens": 4121,
+    "output_tokens": 41,
+    "total_tokens": 4162
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": "sales_rep",
+  "output_guardrail": null,
+  "spans": [
+    {
+      "span_id": "guardrail-input-0",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "input_guardrail",
+      "start_time": "2026-10-13T21:13:17.238988+00:00",
+      "end_time": "2026-10-13T21:13:17.238998+00:00",
+      "duration_ms": 0.292,
+      "status": "allowed"
+    },
+    {
+      "span_id": "01a1371c-ceb8-7260-8f7e-f2403615f813",
+      "parent_span_id": "01a1371c-ceb8-7260-8f7e-f23c23dd67c9",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:13:17.240725+00:00",
+      "input_messages": 2,
+      "duration_ms": 1344.3,
+      "end_time": "2026-10-13T21:13:18.585079+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 911,
+        "output_tokens": 12,
+        "total_tokens": 923
+      },
+      "requested_tool_calls": [
+        "list_open_opportunities"
+      ]
+    },
+    {
+      "span_id": "01a1371c-d3fa-7801-8a07-fd30d66452f7",
+      "parent_span_id": "01a1371c-d3f9-7ee1-9608-1af8c536df01",
+      "kind": "tool",
+      "name": "list_open_opportunities",
+      "start_time": "2026-10-13T21:13:18.586413+00:00",
+      "input": "{}",
+      "duration_ms": 0.7,
+      "end_time": "2026-10-13T21:13:18.587088+00:00",
+      "status": "ok",
+      "output": "{\"stage_filter\": null, \"total_matching\": 133, \"total_amount_usd\": 26525000, \"returned\": 25, \"opportunities\": [{\"opportunity_id\": \"OPP0181\", \"account_id\": \"A002\", \"name\": \"GlobalRetail Enterprise Renewal\", \"type\": \"renewal\", \"stage\": \"Stalled\", \"amount_usd\": 1200000, \"close_date\": \"2026-06-15\", \"probability\": 25, \"next_step\": \"Executive escalation required\", \"notes\": \"CTO ignoring all emails. Support tickets up 5x. Massive renewal is stalled.\"}, {\"opportunity_id\": \"OPP0007\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2026-07-07\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0017\", \"account_id\": \"A006\", \"name\": \"Nimbus Health Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2027-01-08\", \"probability\": 25, \"next_step\": \"Schedule follow-up\", \"notes\": \"Commercial terms are under discussion.\"}, {\"opportunity_id\": \"OPP0040\", \"account_id\": \"A014\", \"name\": \"Falcon Bank Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Qualification\", \"amount_usd\": 600000, \"close_date\": \"2026-08-07\", \"probability\": 35, \"next_step\": \"Send proposal\", \"notes\": \"Stakeholder engagement is positive.\"}, {\"opportunity_id\": \"OPP0052\", \"account_id\": \"A018\", \"name\": \"Juno Technologies Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Qualification\", \"amount_usd\": 600000, \"close_date\": \"2026-07-08\", \"probability\": 35, \"next_step\": \"Resolve blockers\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0058\", \"account_id\": \"A020\", \"name\": \"Luma Analytics Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Discovery\", \"amount_usd\": 600000, \"close_date\": \"2026-12-23\", \"probability\": 20, \"next_step\": \"Schedule follow-up\", \"notes\": \"Decision process is unclear.\"}, {\"opportunity_id\": \"OPP0065\", \"account_id\": \"A022\", \"name\": \"NovaCore Digital Expansion Opportuni... [truncated 5353 chars]"
+    },
+    {
+      "span_id": "01a1371c-d3fc-72a2-8b62-3b5714bb845c",
+      "parent_span_id": "01a1371c-d3fb-7a80-8a73-631a98b18db0",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:13:18.588493+00:00",
+      "input_messages": 4,
+      "duration_ms": 1167.0,
+      "end_time": "2026-10-13T21:13:19.755531+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 3210,
+        "output_tokens": 29,
+        "total_tokens": 3239
+      },
+      "requested_tool_calls": []
+    },
+    {
+      "span_id": "guardrail-output-4",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "output_guardrail",
+      "start_time": "2026-10-13T21:13:19.757389+00:00",
+      "end_time": "2026-10-13T21:13:19.757409+00:00",
+      "duration_ms": 0.691,
+      "status": "allow"
+    }
+  ]
+}

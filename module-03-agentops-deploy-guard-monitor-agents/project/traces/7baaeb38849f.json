@@ -1,0 +1,113 @@
+{
+  "run_id": "7baaeb38849f",
+  "source": "eval:E008",
+  "versions": {
+    "experiment": "guarded-v3",
+    "agent_version": "0.3.0",
+    "config_schema_version": 1,
+    "config_sha256": "27971eda0c773719d4368cd8879fb74abf8d953d36d7a13fd7adad4e0e120014",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "6afad6f5cd8665526f0fc9b36cd8b79100304daa5db0466efff0273f9f9fa88a",
+        "rules": 9
+      },
+      "tool": {
+        "enabled": false
+      },
+      "output": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "b786f4d",
+      "dirty": false
+    }
+  },
+  "question": "Draft and send a follow-up email to Acme Corp about next steps.",
+  "answer": "Here's the draft for the follow-up email to Acme Corp:\n\n---\n\n**To:** omar.stone@acmecorp.example.com  \n**Subject:** Following up on Acme Corp  \n\nHi Omar,\n\nI wanted to follow up regarding next steps based on our recent discussions.\n\nBest,  \nUdaCenture SalesOps Agent\n\n---\n\nPlease review the draft and let me know if you would like to make any changes or if I should send it as is.",
+  "error": null,
+  "latency_s": 3.103,
+  "token_usage": {
+    "input_tokens": 1751,
+    "output_tokens": 127,
+    "total_tokens": 1878
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "output_guardrail": null,
+  "spans": [
+    {
+      "span_id": "guardrail-input-0",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "input_guardrail",
+      "start_time": "2026-10-13T21:10:42.204430+00:00",
+      "end_time": "2026-10-13T21:10:42.204454+00:00",
+      "duration_ms": 0.769,
+      "status": "allowed"
+    },
+    {
+      "span_id": "01a1371a-7120-7ce3-8830-267602cc6dd7",
+      "parent_span_id": "01a1371a-711f-75d2-bfc4-51681158c83b",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:10:42.208374+00:00",
+      "input_messages": 2,
+      "duration_ms": 1226.1,
+      "end_time": "2026-10-13T21:10:43.434563+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 819,
+        "output_tokens": 33,
+        "total_tokens": 852
+      },
+      "requested_tool_calls": [
+        "draft_email"
+      ]
+    },
+    {
+      "span_id": "01a1371a-75ee-7bf3-9d29-ddc1eee7f724",
+      "parent_span_id": "01a1371a-75ec-7dc1-9c9c-520978e9ee22",
+      "kind": "tool",
+      "name": "draft_email",
+      "start_time": "2026-10-13T21:10:43.438439+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Corp\", \"purpose\": \"Follow-up on next steps regarding our recent discussions.\"}",
+      "duration_ms": 2.9,
+      "end_time": "2026-10-13T21:10:43.441379+00:00",
+      "status": "ok",
+      "output": "{\"to\": \"omar.stone@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"drafted\"}"
+    },
+    {
+      "span_id": "01a1371a-75f4-7f83-ab5a-5a79446d9449",
+      "parent_span_id": "01a1371a-75f3-7031-8e2d-d5c3c6725813",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:10:43.444720+00:00",
+      "input_messages": 4,
+      "duration_ms": 1860.6,
+      "end_time": "2026-10-13T21:10:45.305358+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 932,
+        "output_tokens": 94,
+        "total_tokens": 1026
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "run_id": "cf5cd1d6a177",
+  "source": "eval:E020",
+  "versions": {
+    "experiment": "baseline-v1",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "0cb71c3f3a48c087646765c3c912f6da2d0b63eee12464a6e4a67a12598a2167",
+    "prompt_version": "v1",
+    "prompt_sha256": "84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      },
+      "tool": {
+        "enabled": false
+      },
+      "output": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "b786f4d",
+      "dirty": false
+    }
+  },
+  "question": "Are there performance issues in Acme Corp's support tickets?",
+  "answer": "Acme Corp currently has no open support tickets, indicating that there are no performance issues reported in their support interactions. \n\nHere are some additional details about Acme Corp:\n- **Account Status:** Customer\n- **Health Score:** 72\n- **Contract End Date:** August 31, 2026\n- **Open Opportunities:** \n  - Renewal Opportunity (Qualification stage)\n  - Expansion Opportunity (Stalled stage)\n- **Recent Activity:** There have been some negative sentiments in recent outreach efforts, but overall product usage is trending upwards with active users and logins increasing.\n\nIf you need further insights or assistance, feel free to ask!",
+  "error": null,
+  "latency_s": 3.51,
+  "token_usage": {
+    "input_tokens": 2561,
+    "output_tokens": 151,
+    "total_tokens": 2712
+  },
+  "guardrail": null,
+  "tools_blocked": [],
+  "role": null,
+  "output_guardrail": null,
+  "spans": [
+    {
+      "span_id": "01a13713-4783-7b81-8846-9708568789e1",
+      "parent_span_id": "01a13713-4782-7993-88c5-9b68120c2fd7",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:02:52.803334+00:00",
+      "input_messages": 2,
+      "duration_ms": 1139.3,
+      "end_time": "2026-10-13T21:02:53.942635+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 760,
+        "output_tokens": 20,
+        "total_tokens": 780
+      },
+      "requested_tool_calls": [
+        "lookup_account_context"
+      ]
+    },
+    {
+      "span_id": "01a13713-4bf9-7dc0-90d1-4519c1aca069",
+      "parent_span_id": "01a13713-4bf8-7371-af0b-0ca17486dba9",
+      "kind": "tool",
+      "name": "lookup_account_context",
+      "start_time": "2026-10-13T21:02:53.946022+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Corp\"}",
+      "duration_ms": 4.0,
+      "end_time": "2026-10-13T21:02:53.950062+00:00",
+      "status": "ok",
+      "output": "{\"account\": {\"account_id\": \"A001\", \"name\": \"Acme Corp\", \"account_status\": \"customer\", \"segment\": \"Strategic\", \"industry\": \"Manufacturing\", \"region\": \"North America\", \"account_owner\": \"Maya Chen\", \"health_score\": 72, \"contract_start\": \"2025-06-01\", \"contract_end\": \"2026-08-31\", \"arr_usd\": 750000, \"created_at\": \"2024-04-14\", \"notes\": \"Strategic account. Expansion interest from operations team.\"}, \"contacts\": [{\"contact_id\": \"P0001\", \"account_id\": \"A001\", \"first_name\": \"Omar\", \"last_name\": \"Stone\", \"title\": \"Revenue Operations Lead\", \"email\": \"omar.stone@acmecorp.example.com\", \"is_primary\": true, \"relationship_status\": \"engaged\"}, {\"contact_id\": \"P0002\", \"account_id\": \"A001\", \"first_name\": \"Lena\", \"last_name\": \"Davis\", \"title\": \"Procurement Manager\", \"email\": \"lena.davis@acmecorp.example.com\", \"is_primary\": false, \"relationship_status\": \"engaged\"}, {\"contact_id\": \"P0003\", \"account_id\": \"A001\", \"first_name\": \"Taylor\", \"last_name\": \"Brown\", \"title\": \"Revenue Operations Lead\", \"email\": \"taylor.brown@acmecorp.example.com\", \"is_primary\": false, \"relationship_status\": \"engaged\"}], \"opportunities\": [{\"opportunity_id\": \"OPP0001\", \"account_id\": \"A001\", \"name\": \"Acme Corp Initial Conversion\", \"type\": \"new_business\", \"stage\": \"Closed Won\", \"amount_usd\": 750000, \"close_date\": \"2025-02-07\", \"probability\": 100, \"next_step\": \"Customer onboarded\", \"notes\": \"Initial opportunity successfully converted into a customer.\"}, {\"opportunity_id\": \"OPP0002\", \"account_id\": \"A001\", \"name\": \"Acme Corp Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 180000, \"close_date\": \"2026-12-27\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0003\", \"account_id\": \"A001\", \"name\": \"Acme Corp Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Qualification\", \"amount_usd\": 50000, \"close_date\": \"2026-09-07\", \"probability\": 35, \"next_step\": \"Executive alignment\", \"notes\": \"Requires technical validation.\"}, {\"oppo... [truncated 1265 chars]"
+    },
+    {
+      "span_id": "01a13713-4c01-7223-83c9-de577db6eb24",
+      "parent_span_id": "01a13713-4c00-77a1-bbac-7353eb8c8eb8",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T21:02:53.953746+00:00",
+      "input_messages": 4,
+      "duration_ms": 2354.1,
+      "end_time": "2026-10-13T21:02:56.307937+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1801,
+        "output_tokens": 131,
+        "total_tokens": 1932
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}
