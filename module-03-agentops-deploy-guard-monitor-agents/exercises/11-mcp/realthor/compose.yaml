@@ -1,0 +1,22 @@
+services:
+  # The MCP data service — a separate system RealThor consumes over the protocol.
+  mcp:
+    build: ../mcp
+    image: proptech-mcp:latest
+    ports:
+      - "8000:8000"
+    # Bind to 0.0.0.0 so the realthor container can reach it on the compose network.
+    command: ["serve", "--host", "0.0.0.0"]
+
+  # RealThor — the interactive agent, now an MCP client. Launch it with:
+  #   docker compose run --rm -it realthor
+  # It uses config.docker.yaml, which points at the mcp service (http://mcp:8000/mcp).
+  realthor:
+    build: .
+    image: realthor:latest
+    env_file: .env
+    depends_on:
+      - mcp
+    stdin_open: true
+    tty: true
+    command: ["--config", "config.docker.yaml"]

@@ -1,0 +1,12 @@
+mcp:
+  transport: http          # streamable HTTP; use "stdio" for subprocess launch
+  host: 127.0.0.1
+  port: 8000
+  allowed_hosts: ["*"]     # dev convenience: accept any Host header (e.g. the
+                           # `mcp` service name over the compose network). A
+                           # production server pins real hostnames + adds auth.
+
+paths:
+  demand_data: data/demand_signals.csv
+  supply_data: data/supply_snapshot.csv
+  velocity_data: data/listing_velocity.csv

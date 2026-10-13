@@ -1,0 +1,56 @@
+agent:
+  name: RealThor
+  version: "0.11.0"
+
+model:
+  name: gpt-4o-mini
+  temperature: 0.0
+
+sandbox:
+  timeout: 30
+
+hitl:
+  ibuyer_threshold: 500000
+
+debug:
+  state_db: state.db      # LangGraph checkpointer — agent state, keyed by thread_id
+
+tracing:
+  enabled: true
+
+mcp:
+  # RealThor's market-data tools are served by the MCP data service (the `mcp/`
+  # project). Start it with `uv run proptech-mcp serve`, then launch RealThor.
+  transport: streamable-http
+  url: http://localhost:8000/mcp
+  # stdio alternative — the client launches the sibling server as a subprocess
+  # (no port, self-contained). Uncomment to use instead of the URL above.
+  # transport: stdio
+  # command: uv
+  # args: ["--directory", "../mcp", "run", "proptech-mcp", "serve", "--transport", "stdio"]
+
+paths:
+  prompt: prompts/system_prompt_v11.md
+  app_db: realthor.db     # application state — users + sessions
+  analyst_prompt: prompts/analyst_prompt.md
+  demand_data: data/demand_signals.csv
+  supply_data: data/supply_snapshot.csv
+  neighborhood_data: data/neighborhood_profiles.csv
+  velocity_data: data/listing_velocity.csv
+  listings_data: data/listings.csv
+  supply_opportunities_data: data/supply_opportunities.csv
+  demand_leads_data: data/demand_leads.csv
+  sales_data: data/sales.csv
+  users_data: data/users.csv
+  channel_recommendations: data/channel_recommendations.jsonl
+
+logging:
+  log_dir: logs
+  reports_dir: reports
+  cost_per_1k_tokens_input: 0.00015
+  cost_per_1k_tokens_output: 0.00060
+
+evaluation:
+  default_sample: 10
+  distribution: even
+  seed: 42
