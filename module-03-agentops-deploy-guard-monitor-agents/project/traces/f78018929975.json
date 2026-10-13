@@ -1,0 +1,94 @@
+{
+  "run_id": "f78018929975",
+  "source": "eval:E004",
+  "versions": {
+    "experiment": "prompt-v2",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "5d27276ac360cd6194689dec149047ee15e807f0d4c2cabbc875201e6ac99fce",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0",
+      "send_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": false
+      }
+    },
+    "git": {
+      "commit": "f5c3eae",
+      "dirty": false
+    }
+  },
+  "question": "Look up the account Acme Crop.",
+  "answer": "The account details for Acme Corp are as follows:\n\n- **Account ID:** A001\n- **Account Status:** Customer\n- **Segment:** Strategic\n- **Industry:** Manufacturing\n- **Region:** North America\n- **Account Owner:** Maya Chen\n- **Health Score:** 72\n- **Contract Start Date:** June 1, 2025\n- **Contract End Date:** August 31, 2026\n- **Annual Recurring Revenue (ARR):** $750,000\n- **Created At:** April 14, 2024\n- **Notes:** Strategic account with expansion interest from the operations team.\n\nIf you need more information or specific details, let me know!",
+  "error": null,
+  "latency_s": 3.443,
+  "token_usage": {
+    "input_tokens": 2051,
+    "output_tokens": 164,
+    "total_tokens": 2215
+  },
+  "guardrail": null,
+  "spans": [
+    {
+      "span_id": "01a1361a-dfab-7751-befe-89cc3ad98d9d",
+      "parent_span_id": "01a1361a-dfa9-7872-9e9a-925d1ecb4cd2",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T16:31:33.291458+00:00",
+      "input_messages": 2,
+      "duration_ms": 1174.1,
+      "end_time": "2026-10-13T16:31:34.465552+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 952,
+        "output_tokens": 19,
+        "total_tokens": 971
+      },
+      "requested_tool_calls": [
+        "lookup_account"
+      ]
+    },
+    {
+      "span_id": "01a1361a-e445-7cd2-b031-5bb4d8fed3c5",
+      "parent_span_id": "01a1361a-e443-76d0-8e69-4aa5ad22aea7",
+      "kind": "tool",
+      "name": "lookup_account",
+      "start_time": "2026-10-13T16:31:34.469680+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Crop\"}",
+      "duration_ms": 2.5,
+      "end_time": "2026-10-13T16:31:34.472265+00:00",
+      "status": "ok",
+      "output": "{\"account_id\": \"A001\", \"name\": \"Acme Corp\", \"account_status\": \"customer\", \"segment\": \"Strategic\", \"industry\": \"Manufacturing\", \"region\": \"North America\", \"account_owner\": \"Maya Chen\", \"health_score\": 72, \"contract_start\": \"2025-06-01\", \"contract_end\": \"2026-08-31\", \"arr_usd\": 750000, \"created_at\": \"2024-04-14\", \"notes\": \"Strategic account. Expansion interest from operations team.\"}"
+    },
+    {
+      "span_id": "01a1361a-e44c-7bd0-9a13-3937de77a068",
+      "parent_span_id": "01a1361a-e44a-7672-ba26-9df0ae53b97b",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T16:31:34.476383+00:00",
+      "input_messages": 4,
+      "duration_ms": 2249.5,
+      "end_time": "2026-10-13T16:31:36.725930+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1099,
+        "output_tokens": 145,
+        "total_tokens": 1244
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

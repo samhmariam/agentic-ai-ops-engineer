@@ -1,0 +1,104 @@
+{
+  "run_id": "f96dbc7309c8",
+  "source": "eval:E004",
+  "versions": {
+    "experiment": "guarded-v3",
+    "agent_version": "0.3.0",
+    "config_schema_version": 1,
+    "config_sha256": "2e411c00ba20a57333ccf27382dbdac537cb2d4e119eedff2cb5aa6f54e4758c",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "6afad6f5cd8665526f0fc9b36cd8b79100304daa5db0466efff0273f9f9fa88a",
+        "rules": 9
+      }
+    },
+    "git": {
+      "commit": "f5c3eae",
+      "dirty": false
+    }
+  },
+  "question": "Look up the account Acme Crop.",
+  "answer": "I found the account details for Acme Corp:\n\n- **Account ID:** A001\n- **Account Status:** Customer\n- **Segment:** Strategic\n- **Industry:** Manufacturing\n- **Region:** North America\n- **Account Owner:** Maya Chen\n- **Health Score:** 72\n- **Contract Start Date:** June 1, 2025\n- **Contract End Date:** August 31, 2026\n- **Annual Recurring Revenue (ARR):** $750,000\n- **Created At:** April 14, 2024\n- **Notes:** Strategic account. Expansion interest from operations team.\n\nIf you need more information or specific details, let me know!",
+  "error": null,
+  "latency_s": 3.762,
+  "token_usage": {
+    "input_tokens": 1771,
+    "output_tokens": 162,
+    "total_tokens": 1933
+  },
+  "guardrail": null,
+  "spans": [
+    {
+      "span_id": "guardrail-input",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "input_guardrail",
+      "start_time": "2026-10-13T16:33:49.859267+00:00",
+      "end_time": "2026-10-13T16:33:49.859289+00:00",
+      "duration_ms": 0.991,
+      "status": "allowed"
+    },
+    {
+      "span_id": "01a1361c-f528-76f3-8e29-2642f05a7542",
+      "parent_span_id": "01a1361c-f526-71d2-aa25-58344b5033ff",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T16:33:49.864397+00:00",
+      "input_messages": 2,
+      "duration_ms": 1373.8,
+      "end_time": "2026-10-13T16:33:51.238262+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 812,
+        "output_tokens": 19,
+        "total_tokens": 831
+      },
+      "requested_tool_calls": [
+        "lookup_account"
+      ]
+    },
+    {
+      "span_id": "01a1361c-fa95-7783-8af2-a7f0a2cbbb88",
+      "parent_span_id": "01a1361c-fa87-76d3-8760-98074c300399",
+      "kind": "tool",
+      "name": "lookup_account",
+      "start_time": "2026-10-13T16:33:51.255858+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Crop\"}",
+      "duration_ms": 20.0,
+      "end_time": "2026-10-13T16:33:51.275943+00:00",
+      "status": "ok",
+      "output": "{\"account_id\": \"A001\", \"name\": \"Acme Corp\", \"account_status\": \"customer\", \"segment\": \"Strategic\", \"industry\": \"Manufacturing\", \"region\": \"North America\", \"account_owner\": \"Maya Chen\", \"health_score\": 72, \"contract_start\": \"2025-06-01\", \"contract_end\": \"2026-08-31\", \"arr_usd\": 750000, \"created_at\": \"2024-04-14\", \"notes\": \"Strategic account. Expansion interest from operations team.\"}"
+    },
+    {
+      "span_id": "01a1361c-faba-7c81-a6fa-7206e88d8265",
+      "parent_span_id": "01a1361c-fab5-7ea2-936d-72fd89dec041",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T16:33:51.290754+00:00",
+      "input_messages": 4,
+      "duration_ms": 2328.5,
+      "end_time": "2026-10-13T16:33:53.619286+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 959,
+        "output_tokens": 143,
+        "total_tokens": 1102
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}
