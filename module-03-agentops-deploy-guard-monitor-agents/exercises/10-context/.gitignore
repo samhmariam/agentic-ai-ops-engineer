@@ -1,0 +1,13 @@
+# Runtime artifacts (anchored to project root so tests/fixtures/state.db is kept)
+/state.db
+/realthor.db
+/.realthor_session
+/logs/runs.jsonl
+
+.venv
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.env
+/langfuse/
