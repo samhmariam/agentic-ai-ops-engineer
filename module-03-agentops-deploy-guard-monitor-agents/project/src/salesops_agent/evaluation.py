@@ -103,10 +103,7 @@ def run_evaluation(
     passed = sum(r.passed for r in results)
     summary = {
         "timestamp": stamp,
-        "agent_version": cfg["agent"]["version"],
-        "prompt_version": cfg["prompt"]["version"],
-        "model": cfg["model"]["name"],
-        "tools_enabled": cfg["tools"]["enabled"],
+        "versions": agent.manifest,
         "total": len(results),
         "passed": passed,
         "pass_rate": round(passed / len(results), 3) if results else 0.0,

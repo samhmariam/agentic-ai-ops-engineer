@@ -7,6 +7,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
+from salesops_agent.agent import describe_versions
 from salesops_agent.config import ConfigError, load_config, with_overrides
 from salesops_agent.data import CRMData, normalize_lookup_text
 from salesops_agent.evaluation import EvalCase, load_cases, score_case
@@ -15,6 +16,7 @@ from salesops_agent.reporting import build_report
 from salesops_agent.runner import RunResult
 from salesops_agent.schemas import DataValidationError
 from salesops_agent.tools import make_tools, tool_versions
+from salesops_agent.versions import short_manifest
 
 
 @pytest.fixture(scope="module")
@@ -222,3 +224,28 @@ def test_report_builds_without_runs(cfg, tmp_path):
     out = build_report(with_overrides(cfg, logs_dir=tmp_path / "logs", reports_dir=tmp_path / "reports"))
     text = out.read_text(encoding="utf-8")
     assert "No runs logged yet" in text and "No evaluation results" in text
+
+
+def test_version_manifest_pins_everything(cfg):
+    manifest = describe_versions(cfg)
+    assert manifest["agent_version"] == cfg["agent"]["version"]
+    assert manifest["prompt_version"] == "v1"
+    assert manifest["prompt_sha256"] == load_system_prompt(cfg).sha256
+    assert manifest["config_sha256"] == cfg["config_sha256"]
+    assert manifest["config_schema_version"] == 1
+    assert manifest["data_schema_version"] == "1.0"
+    assert set(manifest["tools"]) == set(cfg["tools"]["enabled"])
+    assert set(manifest["git"]) == {"commit", "dirty"}
+    assert any(line.startswith("prompt v1 (") for line in short_manifest(manifest))
+
+
+def test_report_includes_eval_versions(cfg, tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    manifest = describe_versions(cfg)
+    ev = {"timestamp": "20260101T000000Z", "versions": manifest, "total": 1, "passed": 1,
+          "pass_rate": 1.0, "results": [{"case_id": "E1", "category": "c", "passed": True, "failures": []}]}
+    (reports / "eval_20260101T000000Z.json").write_text(json.dumps(ev), encoding="utf-8")
+    text = build_report(with_overrides(cfg, logs_dir=tmp_path / "logs", reports_dir=reports)).read_text(encoding="utf-8")
+    assert "## Versions under evaluation" in text
+    assert f"prompt v1 ({manifest['prompt_sha256'][:12]})" in text

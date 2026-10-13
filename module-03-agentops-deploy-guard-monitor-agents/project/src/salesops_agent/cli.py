@@ -1,4 +1,4 @@
-"""Command-line entry point: `salesops ask | eval | report`."""
+"""Command-line entry point: `salesops ask | eval | report | versions`."""
 
 from __future__ import annotations
 
@@ -36,6 +36,20 @@ def ask(question, config_path):
         f"tools: {', '.join(result.tools_called) or 'none'} | trace: {result.trace_path}]",
         err=True,
     )
+
+
+@app.command()
+@click.option("--json", "as_json", is_flag=True, help="Print the full manifest as JSON.")
+@config_option
+def versions(as_json, config_path):
+    """Show the versions of prompt, config, schemas, tools and code in use."""
+    import json
+
+    from salesops_agent.agent import describe_versions
+    from salesops_agent.versions import short_manifest
+
+    manifest = describe_versions(load_config(config_path))
+    click.echo(json.dumps(manifest, indent=2) if as_json else "\n".join(short_manifest(manifest)))
 
 
 @app.command("eval")

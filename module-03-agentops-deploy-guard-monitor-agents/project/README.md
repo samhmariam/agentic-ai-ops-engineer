@@ -63,24 +63,29 @@ The starter notebook (`project_starter.ipynb`) is a single `create_agent` call o
 ## Project Layout
 
 ```
-config.yaml              model, prompt version, enabled tools, paths, pricing
-prompts/                 versioned system prompts (system_prompt_v1.md, ...)
+config.yaml              model, prompt version, enabled tools, paths, pricing (schema_version 1)
+prompts/
+  registry.yaml          prompt versions with SHA-256 of their content
+  system_prompt_v1.md    released prompt text (immutable)
 src/salesops_agent/
-  config.py              load config.yaml, resolve paths relative to it
-  prompts.py             load the configured prompt version
-  data.py                CRM data access layer (account resolution, lookups)
-  tools.py               agent tools, filtered by tools.enabled
-  agent.py               agent creation (model + prompt + tools)
+  config.py              validate config.yaml (AppConfig), resolve paths, hash config
+  prompts.py             load a prompt version from the registry, verify its hash
+  schemas.py             CRM record schemas + tool input schemas (DATA_SCHEMA_VERSION)
+  data.py                CRM data access layer, validates the dataset on load
+  tools.py               versioned ToolSpecs -> StructuredTools, filtered by tools.enabled
+  agent.py               agent creation (model + prompt + tools) and version manifest
+  versions.py            version manifest: prompt, config, schemas, tools, git commit
   runner.py              run one question: run_id, trace, structured log
   logging_utils.py       JSON-lines logging -> logs/agent.jsonl
   tracing.py             LangChain callback -> traces/<run_id>.json
   evaluation.py          eval harness -> reports/eval_<ts>.json
   reporting.py           Markdown report from logs + latest eval
-  cli.py                 `salesops ask | eval | report`
+  cli.py                 `salesops ask | eval | report | versions`
 evaluation/eval_cases.jsonl   evaluation dataset
 data/                    CRM dataset (JSON)
 logs/ traces/ reports/   generated artifacts
 tests/                   offline tests (no LLM calls)
+GITLOG.txt               project commit history, generated from git
 ```
 
 ## Quickstart
@@ -94,6 +99,28 @@ uv run pytest                                   # offline tests
 uv run salesops ask "Summarize the account risk for TechStart Inc."
 uv run salesops eval                            # all cases; --case E005 for one
 uv run salesops report                          # writes reports/report_<ts>.md
+uv run salesops versions                        # versions in use; --json for the full manifest
 ```
 
 Evaluation sends any emails to a throwaway `reports/eval_outbox_<ts>.json`, never to `data/email_outbox.json`.
+
+## Versioning
+
+Everything that shapes the agent's behaviour has an explicit version.
+
+| Component | How it is versioned | Enforced by |
+|---|---|---|
+| Prompts | `prompts/registry.yaml` maps `v1`, `v2`, ... to a file and its SHA-256. `config.yaml` selects one. | Loading fails if a released prompt's text no longer matches its hash, so changes must ship as a new version. |
+| Configuration | `config.yaml` declares `schema_version: 1`. Its content hash is recorded per run. | `AppConfig` (pydantic) rejects unknown keys, missing fields and invalid values at startup. |
+| Data schemas | `DATA_SCHEMA_VERSION` in `schemas.py` covers the CRM record models. | The dataset is validated on load, and malformed records fail with file and index. |
+| Tools | Each `ToolSpec` has a semantic version, a typed input schema, and risk metadata (`classification`, `side_effect`). | Tool arguments are validated before the tool runs. Unknown tool names in config are rejected. |
+| Code | Git commit, plus a flag for uncommitted changes under `src/`, `prompts/`, `config.yaml`, `evaluation/`, `pyproject.toml` and `uv.lock`. | Recorded in every manifest. |
+| Dependencies | `uv.lock` and `.python-version` (3.12). | `uv sync` installs exactly the locked set. |
+
+All of these are collected into one **version manifest** (`salesops versions --json`). It is written into every `run_started` log event, every trace file and every evaluation result. Any answer, trace or score can therefore be tied back to the exact prompt, config, schemas, tools and commit that produced it.
+
+`GITLOG.txt` is generated from repository history and limited to this project directory:
+
+```bash
+git log --oneline --decorate --graph --all -- . > GITLOG.txt
+```

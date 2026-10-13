@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from salesops_agent.versions import short_manifest
+
 
 def load_run_events(log_path: Path) -> List[Dict[str, Any]]:
     if not log_path.exists():
@@ -78,9 +80,11 @@ def _eval_section(ev: Optional[Dict[str, Any]]) -> List[str]:
     by_cat: Dict[str, List[bool]] = defaultdict(list)
     for r in ev["results"]:
         by_cat[r["category"]].append(r["passed"])
+    # Eval files written before the version manifest kept these fields top-level.
+    versions = ev.get("versions") or {k: ev.get(k) for k in ("agent_version", "prompt_version", "model")}
     lines += [
-        f"Run `{ev['timestamp']}`: agent `{ev['agent_version']}`, prompt `{ev['prompt_version']}`, "
-        f"model `{ev['model']}`. Passed **{ev['passed']}/{ev['total']}** ({ev['pass_rate']:.0%}).",
+        f"Run `{ev['timestamp']}`: agent `{versions['agent_version']}`, prompt `{versions['prompt_version']}`, "
+        f"model `{versions['model']}`. Passed **{ev['passed']}/{ev['total']}** ({ev['pass_rate']:.0%}).",
         "",
         "| Category | Passed |",
         "|---|---|",
@@ -100,14 +104,18 @@ def build_report(cfg: dict[str, Any]) -> Path:
     reports_dir.mkdir(parents=True, exist_ok=True)
     runs = load_run_events(cfg["paths"]["logs_dir"] / cfg["logging"]["file"])
     now = datetime.now(timezone.utc)
+    ev = latest_eval(reports_dir)
 
     lines = [
         "# SalesOps Agent Report",
         "",
-        f"Generated {now.isoformat(timespec='seconds')}. Agent `{cfg['agent']['version']}`, "
-        f"prompt `{cfg['prompt']['version']}`, model `{cfg['model']['name']}`.",
+        f"Generated {now.isoformat(timespec='seconds')}.",
         "",
-        *_eval_section(latest_eval(reports_dir)),
+    ]
+    if ev and ev.get("versions"):
+        lines += ["## Versions under evaluation", "", *[f"- {line}" for line in short_manifest(ev["versions"])], ""]
+    lines += [
+        *_eval_section(ev),
         *_run_section(runs),
     ]
     out = reports_dir / f"report_{now.strftime('%Y%m%dT%H%M%SZ')}.md"
