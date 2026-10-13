@@ -1,6 +1,9 @@
-* 2d7eb6f (HEAD -> main) Document sandboxed execution; record guarded-v6 evaluation
+* 15980d6 (HEAD -> main) Document human-in-the-loop workflow; record guarded-v7 evaluation
+* 1c040a2 Add human-in-the-loop approval gate for high-risk actions (5.5)
+* 462b94e (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 2d7eb6f Document sandboxed execution; record guarded-v6 evaluation
 * 96c4b3a Add sandboxed run_analysis tool (runtime control 5.4)
-* 3f468e1 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 3f468e1 Regenerate GITLOG.txt from project git history
 * d492a89 Stop committing per-run artifacts; commit a curated set instead
 * 2762759 Default to 2 evaluation workers
 * 67627ae Evaluate tasks in parallel and bound model request time
