@@ -1,6 +1,11 @@
-* d1644b4 (HEAD -> main) Record sample salesops-agent ask runs (log and traces)
+* d715d42 (HEAD -> main) Record 12-task evaluation runs and evaluation report
+* 00fd8a4 Document the evaluation suite, tasks and evaluation report in README
+* 06607f0 Use nearest-rank p95 latency and show full task names
+* 3bdc845 Add `uv run evaluate` and evaluation_report.{md,csv,json}
+* 51bfbdc (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* d1644b4 Record sample salesops-agent ask runs (log and traces)
 * 75f0675 Add salesops-agent local entry point
-* e82741f (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* e82741f Regenerate GITLOG.txt from project git history
 * fde9fd6 Record eval results for baseline-v1, prompt-v2 and candidate-v2
 * 16c3c59 Document version-based evaluation workflow in README
 * 8a5a7bd Tag runs with their experiment and scope report telemetry to it
