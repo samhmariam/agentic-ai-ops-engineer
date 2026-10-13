@@ -1,0 +1,15 @@
+# Experiment: the previous default (agent 0.4.0). Prompt v2, least-privilege tools,
+# input + tool/action guardrails, send_email behind approval; no output guardrail.
+# Kept so earlier guarded-v4 results stay reproducible and comparable.
+extends: ../config.yaml
+
+experiment:
+  name: guarded-v4
+  description: Prompt v2, least-privilege tools, input guardrail v1, tool/action guardrail v1 (send_email needs approval).
+
+agent:
+  version: "0.4.0"
+
+guardrails:
+  output:
+    enabled: false

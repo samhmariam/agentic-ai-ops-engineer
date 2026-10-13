@@ -80,6 +80,12 @@ def ask(question, config_path, as_json, role):
             guard_line = f"[input guardrail: blocked by {g['rule_id']} ({g['category']}); agent not invoked]\n"
         for b in result.tools_blocked:
             guard_line += f"[tool guardrail: blocked {b['tool']} ({b['reason']}); not executed]\n"
+        out = result.output_guardrail
+        if out:
+            detail = {"block": "response replaced by refusal",
+                      "review": f"response withheld for human review (id {out['review_id']})",
+                      "redact": f"{out['redactions']} sensitive value(s) redacted"}[out["action"]]
+            guard_line += f"[output guardrail: {out['action']} by {', '.join(out['rule_ids'])}; {detail}]\n"
         click.echo(
             f"\n[run {result.run_id} | {cfg['experiment']['name']} | role {result.role or 'n/a'} | "
             f"{result.latency_s:.1f}s | "

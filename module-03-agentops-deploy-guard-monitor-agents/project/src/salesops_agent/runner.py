@@ -10,6 +10,8 @@ request first, and a blocked request is answered from the policy without invokin
 the agent graph at all (no model call, no tool call). While the agent runs, the
 tool guardrail (wrapped around every tool) checks each proposed call against the
 data access policy using the RunContext set up here (request, role, approvals).
+Finally the output guardrail inspects the agent's answer before it is returned:
+it may block it (safe refusal), withhold it for human review, or redact it.
 """
 
 from __future__ import annotations
@@ -43,6 +45,7 @@ class RunResult:
     guardrail: Optional[Dict[str, Any]] = None   # input-guardrail block decision, if it fired
     tools_blocked: List[Dict[str, Any]] = field(default_factory=list)  # tool calls the policy refused
     role: Optional[str] = None
+    output_guardrail: Optional[Dict[str, Any]] = None  # output decision when it changed the answer
 
     @property
     def blocked(self) -> bool:
@@ -103,6 +106,18 @@ def run_question(
         except Exception as exc:  # surface failures as data, not crashes
             error = f"{type(exc).__name__}: {exc}"
     latency = round(time.perf_counter() - t0, 3)
+    output_decision = None
+    if agent.output_guard is not None and guardrail is None and error is None:
+        t_out = time.perf_counter()
+        decision = agent.output_guard.apply(answer, cfg["paths"]["review_queue"], run_id=run_id, request=question)
+        recorder.record_guardrail(decision.to_dict(), (time.perf_counter() - t_out) * 1000)
+        if decision.triggered:
+            output_decision = decision.to_dict()
+            answer = decision.response
+            log_event(logger, "output_guardrail_triggered", level=logging.WARNING, run_id=run_id, source=source,
+                      action=decision.action, rule_ids=decision.rule_ids, categories=decision.categories,
+                      redactions=decision.redactions, review_id=decision.review_id)
+        latency = round(time.perf_counter() - t0, 3)
     tools_blocked = [{k: b.get(k) for k in ("tool", "reason", "rule")} for b in ctx.blocked]
     tools_executed = list(recorder.tools_called)
     for blocked in tools_blocked:           # attempted-but-refused calls did not execute
@@ -127,6 +142,7 @@ def run_question(
             guardrail=guardrail,
             tools_blocked=tools_blocked,
             role=role,
+            output_guardrail=output_decision,
         ))
 
     result = RunResult(
@@ -144,6 +160,7 @@ def run_question(
         guardrail=guardrail,
         tools_blocked=tools_blocked,
         role=role,
+        output_guardrail=output_decision,
     )
     manifest = agent.manifest
     log_event(logger, "run_completed", source=source, experiment=manifest["experiment"],

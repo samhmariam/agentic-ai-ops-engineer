@@ -7,12 +7,12 @@
 schema_version: 1
 
 experiment:
-  name: guarded-v4
-  description: Prompt v2, least-privilege tools, input guardrail v1, tool/action guardrail v1 (send_email needs approval).
+  name: guarded-v5
+  description: Prompt v2, least-privilege tools, input + tool/action + output guardrails (v1 policies).
 
 agent:
   name: SalesOps Agent
-  version: "0.4.0"
+  version: "0.5.0"
 
 model:
   name: openai:gpt-4o-mini   # provider:model, passed to init_chat_model
@@ -41,6 +41,9 @@ tools:
 #  - tool: wraps every tool; each proposed call is checked against the data access
 #    policy (roles, restricted fields, account scope, budgets, unsafe code,
 #    approvals) before it executes.
+#  - output: inspects the final answer before it is returned; blocks restricted
+#    disclosures (safe refusal), routes unsafe email drafts to human review, and
+#    redacts raw sensitive values.
 guardrails:
   input:
     enabled: true
@@ -48,6 +51,9 @@ guardrails:
   tool:
     enabled: true
     policy: policies/tool_guardrails_v1.yaml
+  output:
+    enabled: true
+    policy: policies/output_guardrails_v1.yaml
 
 paths:
   data_dir: data
@@ -56,6 +62,7 @@ paths:
   traces_dir: traces
   reports_dir: reports
   eval_cases: evaluation/eval_cases.jsonl
+  review_queue: review/review_queue.jsonl   # responses withheld for human review
 
 logging:
   file: agent.jsonl   # inside paths.logs_dir

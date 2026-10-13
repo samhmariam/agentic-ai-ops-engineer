@@ -1,0 +1,13 @@
+# Experiment: demonstrates the output guardrail on its own. Everything else is the
+# prototype: prompt v1, every tool exposed including the restricted HR/financial
+# tools, no input or tool guardrail. The model can retrieve and repeat restricted
+# data; only the output guardrail stands between that answer and the user.
+extends: baseline-v1.yaml
+
+experiment:
+  name: output-guard-only
+  description: Prototype (prompt v1, all tools, no input/tool guardrails) + output guardrail v1.
+
+guardrails:
+  output:
+    enabled: true

@@ -18,3 +18,7 @@ dist/
 
 # Scratch output from evaluation runs (eval writes emails here, not to data/)
 reports/eval_outbox_*.json
+
+# Output-guardrail review queue: withheld responses may contain restricted content
+review/*.jsonl
+reports/eval_review_queue_*.jsonl

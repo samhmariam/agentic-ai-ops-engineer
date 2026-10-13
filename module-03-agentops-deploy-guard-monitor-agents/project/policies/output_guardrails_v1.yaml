@@ -1,0 +1,184 @@
+# Output guardrail policy v1.
+#
+# Inspects the agent's final response in code BEFORE it is returned to the user.
+# Chosen behaviour, by severity (the most severe triggered action wins):
+#
+#   block   -> the whole response is withheld and replaced by a safe refusal.
+#              Used when an answer discloses restricted information: executive
+#              compensation, employee performance/termination, M&A, layoff plans,
+#              confidential strategy, or acquisition details in an email.
+#   review  -> the response is withheld, written to the human review queue
+#              (paths.review_queue), and the user is told it awaits review.
+#              Used for customer-facing email drafts containing unsafe claims
+#              (discounts, legal commitments) that a human may legitimately approve.
+#   redact  -> the response is returned with sensitive spans replaced by
+#              [REDACTED]. Used for raw values and field names from the internal
+#              HR/financial files that appear outside a blocking context.
+#
+# Rule matching: `match` is a list of alternatives; each alternative is a list of
+# regexes that must ALL match within the same sentence (scope: sentence) or anywhere
+# in the response (scope: response). Matching is case-insensitive. `{employee_names}`
+# and `{exec_titles}` expand to the HR record names and executive titles.
+# Rules with `email_only: true` apply only when the response contains an email draft.
+# `unless` phrases are blanked out before a rule is tested (only the phrase itself,
+# so they cannot hide a disclosure elsewhere in the same sentence).
+#
+# Released policies are immutable: add output_guardrails_v2.yaml to change rules.
+
+version: v1
+redaction_token: "[REDACTED]"
+
+responses:
+  hr: >-
+    I can't share employee compensation, performance or employment information.
+    Please contact HR directly.
+  confidential_strategy: >-
+    I can't share confidential company information such as mergers and
+    acquisitions, workforce plans or internal strategy, and I can't confirm or deny
+    whether any such plans exist. Please contact Finance or Legal.
+  email_review: >-
+    I prepared a customer-facing email, but it contains claims that need human
+    review before it can be shared ({categories}). It has been queued for review
+    (review id {review_id}); you'll be able to use it once it is approved.
+
+vocab:
+  exec_titles: '(ceo|cfo|cto|coo|cro|cmo|chief \w+( \w+)? officer|chief executive|founders?|executive team|c-suite)'
+
+email_detection:
+  - '(^|\n)\W*(subject|to)\W*:'
+  - '(^|\n)\W*(dear|hi|hello)\b[^\n]{0,40},\s*($|\n)'
+
+rules:
+  # -- HR -------------------------------------------------------------------
+  - id: hr.executive_compensation
+    category: executive_compensation
+    action: block
+    response: hr
+    scope: sentence
+    match:
+      - ['\b(bonus(es)?|salar(y|ies)|compensation|equity (bonus|grant|award)s?|stock options|rsus?|pay package|comp package|total comp)\b',
+         '(\$\s?\d|\b\d[\d,.]*\s?(k|m|mm|million|thousand)\b|\b\d{1,3}(,\d{3})+\b|\b{exec_titles}\b|\b{employee_names}\b)']
+
+  - id: hr.employee_pay
+    category: hr_restricted
+    action: block
+    response: hr
+    scope: sentence
+    match:
+      - ['\b(salar(y|ies)|payroll|pay band|bonus(es)?|compensation)\b', '\b({employee_names}|employees?|staff|team members?|our (account executives?|reps?|managers?|team)|account executives?)\b']
+
+  - id: hr.performance
+    category: hr_restricted
+    action: block
+    response: hr
+    scope: sentence
+    match:
+      - ['\b(exceeds_expectations|meets_expectations|below_expectations)\b']
+      - ['\b(performance (status|reviews?|ratings?|plans?|improvement plans?)|exceeds expectations|meets expectations|below expectations|underperform\w*|pip|on probation|disciplinary)\b',
+         '\b({employee_names}|employees?|staff|team members?|our (account executives?|reps?|managers?|team)|account executives?)\b']
+
+  - id: hr.termination
+    category: hr_restricted
+    action: block
+    response: hr
+    scope: sentence
+    match:
+      - ['\b(termination warning|pending termination)\b']
+      - ['\b(fired|firing|terminated|termination|let go|laid off|dismissed|dismissal)\b',
+         '\b({employee_names}|employees?|staff|team members?|our (account executives?|reps?|managers?|team)|account executives?)\b']
+
+  # -- confidential strategy ---------------------------------------------------
+  - id: strategy.m_and_a
+    category: m_and_a
+    action: block
+    response: confidential_strategy
+    scope: sentence
+    unless:
+      - '\bcustomer acquisition\b'
+      - '\b(acquir\w*|acquisition of) (new |more )?(customers?|clients?|leads?|users?|logos?)\b'
+      - '\bmerg(e|ed|ing) (the |these |those |two |duplicate )?(records?|contacts?|duplicates?|entries|notes|opportunit(y|ies))\b'
+    match:
+      - ['\bactive negotiation\b']
+      - ['\b(confidential_m_and_a|target_company|acquisition discussion)\b']
+      # any statement of our own acquisition intent, confirming OR denying it
+      - ['\b(we|udacenture|the company)(''re| are| were| will| plan to| are not| aren''t| is| is not)?\s+(not\s+)?(currently\s+)?(be\s+)?(in talks to\s+)?(acquir\w*|merg\w*|buy(ing)?)\b']
+      - ['\b(acquisition|acquir\w*|merger|m&a|m and a|takeover|buyout)\b',
+         '\b(negotiat\w*|talks|discussions?|target|planned|pending|in progress|underway|deal|confidential|due diligence)\b']
+
+  - id: strategy.layoffs
+    category: layoffs
+    action: block
+    response: confidential_strategy
+    scope: sentence
+    match:
+      - ['\b(confidential_layoff_plan|planned_reduction|affected_departments)\b']
+      - ['\b(layoffs?|lay ?offs?|laying off|reduction in force|workforce reduction|headcount (reduction|cuts?)|job cuts|downsiz\w*|restructuring)\b',
+         '(\b(planned|plans?|draft|percent|departments?|marketing|customer success|next (quarter|year|month)|upcoming|affected)\b|\d+\s?%)']
+
+  - id: strategy.confidential
+    category: confidential_strategy
+    action: block
+    response: confidential_strategy
+    scope: sentence
+    match:
+      - ['\b(confidential_discount_policy|max_unapproved_discount|executive_override_threshold)\b']
+      - ['\b(discount polic(y|ies)|unapproved discount|override threshold)\b']
+      - ['\bconfidential\b', '\b(strateg\w*|pricing|discount\w*|plans?|financials?)\b']
+      - ['\b(cash )?runway\b', '\b\d+\s?months?\b']
+
+  # -- customer-facing emails ----------------------------------------------------
+  - id: email.acquisition_details
+    category: email_confidential
+    action: block
+    response: confidential_strategy
+    scope: response
+    email_only: true
+    unless:
+      - '\bcustomer acquisition\b'
+      - '\b(acquir\w*|acquisition of) (new |more )?(customers?|clients?|leads?|users?|logos?)\b'
+      - '\bmerg(e|ed|ing) (the |these |those |two |duplicate )?(records?|contacts?|duplicates?|entries|notes|opportunit(y|ies))\b'
+    match:
+      - ['\b(acquisition|acquir\w*|merger|m&a|takeover|buyout)\b']
+
+  - id: email.discount_claim
+    category: email_discount
+    action: review
+    response: email_review
+    scope: response
+    email_only: true
+    match:
+      - ['(\b\d{1,2}(\.\d+)?\s?(%|percent)\s?(off|discount)|\bdiscount(ed|s)?\b|\bfree (month|months|upgrade|onboarding|licen[cs]es?|seats?|trial extension)\b|\bwaiv(e|ed|ing)\b|\bprice (cut|reduction|lock)\b|\bspecial pricing\b|\bcredit(s)? (of|worth)\b)']
+
+  - id: email.legal_commitment
+    category: email_legal_commitment
+    action: review
+    response: email_review
+    scope: response
+    email_only: true
+    match:
+      - ['\b(guarantee(d|s)?|legally binding|contractual(ly)?|indemnif\w*|warrant(y|ies)|liabilit(y|ies)|sla credits?|penalt(y|ies)|we (will|shall) (refund|compensate|reimburse)|full refund|money[- ]back)\b']
+
+# Raw sensitive data, redacted wherever it appears outside a blocking context.
+redact:
+  # Field names from the internal files.
+  field_names:
+    - salary_usd
+    - equity_bonus_usd
+    - performance_status
+    - revenue_usd
+    - runway_months
+    - confidential_strategy
+    - CONFIDENTIAL_M_AND_A
+    - CONFIDENTIAL_LAYOFF_PLAN
+    - CONFIDENTIAL_DISCOUNT_POLICY
+  # Values read from the internal files at load time. Money values are matched in
+  # common renderings ($2,000,000 / 2000000 / $2M / $2 million / $850k). Values that
+  # also occur in the CRM data are skipped so legitimate CRM figures are never redacted.
+  values_from:
+    - {source: hr, path: 'records[].salary_usd', kind: money}
+    - {source: hr, path: 'records[].equity_bonus_usd', kind: money}
+    - {source: hr, path: 'records[].employee_id', kind: text}
+    - {source: hr, path: 'records[].notes', kind: text}
+    - {source: financial, path: 'quarterly_summary.revenue_usd', kind: money}
+    - {source: financial, path: 'confidential_strategy.CONFIDENTIAL_M_AND_A.notes', kind: text}
+    - {source: financial, path: 'confidential_strategy.CONFIDENTIAL_DISCOUNT_POLICY.notes', kind: text}

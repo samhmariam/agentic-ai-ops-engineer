@@ -58,6 +58,7 @@ def flatten_versions(manifest: Dict[str, Any]) -> Dict[str, str]:
         "model": f"{manifest.get('model', ABSENT)} @ t={manifest.get('temperature', '?')}",
         "input guardrail": _guard_text((manifest.get("guardrails") or {}).get("input")),
         "tool guardrail": _guard_text((manifest.get("guardrails") or {}).get("tool")),
+        "output guardrail": _guard_text((manifest.get("guardrails") or {}).get("output")),
         "git": (manifest.get("git") or {}).get("commit") or ABSENT,
     }
     for name, version in (manifest.get("tools") or {}).items():

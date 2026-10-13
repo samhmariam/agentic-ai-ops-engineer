@@ -17,3 +17,5 @@ tools:
 guardrails:
   tool:
     enabled: false
+  output:
+    enabled: false

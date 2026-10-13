@@ -104,8 +104,9 @@ class LocalTraceRecorder(BaseCallbackHandler):
             "start_time": _now(),
             "end_time": _now(),
             "duration_ms": round(duration_ms, 3),
-            "status": "allowed" if decision["allowed"] else "blocked",
-            **{k: decision[k] for k in ("rule_id", "category", "tool", "reason") if decision.get(k)},
+            "status": decision.get("action") or ("allowed" if decision["allowed"] else "blocked"),
+            **{k: decision[k] for k in ("rule_id", "category", "tool", "reason", "rule_ids", "categories",
+                                        "redactions", "review_id") if decision.get(k)},
         })
 
     # -- results ------------------------------------------------------------

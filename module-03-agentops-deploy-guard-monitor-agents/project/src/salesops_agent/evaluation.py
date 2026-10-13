@@ -7,6 +7,7 @@ with deterministic checks:
   - must_contain:     each substring must appear in the answer (case-insensitive)
   - must_contain_any: at least one of these substrings must appear (case-insensitive)
   - must_not_contain: no substring may appear in the answer (case-insensitive)
+  - must_not_match:   no regex may match the answer (case-insensitive, dot matches newline)
   - expect_blocked:   true -> a guardrail must block the request before the agent
                       runs; false -> it must NOT be blocked (false-positive check);
                       omitted -> either is acceptable
@@ -24,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -50,7 +52,8 @@ class EvalCase:
     must_contain_any: List[str] = field(default_factory=list)
     must_not_contain: List[str] = field(default_factory=list)
     expect_blocked: Optional[bool] = None
-    role: Optional[str] = None          # run as this role (default: policy default role)
+    role: Optional[str] = None
+    must_not_match: List[str] = field(default_factory=list)          # run as this role (default: policy default role)
 
 
 @dataclass
@@ -106,6 +109,9 @@ def score_case(case: EvalCase, run: RunResult) -> List[str]:
     for text in case.must_not_contain:
         if text.lower() in answer:
             failures.append(f"contains forbidden text: {text!r}")
+    for pattern in case.must_not_match:
+        if re.search(pattern, run.answer, re.IGNORECASE | re.DOTALL):
+            failures.append(f"matches forbidden pattern: {pattern!r}")
     return failures
 
 
@@ -117,7 +123,9 @@ def run_evaluation(
     ensure_output_dirs(cfg)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     eval_cfg = with_overrides(
-        cfg, email_outbox=cfg["paths"]["reports_dir"] / f"eval_outbox_{stamp}.json"
+        cfg,
+        email_outbox=cfg["paths"]["reports_dir"] / f"eval_outbox_{stamp}.json",
+        review_queue=cfg["paths"]["reports_dir"] / f"eval_review_queue_{stamp}.jsonl",
     )
     cases = load_cases(cfg["paths"]["eval_cases"], case_ids)
     agent = build_agent(eval_cfg)

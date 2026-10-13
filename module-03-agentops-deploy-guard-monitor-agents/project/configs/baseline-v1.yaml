@@ -25,3 +25,5 @@ guardrails:
     enabled: false
   tool:
     enabled: false
+  output:
+    enabled: false

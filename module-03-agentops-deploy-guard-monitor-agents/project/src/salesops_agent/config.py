@@ -78,6 +78,7 @@ class PathsSection(_Section):
     traces_dir: Path
     reports_dir: Path
     eval_cases: Path
+    review_queue: Path          # responses withheld by the output guardrail for human review
 
 
 class LoggingSection(_Section):
@@ -100,9 +101,15 @@ class ToolGuardrailSection(_Section):
     policy: Path
 
 
+class OutputGuardrailSection(_Section):
+    enabled: bool
+    policy: Path
+
+
 class GuardrailsSection(_Section):
     input: InputGuardrailSection
     tool: ToolGuardrailSection
+    output: OutputGuardrailSection
 
 
 class Price(_Section):
@@ -142,7 +149,12 @@ def deep_merge(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # File references outside `paths` that are resolved relative to the declaring file.
-_PATH_FIELDS = [("prompt", "registry"), ("guardrails", "input", "policy"), ("guardrails", "tool", "policy")]
+_PATH_FIELDS = [
+    ("prompt", "registry"),
+    ("guardrails", "input", "policy"),
+    ("guardrails", "tool", "policy"),
+    ("guardrails", "output", "policy"),
+]
 
 
 def _resolve_relative_paths(raw: Dict[str, Any], base_dir: Path) -> None:

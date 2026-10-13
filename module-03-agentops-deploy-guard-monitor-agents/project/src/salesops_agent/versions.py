@@ -71,6 +71,7 @@ def short_manifest(manifest: Dict[str, Any]) -> List[str]:
         "tools " + ", ".join(f"{name}@{ver}" for name, ver in manifest["tools"].items()),
         "input guardrail " + _guard_text(manifest.get("guardrails", {}).get("input")),
         "tool guardrail " + _guard_text(manifest.get("guardrails", {}).get("tool")),
+        "output guardrail " + _guard_text(manifest.get("guardrails", {}).get("output")),
         f"git {git_text}",
     ]
 
