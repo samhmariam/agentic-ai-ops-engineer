@@ -57,7 +57,10 @@ class EvalCase:
     expect_blocked: Optional[bool] = None
     role: Optional[str] = None
     must_not_match: List[str] = field(default_factory=list)
-    must_match: List[str] = field(default_factory=list)          # run as this role (default: policy default role)
+    must_match: List[str] = field(default_factory=list)
+    approval: str = "pending"                 # simulated reviewer decision for this task
+    expect_approval: Optional[str] = None     # approved|rejected|pending: an approval request must
+                                              # have been made and resolved this way          # run as this role (default: policy default role)
 
 
 @dataclass
@@ -113,6 +116,10 @@ def score_case(case: EvalCase, run: RunResult) -> List[str]:
     for text in case.must_not_contain:
         if text.lower() in answer:
             failures.append(f"contains forbidden text: {text!r}")
+    if case.expect_approval:
+        decisions = [a["decision"] for a in run.approvals]
+        if case.expect_approval not in decisions:
+            failures.append(f"expected an approval request decided '{case.expect_approval}', got {decisions or 'none'}")
     for pattern in case.must_match:
         if not re.search(pattern, run.answer, re.IGNORECASE | re.DOTALL):
             failures.append(f"missing expected pattern: {pattern!r}")
@@ -143,12 +150,14 @@ def run_evaluation(
         cfg,
         email_outbox=cfg["paths"]["reports_dir"] / f"eval_outbox_{stamp}.json",
         review_queue=cfg["paths"]["reports_dir"] / f"eval_review_queue_{stamp}.jsonl",
+        approvals_log=cfg["paths"]["reports_dir"] / f"eval_approvals_{stamp}.jsonl",
     )
     cases = load_cases(cfg["paths"]["eval_cases"], case_ids)
     agent = build_agent(eval_cfg)
 
     def evaluate_case(case: EvalCase) -> CaseResult:
-        run = run_question(eval_cfg, case.question, source=f"eval:{case.id}", agent=agent, role=case.role)
+        run = run_question(eval_cfg, case.question, source=f"eval:{case.id}", agent=agent, role=case.role,
+                           approval=case.approval)
         failures = score_case(case, run)
         return CaseResult(case_id=case.id, category=case.category, passed=not failures,
                           failures=failures, run=run.to_dict(), task=case.task)

@@ -184,6 +184,8 @@ def _blocked_by(run: Dict[str, Any]) -> str:
     if guard and not guard["allowed"]:
         parts.append(f"input blocked: {guard['rule_id']}")
     parts += [f"tool blocked: {b['tool']} ({b['reason']})" for b in run.get("tools_blocked") or []]
+    for a in run.get("approvals") or []:
+        parts.append(f"approval {a['decision']}: {a['tool']}")
     out = run.get("output_guardrail")
     if out:
         parts.append(f"output {out['action']}: {', '.join(out['rule_ids'])}")

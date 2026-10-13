@@ -7,12 +7,12 @@
 schema_version: 1
 
 experiment:
-  name: guarded-v6
-  description: guarded-v5 + run_analysis sandbox tool (sandbox policy v1, tool policy v2).
+  name: guarded-v7
+  description: guarded-v6 + human-in-the-loop approval for send_email (prompt v3).
 
 agent:
   name: SalesOps Agent
-  version: "0.6.0"
+  version: "0.7.0"
 
 model:
   name: openai:gpt-4o-mini   # provider:model, passed to init_chat_model
@@ -22,12 +22,13 @@ model:
 
 prompt:
   registry: prompts/registry.yaml
-  version: v2
+  version: v3
 
 # Tools exposed to the agent, each pinned to a version from the tool registry
 # (salesops_agent.tools). Least privilege: the restricted HR/financial tools are not
 # exposed (see configs/baseline-v1.yaml for the prototype set). send_email is
-# exposed but gated by the tool guardrail: it only runs with human approval.
+# exposed but gated by the tool guardrail's human approval gate (salesops-agent ask
+# --approval approve|reject|pending|prompt): it only runs when a reviewer approves.
 tools:
   enabled:
     lookup_account: "1.0.0"
@@ -60,12 +61,13 @@ guardrails:
 
 paths:
   data_dir: data
-  email_outbox: data/email_outbox.json
+  email_outbox: outbox/email_outbox.json   # where approved emails are "sent" (gitignored; data/ is input only)
   logs_dir: logs
   traces_dir: traces
   reports_dir: reports
   eval_cases: evaluation/eval_cases.jsonl
   review_queue: review/review_queue.jsonl   # responses withheld for human review
+  approvals_log: review/approvals.jsonl     # HITL approval requests and decisions (audit trail)
 
 # Sandboxed code execution for run_analysis: isolated process, allowlisted syntax and
 # imports, approved CRM datasets only, time/size limits (policies/sandbox_v1.yaml).

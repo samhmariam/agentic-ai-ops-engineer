@@ -1,0 +1,15 @@
+# Experiment: the previous default (agent 0.6.0). Prompt v2 ("never send in the same
+# turn"), all guardrails, run_analysis sandbox tool. send_email requests are blocked
+# as approval_required, but there is no human decision step.
+# Kept so earlier guarded-v6 results stay reproducible and comparable.
+extends: ../config.yaml
+
+prompt:
+  version: v2
+
+experiment:
+  name: guarded-v6
+  description: guarded-v5 + run_analysis sandbox tool (sandbox policy v1, tool policy v2).
+
+agent:
+  version: "0.6.0"

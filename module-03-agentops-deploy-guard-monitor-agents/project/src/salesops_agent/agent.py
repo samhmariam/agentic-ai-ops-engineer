@@ -44,6 +44,8 @@ def _load_components(cfg: dict[str, Any]) -> _Components:
     tool_guard = load_tool_guardrail(cfg, crm)
     sandbox = load_sandbox(cfg, crm) if "run_analysis" in cfg["tools"]["enabled"] else None
     tools = make_tools(crm, cfg["paths"]["email_outbox"], cfg["tools"]["enabled"], tool_guard, sandbox)
+    if tool_guard is not None:
+        _require_approval_for_side_effects(tools, tool_guard)
     prompt = load_system_prompt(cfg)
     input_guard = load_input_guardrail(cfg)
     output_guard = load_output_guardrail(cfg, crm)
@@ -64,6 +66,19 @@ def model_kwargs(cfg: dict[str, Any]) -> Dict[str, Any]:
     m = cfg["model"]
     return {"model": m["name"], "temperature": m["temperature"],
             "timeout": m["timeout_s"], "max_retries": m["max_retries"]}
+
+
+def _require_approval_for_side_effects(tools: List[BaseTool], guard: ToolGuardrail) -> None:
+    """Startup invariant: with the tool guardrail on, every tool that changes the outside
+    world must go through the human approval gate. A config or policy that exposes a
+    side-effect tool without `requires_approval` fails to build, so there is no
+    unguarded path to a customer-facing action."""
+    for tool in tools:
+        if (tool.metadata or {}).get("side_effect"):
+            rule = guard.policy.tools.get(tool.name)
+            if rule is None or not rule.requires_approval:
+                raise ValueError(f"side-effect tool {tool.name!r} is exposed without requires_approval "
+                                 f"in {guard.policy.name} {guard.policy.version}")
 
 
 def describe_versions(cfg: dict[str, Any]) -> Dict[str, Any]:

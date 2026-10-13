@@ -3,6 +3,9 @@
 # Kept so earlier guarded-v3 results stay reproducible and comparable.
 extends: ../config.yaml
 
+prompt:
+  version: v2
+
 experiment:
   name: guarded-v3
   description: Prompt v2, least-privilege tools, input guardrails (policy v1).

@@ -43,27 +43,46 @@ def _require_api_key():
         )
 
 
+
+def _confirm_action(request) -> bool:
+    """Interactive reviewer for --approval prompt: show the exact action, ask y/n."""
+    action = request["action"]
+    click.echo("\n=== Approval required ===", err=True)
+    click.echo(f"Action: {action['tool']} (approval id {request['approval_id']})", err=True)
+    for key, value in action["args"].items():
+        click.echo(f"{key}: {value}", err=True)
+    return click.confirm("Approve this action?", default=False, err=True)
+
 @app.command()
 @click.argument("question")
 @config_option
 @click.option("--json", "as_json", is_flag=True, help="Print the full run result as JSON.")
 @click.option("--role", default=None,
               help="Run as this role for the tool/action guardrail (default: policy default_role).")
-def ask(question, config_path, as_json, role):
+@click.option("--approval", type=click.Choice(["approve", "reject", "pending", "prompt"]), default="pending",
+              show_default=True,
+              help="Human-in-the-loop decision for high-risk actions (send_email): simulate a reviewer "
+                   "approving or rejecting, leave it pending, or prompt interactively.")
+def ask(question, config_path, as_json, role, approval):
     """Ask the agent a single QUESTION and print its final answer.
 
     Loads the config and its versioned prompt, initializes the pinned tools, invokes
     the agent, and writes a structured log entry (logs/) and a trace file (traces/).
-    The answer goes to stdout; run details go to stderr.
+    High-risk actions such as sending an email go through the approval gate and
+    only run when approved (--approval). The answer goes to stdout; run details go
+    to stderr.
     """
+    from salesops_agent.guardrails.approval import make_approver
     from salesops_agent.runner import run_question
 
     if not question.strip():
         raise click.UsageError("QUESTION must not be empty.")
     cfg = _load(config_path)
     _require_api_key()
+    approver = make_approver(approval, prompt_fn=_confirm_action if approval == "prompt" else None)
     try:
-        result = run_question(cfg, question.strip(), source="cli", role=role)
+        result = run_question(cfg, question.strip(), source="cli", role=role,
+                              approval=approval, approver=approver)
     except Exception as exc:  # agent could not be built: prompt hash, tool pin, data schema...
         raise click.ClickException(f"Could not start the agent: {type(exc).__name__}: {exc}")
 
@@ -80,7 +99,13 @@ def ask(question, config_path, as_json, role):
             g = result.guardrail
             guard_line = f"[input guardrail: blocked by {g['rule_id']} ({g['category']}); agent not invoked]\n"
         for b in result.tools_blocked:
-            guard_line += f"[tool guardrail: blocked {b['tool']} ({b['reason']}); not executed]\n"
+            if b["reason"] not in ("approval_required", "approval_rejected"):   # shown as approvals below
+                guard_line += f"[tool guardrail: blocked {b['tool']} ({b['reason']}); not executed]\n"
+        for a in result.approvals:
+            outcome = {"approved": "executed", "rejected": "not executed",
+                       "pending": "not executed, awaiting approval"}[a["decision"]]
+            guard_line += (f"[approval: {a['tool']} requested (id {a['approval_id']}) -> {a['decision']} "
+                           f"by {a['decided_by']}; {outcome}]\n")
         out = result.output_guardrail
         if out:
             detail = {"block": "response replaced by refusal",

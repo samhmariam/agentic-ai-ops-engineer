@@ -41,6 +41,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from salesops_agent.data import CRMData
+from salesops_agent.guardrails.approval import Approver, resolve_approval
 from salesops_agent.logging_utils import log_event
 
 Reason = Literal[
@@ -114,6 +115,13 @@ class ToolPolicy(_Strict):
         return self
 
 
+# Messages for reasons added after policy v1/v2 were released (policies stay immutable).
+_DEFAULT_MESSAGES = {
+    "approval_rejected": "A human reviewer rejected this action, so it was not performed. "
+                         "Tell the user it was not sent and offer to revise the draft.",
+}
+
+
 # -- run context ------------------------------------------------------------
 
 @dataclass
@@ -123,7 +131,11 @@ class RunContext:
     run_id: Optional[str] = None
     request: str = ""
     role: Optional[str] = None
-    approvals: Set[str] = field(default_factory=set)       # approved action ids (HITL, 5.5)
+    approvals: Set[str] = field(default_factory=set)       # action ids approved in advance
+    approver: Optional[Approver] = None                     # HITL reviewer; None -> decision stays pending
+    approvals_log: Optional[Path] = None                    # audit file for approval requests/decisions
+    on_approval: Optional[Callable[[Dict[str, Any]], None]] = None   # trace recorder hook
+    approval_records: List[Any] = field(default_factory=list)
     referenced_accounts: Optional[Set[str]] = None          # computed lazily from `request`
     logger: Optional[logging.Logger] = None
     on_block: Optional[Callable[[Dict[str, Any]], None]] = None   # e.g. trace recorder hook
@@ -205,7 +217,7 @@ class ToolGuardrail:
             "policy_version": self.policy.version,
             "tool": tool,
             "rule": rule,
-            "message": self.policy.messages[reason].strip(),
+            "message": self.policy.messages.get(reason, _DEFAULT_MESSAGES.get(reason, reason)).strip(),
             **extra,
         }
 
@@ -233,9 +245,15 @@ class ToolGuardrail:
                 decision = self._check_account_scope(tool, args, ctx)
                 if decision:
                     return decision
-            if rule.requires_approval:
+            if rule.requires_approval:   # human-in-the-loop gate (guardrails/approval.py)
                 aid = action_id(tool, args)
-                if aid not in ctx.approvals:
+                decision = resolve_approval(ctx, tool, args, aid)
+                if decision == "rejected":
+                    rejected = self._blocked(tool, "approval_rejected", f"tools.{tool}.requires_approval",
+                                             approval_id=aid)
+                    rejected["status"] = "rejected"
+                    return rejected
+                if decision != "approved":
                     return self._blocked(tool, "approval_required", f"tools.{tool}.requires_approval",
                                          approval_id=aid)
             ctx.tool_calls += 1

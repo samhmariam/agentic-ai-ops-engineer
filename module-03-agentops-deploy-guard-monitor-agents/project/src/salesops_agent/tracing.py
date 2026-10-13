@@ -109,6 +109,21 @@ class LocalTraceRecorder(BaseCallbackHandler):
                                         "redactions", "review_id") if decision.get(k)},
         })
 
+    def record_approval(self, record: Dict[str, Any]) -> None:
+        """Record a human-in-the-loop approval request and its decision."""
+        self.spans.append({
+            "span_id": f"approval-{record['approval_id']}-{len(self.spans)}",
+            "parent_span_id": None,
+            "kind": "approval",
+            "name": "human_approval",
+            "start_time": record["requested_at"],
+            "end_time": record["decided_at"],
+            "duration_ms": 0.0,
+            "status": record["decision"],
+            "approval_requested": True,
+            **{k: record[k] for k in ("approval_id", "tool", "decision", "decided_by", "preapproved")},
+        })
+
     # -- results ------------------------------------------------------------
 
     @property

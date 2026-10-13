@@ -57,7 +57,7 @@ def test_ask_prints_answer_and_writes_log_and_trace(fake_agent, tmp_config, tmp_
 
     events = [json.loads(line) for line in (tmp_path / "logs" / "agent.jsonl").read_text().splitlines()]
     assert [e["event"] for e in events] == ["run_started", "run_completed"]
-    assert events[0]["versions"]["prompt_version"] == "v2"
+    assert events[0]["versions"]["prompt_version"] == "v3"
     assert events[0]["versions"]["guardrails"]["input"]["enabled"] is True
     assert events[1]["experiment"] == "cli-test" and events[1]["success"] is True
     assert "question" not in events[1] and "answer" not in events[1]   # no raw text in logs
@@ -105,7 +105,7 @@ def test_bad_config_gives_clear_error(tmp_path):
 
 def test_versions_and_help():
     out = invoke("versions").output
-    assert "prompt v2" in out and "input guardrail policy v1" in out
+    assert "prompt v3" in out and "input guardrail policy v1" in out
     help_text = invoke("--help").output
     for command in ("ask", "eval", "compare", "experiments", "report", "versions"):
         assert command in help_text

@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional
 from salesops_agent.agent import SalesOpsAgent, build_agent
 from salesops_agent.config import ensure_output_dirs, model_pricing
 from salesops_agent.guardrails import RunContext, tool_run_context
+from salesops_agent.guardrails.approval import Approver, make_approver
 from salesops_agent.logging_utils import log_event, setup_logging
 from salesops_agent.tracing import LocalTraceRecorder
 
@@ -45,6 +46,8 @@ class RunResult:
     guardrail: Optional[Dict[str, Any]] = None   # input-guardrail block decision, if it fired
     tools_blocked: List[Dict[str, Any]] = field(default_factory=list)  # tool calls the policy refused
     role: Optional[str] = None
+    approval_mode: Optional[str] = None
+    approvals: List[Dict[str, Any]] = field(default_factory=list)      # HITL requests and decisions
     output_guardrail: Optional[Dict[str, Any]] = None  # output decision when it changed the answer
 
     @property
@@ -62,6 +65,8 @@ def run_question(
     agent: Optional[SalesOpsAgent] = None,
     role: Optional[str] = None,
     approvals: Optional[set[str]] = None,
+    approval: str = "pending",
+    approver: Optional[Approver] = None,
 ) -> RunResult:
     """Run one question, recording a trace and a structured log entry.
 
@@ -94,6 +99,9 @@ def run_question(
     ctx = RunContext(
         run_id=run_id, request=question, role=role, approvals=set(approvals or ()), logger=logger,
         on_block=lambda b: recorder.record_guardrail({"stage": "tool", "allowed": False, **b}, 0.0),
+        approver=approver or make_approver(approval),
+        approvals_log=cfg["paths"]["approvals_log"],
+        on_approval=recorder.record_approval,
     )
     if guardrail is None:
         try:
@@ -119,6 +127,7 @@ def run_question(
                       redactions=decision.redactions, review_id=decision.review_id)
         latency = round(time.perf_counter() - t0, 3)
     tools_blocked = [{k: b.get(k) for k in ("tool", "reason", "rule")} for b in ctx.blocked]
+    approval_records = [asdict(r) for r in ctx.approval_records]
     tools_executed = list(recorder.tools_called)
     for blocked in tools_blocked:           # attempted-but-refused calls did not execute
         if blocked["tool"] in tools_executed:
@@ -143,6 +152,8 @@ def run_question(
             tools_blocked=tools_blocked,
             role=role,
             output_guardrail=output_decision,
+            approval_mode=approval,
+            approvals=approval_records,
         ))
 
     result = RunResult(
@@ -161,6 +172,8 @@ def run_question(
         tools_blocked=tools_blocked,
         role=role,
         output_guardrail=output_decision,
+        approval_mode=approval,
+        approvals=approval_records,
     )
     manifest = agent.manifest
     log_event(logger, "run_completed", source=source, experiment=manifest["experiment"],

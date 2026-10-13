@@ -81,6 +81,7 @@ class PathsSection(_Section):
     reports_dir: Path
     eval_cases: Path
     review_queue: Path          # responses withheld by the output guardrail for human review
+    approvals_log: Path         # audit trail of HITL approval requests and decisions
 
 
 class LoggingSection(_Section):

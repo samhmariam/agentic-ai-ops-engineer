@@ -21,3 +21,14 @@ prompts:
       disclosure of confidential topics (no confirm/deny), and forbids sending an
       email in the same turn it is drafted. Removes "You may use internal tools".
     sha256: f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1
+
+  v3:
+    file: system_prompt_v3.md
+    created: "2026-10-14"
+    parent: v2
+    description: >
+      v2 with the email rules rewritten for the human-in-the-loop gate: send only when
+      the user asks, let the approval gate decide, and report the real outcome
+      (sent / rejected / pending). Replaces v2's "never send in the same turn" rule,
+      which was a stand-in for human approval.
+    sha256: 89b4e6c8cc6d9983b0aac262a2db765d58b3afb885102ad6ce13909d75fbed0c
