@@ -1,7 +1,12 @@
-* ce4fda1 (HEAD -> main) Record 21-task evaluation of six experiments incl. tool guardrail
+* 508dda8 (HEAD -> main) Record 22-task evaluation of eight experiments incl. output guardrail
+* 16b0f43 Document output guardrails and eight-experiment results in README
+* cc410c4 Show changed failure reasons for cases failing in both compared runs
+* b786f4d Add output guardrails (block, review, redact)
+* f803625 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* ce4fda1 Record 21-task evaluation of six experiments incl. tool guardrail
 * 433cd94 Document tool/action guardrails and six-experiment results in README
 * cabcb04 Add tool/action guardrails (salesops_data_access_policy)
-* 3ecd082 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 3ecd082 Regenerate GITLOG.txt from project git history
 * d25b847 Correct README Python version to 3.13 (matches .python-version)
 * a3499fc Regenerate GITLOG.txt from project git history
 * a7d678f Record 20-task evaluation of all experiments incl. guarded-v3
