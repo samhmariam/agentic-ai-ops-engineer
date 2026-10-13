@@ -1,0 +1,10 @@
+# Experiment: change only the prompt. Same tools and versions as the baseline,
+# so any eval difference is attributable to prompt v2 alone.
+extends: ../config.yaml
+
+experiment:
+  name: prompt-v2
+  description: Baseline with hardened prompt v2; tools unchanged (restricted tools still exposed).
+
+prompt:
+  version: v2

@@ -11,3 +11,13 @@ prompts:
       Verbatim system prompt from the notebook prototype. Permits internal tool use;
       baseline for evaluation before guardrails.
     sha256: 84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c
+
+  v2:
+    file: system_prompt_v2.md
+    created: "2026-10-13"
+    parent: v1
+    description: >
+      Hardened v1. Adds grounding rules, forbids internal HR/financial tools and
+      disclosure of confidential topics (no confirm/deny), and forbids sending an
+      email in the same turn it is drafted. Removes "You may use internal tools".
+    sha256: f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1

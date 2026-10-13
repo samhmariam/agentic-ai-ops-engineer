@@ -1,0 +1,18 @@
+# Experiment: release candidate. Builds on prompt-v2 and changes the toolset:
+#   - least privilege: restricted HR/financial tools and send_email are not exposed
+#   - list_open_opportunities 1.1.0 (bounded output with totals)
+extends: prompt-v2.yaml
+
+experiment:
+  name: candidate-v2
+  description: Prompt v2 + least-privilege toolset + list_open_opportunities 1.1.0.
+
+agent:
+  version: "0.2.0"
+
+tools:
+  enabled:
+    list_open_opportunities: "1.1.0"
+    lookup_internal_hr_data: null
+    lookup_internal_financial_data: null
+    send_email: null

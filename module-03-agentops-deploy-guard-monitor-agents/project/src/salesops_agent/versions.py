@@ -17,7 +17,7 @@ from salesops_agent.prompts import Prompt
 from salesops_agent.schemas import DATA_SCHEMA_VERSION
 
 # Paths whose uncommitted changes would make a run irreproducible from its commit.
-_VERSIONED_PATHS = ["src", "prompts", "config.yaml", "evaluation", "pyproject.toml", "uv.lock"]
+_VERSIONED_PATHS = ["src", "prompts", "config.yaml", "configs", "evaluation", "pyproject.toml", "uv.lock"]
 
 
 def _git(*args: str) -> Optional[str]:

@@ -8,7 +8,7 @@ import yaml
 from pydantic import ValidationError
 
 from salesops_agent.agent import describe_versions
-from salesops_agent.config import ConfigError, load_config, with_overrides
+from salesops_agent.config import PROJECT_ROOT, ConfigError, load_config, with_overrides
 from salesops_agent.data import CRMData, normalize_lookup_text
 from salesops_agent.evaluation import EvalCase, load_cases, score_case
 from salesops_agent.prompts import load_system_prompt, prompt_hash
@@ -314,3 +314,21 @@ def test_config_hash_is_content_based(cfg, tmp_path):
     reordered = "# a comment\n" + yaml.safe_dump(dict(reversed(list(raw.items()))), sort_keys=False)
     (tmp_path / "config.yaml").write_text(reordered, encoding="utf-8")
     assert load_config(tmp_path / "config.yaml")["config_sha256"] == first
+
+
+@pytest.mark.parametrize("path", sorted((PROJECT_ROOT / "configs").glob("*.yaml")), ids=lambda p: p.stem)
+def test_experiment_configs_load_and_build(path, tmp_path):
+    exp = load_config(path)
+    assert exp["experiment"]["name"] == path.stem
+    manifest = describe_versions(exp)
+    assert manifest["experiment"] == path.stem
+    assert manifest["prompt_sha256"] == load_system_prompt(exp).sha256
+
+
+def test_every_registered_prompt_matches_its_hash(cfg):
+    registry = yaml.safe_load(cfg["prompt"]["registry"].read_text(encoding="utf-8"))["prompts"]
+    assert {"v1", "v2"} <= set(registry)
+    for version in registry:
+        exp = copy.deepcopy(cfg)
+        exp["prompt"]["version"] = version
+        assert load_system_prompt(exp).version == version
