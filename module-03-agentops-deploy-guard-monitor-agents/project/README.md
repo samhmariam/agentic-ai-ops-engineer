@@ -103,7 +103,7 @@ GITLOG.txt               project commit history, generated from git
 ```bash
 cd module-03-agentops-deploy-guard-monitor-agents/project
 cp .env.example .env          # add OPENAI_API_KEY (and OPENAI_BASE_URL if using a proxy)
-uv sync                       # creates .venv with Python 3.12 from uv.lock
+uv sync                       # creates .venv with Python 3.13 from uv.lock
 
 uv run pytest                                   # offline tests
 uv run salesops-agent ask "Summarize the account risk for TechStart Inc."
@@ -146,7 +146,7 @@ Everything that shapes the agent's behaviour has an explicit version.
 | Guardrail policies | `policies/input_guardrails_vN.yaml` with a `version`. The policy's SHA-256 and rule count are recorded in the manifest. | The policy is validated at load (schema, regexes compile, responses defined). Changes ship as a new policy file. |
 | Eval dataset | SHA-256 and case count are recorded in every eval result. | `compare` warns when two results were scored on different datasets. |
 | Code | Git commit, plus a flag for uncommitted changes under `src/`, `prompts/`, `policies/`, `config.yaml`, `configs/`, `evaluation/`, `pyproject.toml` and `uv.lock`. | Recorded in every manifest. |
-| Dependencies | `uv.lock` and `.python-version` (3.12). | `uv sync` installs exactly the locked set. |
+| Dependencies | `uv.lock` and `.python-version` (3.13). | `uv sync` installs exactly the locked set. |
 
 All of these are collected into one **version manifest** (`salesops versions --json`). It is written into every `run_started` log event, every trace file and every eval result. Any answer, trace or score can therefore be tied back to the exact prompt, config, schemas, tools and commit that produced it.
 
