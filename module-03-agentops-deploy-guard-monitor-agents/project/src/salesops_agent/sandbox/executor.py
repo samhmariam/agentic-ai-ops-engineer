@@ -22,6 +22,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from salesops_agent.data import CRMData
+from salesops_agent.guardrails.tool import current_run_id
 from salesops_agent.logging_utils import LOGGER_NAME, log_event
 from salesops_agent.sandbox.validator import SandboxRejected, validate
 
@@ -130,7 +131,7 @@ class Sandbox:
         outcome["duration_ms"] = round((time.perf_counter() - started) * 1000, 1)
         outcome["sandbox_policy"] = self.policy.version
         log_event(logging.getLogger(LOGGER_NAME), "sandbox_execution",
-                  level=logging.INFO if outcome["status"] == "ok" else logging.WARNING,
+                  level=logging.INFO if outcome["status"] == "ok" else logging.WARNING, run_id=current_run_id(),
                   status=outcome["status"], error_type=outcome.get("error_type"),
                   duration_ms=outcome["duration_ms"], code_chars=len(code))
         return outcome

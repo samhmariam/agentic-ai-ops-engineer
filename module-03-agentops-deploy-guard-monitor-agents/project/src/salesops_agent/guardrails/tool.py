@@ -145,6 +145,12 @@ def tool_run_context(ctx: RunContext) -> Iterator[RunContext]:
         _CURRENT.reset(token)
 
 
+def current_run_id() -> Optional[str]:
+    """Run id of the agent run executing on this thread, if any (for tool-level logging)."""
+    ctx = _CURRENT.get()
+    return ctx.run_id if ctx else None
+
+
 def action_id(tool: str, args: Dict[str, Any]) -> str:
     """Stable id for one concrete action, so an approval covers exactly that call."""
     canonical = json.dumps({"tool": tool, "args": args}, sort_keys=True, default=str)

@@ -224,3 +224,16 @@ def test_default_config_enables_sandbox():
     assert manifest["guardrails"]["tool"]["policy_version"] == "v2"
     older = describe_versions(load_config(PROJECT_ROOT / "configs" / "guarded-v5.yaml"))
     assert "run_analysis" not in older["tools"] and older["guardrails"]["tool"]["policy_version"] == "v1"
+
+
+def test_sandbox_log_event_carries_run_id(sandbox, tmp_path):
+    from salesops_agent.config import with_overrides
+    from salesops_agent.logging_utils import setup_logging
+
+    cfg = with_overrides(load_config(), logs_dir=tmp_path)
+    setup_logging(cfg)
+    with tool_run_context(RunContext(run_id="run-xyz")):
+        sandbox.run("result = 1")
+    events = [json.loads(l) for l in (tmp_path / "agent.jsonl").read_text().splitlines()]
+    event = [e for e in events if e["event"] == "sandbox_execution"][-1]
+    assert event["run_id"] == "run-xyz" and event["status"] == "ok" and "code" not in event
