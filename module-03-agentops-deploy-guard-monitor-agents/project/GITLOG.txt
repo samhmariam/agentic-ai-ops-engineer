@@ -1,4 +1,6 @@
-* a7d678f (HEAD -> main) Record 20-task evaluation of all experiments incl. guarded-v3
+* d25b847 (HEAD -> main) Correct README Python version to 3.13 (matches .python-version)
+* a3499fc Regenerate GITLOG.txt from project git history
+* a7d678f Record 20-task evaluation of all experiments incl. guarded-v3
 * ed21c57 Document runtime controls and input guardrails in README
 * f5c3eae Add input guardrails and make the guarded config the default
 * 2e63a45 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
