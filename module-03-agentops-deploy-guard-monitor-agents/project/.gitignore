@@ -1,0 +1,20 @@
+# The repo-root .gitignore excludes every data/ directory; this project ships its
+# CRM dataset, so re-include it here.
+!data/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Scratch output from evaluation runs (eval writes emails here, not to data/)
+reports/eval_outbox_*.json

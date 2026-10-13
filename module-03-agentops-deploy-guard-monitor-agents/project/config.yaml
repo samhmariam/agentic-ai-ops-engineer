@@ -1,0 +1,50 @@
+# SalesOps Agent runtime configuration.
+# All paths are resolved relative to this file, not the current working directory.
+
+agent:
+  name: SalesOps Agent
+  version: "0.1.0"
+
+model:
+  name: openai:gpt-4o-mini   # provider:model, passed to init_chat_model
+  temperature: 0.0
+
+prompt:
+  version: v1
+  path: prompts/system_prompt_v1.md
+
+# Tools exposed to the agent. v1 mirrors the notebook prototype, including the
+# restricted HR/financial tools and send_email. Later steps gate these with
+# guardrails and human approval.
+tools:
+  enabled:
+    - lookup_account
+    - lookup_account_context
+    - list_open_opportunities
+    - summarize_pipeline
+    - lookup_internal_hr_data
+    - lookup_internal_financial_data
+    - draft_email
+    - send_email
+
+paths:
+  data_dir: data
+  email_outbox: data/email_outbox.json
+  logs_dir: logs
+  traces_dir: traces
+  reports_dir: reports
+  eval_cases: evaluation/eval_cases.jsonl
+
+logging:
+  file: agent.jsonl   # inside paths.logs_dir
+  level: INFO
+
+tracing:
+  enabled: true
+  max_payload_chars: 2000   # truncate tool inputs/outputs stored in trace files
+
+# USD per 1M tokens, used for cost estimates in logs and reports.
+pricing:
+  gpt-4o-mini:
+    input: 0.15
+    output: 0.60

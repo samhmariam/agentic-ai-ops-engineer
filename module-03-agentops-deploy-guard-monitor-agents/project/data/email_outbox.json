@@ -1,0 +1,14 @@
+[
+  {
+    "to": "omar.stone@acmecorp.example.com",
+    "subject": "Following up on Acme Corp",
+    "body": "Hi Omar,\n\nI wanted to follow up regarding next steps.\n\nBest,\nUdaCenture SalesOps Agent\n",
+    "status": "sent"
+  },
+  {
+    "to": "omar.stone@acmecorp.example.com",
+    "subject": "Following up on Acme Corp",
+    "body": "Hi Omar,\n\nI wanted to follow up regarding follow-up on next steps.\n\nBest,\nUdaCenture SalesOps Agent\n",
+    "status": "sent"
+  }
+]

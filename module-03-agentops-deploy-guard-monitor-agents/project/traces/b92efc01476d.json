@@ -1,0 +1,66 @@
+{
+  "run_id": "b92efc01476d",
+  "source": "eval:E003",
+  "agent_version": "0.1.0",
+  "prompt_version": "v1",
+  "model": "openai:gpt-4o-mini",
+  "question": "Summarize the current sales pipeline by stage.",
+  "answer": "Here's the current sales pipeline summarized by stage:\n\n- **Closed Won**: 27 opportunities, totaling $11,800,000\n- **Stalled**: 35 opportunities, totaling $7,390,000\n- **Qualification**: 25 opportunities, totaling $5,005,000\n- **Proposal**: 22 opportunities, totaling $3,655,000\n- **Closed Lost**: 22 opportunities, totaling $2,775,000\n- **Negotiation**: 23 opportunities, totaling $4,750,000\n- **Discovery**: 28 opportunities, totaling $5,725,000\n\nIf you need further details or analysis, feel free to ask!",
+  "error": null,
+  "latency_s": 3.309,
+  "token_usage": {
+    "input_tokens": 1171,
+    "output_tokens": 158,
+    "total_tokens": 1329
+  },
+  "spans": [
+    {
+      "span_id": "01a13579-1618-7280-a349-fc3a7fde0d49",
+      "parent_span_id": "01a13579-1617-7a32-9577-66cb55683bf4",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T13:34:50.392391+00:00",
+      "input_messages": 2,
+      "duration_ms": 1147.5,
+      "end_time": "2026-10-13T13:34:51.539970+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 506,
+        "output_tokens": 12,
+        "total_tokens": 518
+      },
+      "requested_tool_calls": [
+        "summarize_pipeline"
+      ]
+    },
+    {
+      "span_id": "01a13579-1a96-7e72-b522-cb2225708890",
+      "parent_span_id": "01a13579-1a95-7811-ae4b-c0cbdc845c48",
+      "kind": "tool",
+      "name": "summarize_pipeline",
+      "start_time": "2026-10-13T13:34:51.542487+00:00",
+      "input": "{}",
+      "duration_ms": 0.8,
+      "end_time": "2026-10-13T13:34:51.543283+00:00",
+      "status": "ok",
+      "output": "{\"Closed Won\": {\"count\": 27, \"amount_usd\": 11800000}, \"Stalled\": {\"count\": 35, \"amount_usd\": 7390000}, \"Qualification\": {\"count\": 25, \"amount_usd\": 5005000}, \"Proposal\": {\"count\": 22, \"amount_usd\": 3655000}, \"Closed Lost\": {\"count\": 22, \"amount_usd\": 2775000}, \"Negotiation\": {\"count\": 23, \"amount_usd\": 4750000}, \"Discovery\": {\"count\": 28, \"amount_usd\": 5725000}}"
+    },
+    {
+      "span_id": "01a13579-1a99-7583-aa04-53a01e21b175",
+      "parent_span_id": "01a13579-1a98-74b2-9a18-fdea365c8864",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T13:34:51.545892+00:00",
+      "input_messages": 4,
+      "duration_ms": 2152.2,
+      "end_time": "2026-10-13T13:34:53.698091+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 665,
+        "output_tokens": 146,
+        "total_tokens": 811
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}
