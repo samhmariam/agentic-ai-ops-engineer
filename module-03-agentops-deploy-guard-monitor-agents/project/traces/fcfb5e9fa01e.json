@@ -1,0 +1,88 @@
+{
+  "run_id": "fcfb5e9fa01e",
+  "source": "eval:E010",
+  "versions": {
+    "experiment": "baseline-v1",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "27285baedf0c09a4f716cf40010644b95c3f91f2efe0367698cc4e8d5eae0f3f",
+    "prompt_version": "v1",
+    "prompt_sha256": "84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0"
+    },
+    "git": {
+      "commit": "3bdc845",
+      "dirty": false
+    }
+  },
+  "question": "How many open opportunities are there in total across all stages?",
+  "answer": "There are a total of **150 open opportunities** across all stages.",
+  "error": null,
+  "latency_s": 3.31,
+  "token_usage": {
+    "input_tokens": 13424,
+    "output_tokens": 27,
+    "total_tokens": 13451
+  },
+  "spans": [
+    {
+      "span_id": "01a135cb-c725-7e23-b8f9-232e27cd0e5b",
+      "parent_span_id": "01a135cb-c723-7450-99ca-ce4acf6ecae4",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T15:05:09.669962+00:00",
+      "input_messages": 2,
+      "duration_ms": 1111.7,
+      "end_time": "2026-10-13T15:05:10.781729+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 760,
+        "output_tokens": 12,
+        "total_tokens": 772
+      },
+      "requested_tool_calls": [
+        "list_open_opportunities"
+      ]
+    },
+    {
+      "span_id": "01a135cb-cb82-7b03-9f46-b5e8d0349877",
+      "parent_span_id": "01a135cb-cb80-7bd0-9345-706f0e77749a",
+      "kind": "tool",
+      "name": "list_open_opportunities",
+      "start_time": "2026-10-13T15:05:10.786549+00:00",
+      "input": "{}",
+      "duration_ms": 3.4,
+      "end_time": "2026-10-13T15:05:10.790031+00:00",
+      "status": "ok",
+      "output": "[{\"opportunity_id\": \"OPP0002\", \"account_id\": \"A001\", \"name\": \"Acme Corp Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 180000, \"close_date\": \"2026-12-27\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0003\", \"account_id\": \"A001\", \"name\": \"Acme Corp Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Qualification\", \"amount_usd\": 50000, \"close_date\": \"2026-09-07\", \"probability\": 35, \"next_step\": \"Executive alignment\", \"notes\": \"Requires technical validation.\"}, {\"opportunity_id\": \"OPP0004\", \"account_id\": \"A001\", \"name\": \"Acme Corp Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Qualification\", \"amount_usd\": 120000, \"close_date\": \"2026-10-31\", \"probability\": 35, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Decision process is unclear.\"}, {\"opportunity_id\": \"OPP0007\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2026-07-07\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0008\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Proposal\", \"amount_usd\": 250000, \"close_date\": \"2026-07-10\", \"probability\": 50, \"next_step\": \"Resolve blockers\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0014\", \"account_id\": \"A005\", \"name\": \"BluePeak Manufacturing Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Qualification\", \"amount_usd\": 400000, \"close_date\": \"2026-07-06\", \"probability\": 35, \"next_step\": \"Send proposal\", \"notes\": \"Stakeholder engagement is positive.\"}, {\"opportunity_id\": \"OPP0015\", \"account_id\": \"A005\", \"name\": \"BluePeak Manufacturing Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Qualification\", \"amount_usd\": 25000, \"close_date\": \"2026-09-19\", \"probability\": 35, \"next_step\": \"Executive alignment\", \"notes\": \"De... [truncated 36179 chars]"
+    },
+    {
+      "span_id": "01a135cb-cb8b-7e50-aa12-8beb4720a4ab",
+      "parent_span_id": "01a135cb-cb88-7ae0-b002-6fc2cded84b9",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T15:05:10.795105+00:00",
+      "input_messages": 4,
+      "duration_ms": 2177.8,
+      "end_time": "2026-10-13T15:05:12.973003+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 12664,
+        "output_tokens": 15,
+        "total_tokens": 12679
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "run_id": "fc2e99d534fc",
+  "source": "eval:E001",
+  "versions": {
+    "experiment": "candidate-v2",
+    "agent_version": "0.2.0",
+    "config_schema_version": 1,
+    "config_sha256": "d84d301009b7c9a08e065dfd5cfd8ec6afbf16a82642bc2cd081358088093f5f",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0"
+    },
+    "git": {
+      "commit": "3bdc845",
+      "dirty": false
+    }
+  },
+  "question": "Summarize the account risk for TechStart Inc.",
+  "answer": "Here's the risk summary for TechStart Inc.:\n\n- **Account Status**: Customer\n- **Customer Health Score**: 95 (indicating a healthy relationship)\n- **Contract End Date**: May 28, 2026\n- **Open Renewal Opportunities**: \n  - **Renewal Opportunity**: Negotiation stage, $90,000, with an 80% probability of closing. Urgent as the contract expires in less than 10 days.\n  - **Expansion Opportunity**: Stalled stage, $600,000, with a 25% probability. Budget timing is a concern.\n  - **Additional Renewal Opportunity**: Proposal stage, $250,000, with a 50% probability. Also facing budget timing concerns.\n- **Last Activity**: A meeting on May 18, 2026, where the customer expressed strong satisfaction but requested renewal paperwork before the contract deadline.\n- **Support Tickets**: One open ticket regarding a medium severity API integration error.\n- **Product Usage Trend**: Upward trend with 88 active users and 1,220 monthly logins, indicating good engagement.\n- **Relationship Status of Contacts**: \n  - Lena Ortiz (VP Operations) is a champion.\n  - Alex Stone (CTO) is engaged.\n\nOverall, while TechStart Inc. has a high health score and good product usage, the imminent contract expiration and stalled expansion opportunity present significant risks that need to be addressed promptly.",
+  "error": null,
+  "latency_s": 4.511,
+  "token_usage": {
+    "input_tokens": 2610,
+    "output_tokens": 318,
+    "total_tokens": 2928
+  },
+  "spans": [
+    {
+      "span_id": "01a135ca-4592-7e11-a6f0-6ed7aeabaf46",
+      "parent_span_id": "01a135ca-4584-7532-98c0-72ff2cb63b65",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T15:03:30.962902+00:00",
+      "input_messages": 2,
+      "duration_ms": 1141.1,
+      "end_time": "2026-10-13T15:03:32.104070+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 815,
+        "output_tokens": 20,
+        "total_tokens": 835
+      },
+      "requested_tool_calls": [
+        "lookup_account_context"
+      ]
+    },
+    {
+      "span_id": "01a135ca-4a0b-7050-b1ec-3f8c7552d82d",
+      "parent_span_id": "01a135ca-4a09-7d50-a9fc-bc2c98a83120",
+      "kind": "tool",
+      "name": "lookup_account_context",
+      "start_time": "2026-10-13T15:03:32.107263+00:00",
+      "input": "{\"account_name_or_id\": \"TechStart Inc\"}",
+      "duration_ms": 1.8,
+      "end_time": "2026-10-13T15:03:32.109060+00:00",
+      "status": "ok",
+      "output": "{\"account\": {\"account_id\": \"A003\", \"name\": \"TechStart Inc\", \"account_status\": \"customer\", \"segment\": \"Mid-Market\", \"industry\": \"SaaS\", \"region\": \"North America\", \"account_owner\": \"Rafael Costa\", \"health_score\": 95, \"contract_start\": \"2025-05-30\", \"contract_end\": \"2026-05-28\", \"arr_usd\": 90000, \"created_at\": \"2024-10-11\", \"notes\": \"Very happy customer, but renewal date is imminent.\"}, \"contacts\": [{\"contact_id\": \"P0006\", \"account_id\": \"A003\", \"first_name\": \"Lena\", \"last_name\": \"Ortiz\", \"title\": \"VP Operations\", \"email\": \"lena.ortiz@techstart.example.com\", \"is_primary\": true, \"relationship_status\": \"champion\"}, {\"contact_id\": \"P0007\", \"account_id\": \"A003\", \"first_name\": \"Alex\", \"last_name\": \"Stone\", \"title\": \"Chief Technology Officer\", \"email\": \"alex.stone@techstartinc.example.com\", \"is_primary\": false, \"relationship_status\": \"engaged\"}], \"opportunities\": [{\"opportunity_id\": \"OPP0006\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Initial Conversion\", \"type\": \"new_business\", \"stage\": \"Closed Won\", \"amount_usd\": 90000, \"close_date\": \"2025-03-12\", \"probability\": 100, \"next_step\": \"Customer onboarded\", \"notes\": \"Initial opportunity successfully converted into a customer.\"}, {\"opportunity_id\": \"OPP0007\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Expansion Opportunity\", \"type\": \"expansion\", \"stage\": \"Stalled\", \"amount_usd\": 600000, \"close_date\": \"2026-07-07\", \"probability\": 25, \"next_step\": \"Confirm renewal scope\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0008\", \"account_id\": \"A003\", \"name\": \"TechStart Inc Renewal Opportunity\", \"type\": \"renewal\", \"stage\": \"Proposal\", \"amount_usd\": 250000, \"close_date\": \"2026-07-10\", \"probability\": 50, \"next_step\": \"Resolve blockers\", \"notes\": \"Budget timing is a concern.\"}, {\"opportunity_id\": \"OPP0182\", \"account_id\": \"A003\", \"name\": \"TechStart Renewal\", \"type\": \"renewal\", \"stage\": \"Negotiation\", \"amount_usd\": 90000, \"close_date\": \"2026-05-28\", \"probability\": 80, \"next_step\": \"Confirm renewal paperwork immediately\",... [truncated 1094 chars]"
+    },
+    {
+      "span_id": "01a135ca-4a0f-78e0-8288-eb26298791bc",
+      "parent_span_id": "01a135ca-4a0e-7a93-9943-24ae554ac8e8",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T15:03:32.111832+00:00",
+      "input_messages": 4,
+      "duration_ms": 3344.1,
+      "end_time": "2026-10-13T15:03:35.455980+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1795,
+        "output_tokens": 298,
+        "total_tokens": 2093
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}

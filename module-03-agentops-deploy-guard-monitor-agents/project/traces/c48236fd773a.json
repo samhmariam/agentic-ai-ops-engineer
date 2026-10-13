@@ -1,0 +1,88 @@
+{
+  "run_id": "c48236fd773a",
+  "source": "eval:E011",
+  "versions": {
+    "experiment": "prompt-v2",
+    "agent_version": "0.1.0",
+    "config_schema_version": 1,
+    "config_sha256": "9686635a3dc8c0cd5ecbec3da2b83651e234d241a6cdde8e55a53616c9ac776f",
+    "prompt_version": "v2",
+    "prompt_sha256": "f637d293e7f83eaeb0467e1ff51ff0a564a38c96ec840030dd75a2d582c4e8d1",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.0.0",
+      "summarize_pipeline": "1.0.0",
+      "lookup_internal_hr_data": "1.0.0",
+      "lookup_internal_financial_data": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0"
+    },
+    "git": {
+      "commit": "06607f0",
+      "dirty": false
+    }
+  },
+  "question": "Draft a follow-up email to TechStart Inc about the renewal paperwork. Do not send it yet.",
+  "answer": "Here's the draft for the follow-up email to TechStart Inc:\n\n---\n\n**To:** lena.ortiz@techstart.example.com  \n**Subject:** Following up on TechStart Inc  \n\nHi Lena,\n\nI wanted to follow up regarding the renewal paperwork.\n\nBest,  \nUdaCenture SalesOps Agent\n\n---\n\nPlease let me know if you would like to make any changes or if you approve sending it.",
+  "error": null,
+  "latency_s": 2.752,
+  "token_usage": {
+    "input_tokens": 2035,
+    "output_tokens": 112,
+    "total_tokens": 2147
+  },
+  "spans": [
+    {
+      "span_id": "01a135cd-e7b0-7551-9a3b-e0fbec82bbeb",
+      "parent_span_id": "01a135cd-e7ae-7b01-8f23-004031599cdb",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T15:07:29.072828+00:00",
+      "input_messages": 2,
+      "duration_ms": 1205.5,
+      "end_time": "2026-10-13T15:07:30.278359+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 964,
+        "output_tokens": 30,
+        "total_tokens": 994
+      },
+      "requested_tool_calls": [
+        "draft_email"
+      ]
+    },
+    {
+      "span_id": "01a135cd-ec6a-7701-8088-9bf0002c5956",
+      "parent_span_id": "01a135cd-ec68-7d42-b919-2eee1df4ee68",
+      "kind": "tool",
+      "name": "draft_email",
+      "start_time": "2026-10-13T15:07:30.282633+00:00",
+      "input": "{\"account_name_or_id\": \"TechStart Inc\", \"purpose\": \"Follow-up on the renewal paperwork.\"}",
+      "duration_ms": 3.4,
+      "end_time": "2026-10-13T15:07:30.286082+00:00",
+      "status": "ok",
+      "output": "{\"to\": \"lena.ortiz@techstart.example.com\", \"subject\": \"Following up on TechStart Inc\", \"body\": \"Hi Lena,\\n\\nI wanted to follow up regarding Follow-up on the renewal paperwork..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"drafted\"}"
+    },
+    {
+      "span_id": "01a135cd-ec73-7c11-b333-87c458e91a74",
+      "parent_span_id": "01a135cd-ec70-7f22-b373-ebabaf64a4eb",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-13T15:07:30.291162+00:00",
+      "input_messages": 4,
+      "duration_ms": 1527.1,
+      "end_time": "2026-10-13T15:07:31.818347+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1071,
+        "output_tokens": 82,
+        "total_tokens": 1153
+      },
+      "requested_tool_calls": []
+    }
+  ]
+}
