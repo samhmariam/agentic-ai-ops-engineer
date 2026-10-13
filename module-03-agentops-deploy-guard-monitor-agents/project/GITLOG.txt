@@ -1,4 +1,7 @@
-* fde9fd6 (HEAD -> main) Record eval results for baseline-v1, prompt-v2 and candidate-v2
+* d1644b4 (HEAD -> main) Record sample salesops-agent ask runs (log and traces)
+* 75f0675 Add salesops-agent local entry point
+* e82741f (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* fde9fd6 Record eval results for baseline-v1, prompt-v2 and candidate-v2
 * 16c3c59 Document version-based evaluation workflow in README
 * 8a5a7bd Tag runs with their experiment and scope report telemetry to it
 * 063abbc Name reports after the experiment they describe
@@ -6,7 +9,7 @@
 * c419e6c Compare eval results across versions with `salesops compare`
 * 176811e Add prompt v2 and experiment configs for prompt and toolset changes
 * c8bcc91 Pin tool versions per config and support experiment configs
-* 66626d3 (origin/main, origin/HEAD) Add GITLOG.txt generated from project git history
+* 66626d3 Add GITLOG.txt generated from project git history
 * be089e8 Record v1 baseline evaluation with version manifest
 * 6afcacf Record a version manifest in logs, traces and eval results
 * a51a979 Refactor tools into typed, versioned tool specs with data schemas
