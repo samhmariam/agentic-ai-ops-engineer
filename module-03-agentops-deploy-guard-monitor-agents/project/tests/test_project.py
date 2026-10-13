@@ -4,8 +4,9 @@ import copy
 import json
 
 import pytest
+import yaml
 
-from salesops_agent.config import load_config, with_overrides
+from salesops_agent.config import ConfigError, load_config, with_overrides
 from salesops_agent.data import CRMData, normalize_lookup_text
 from salesops_agent.evaluation import EvalCase, load_cases, score_case
 from salesops_agent.prompts import load_system_prompt, prompt_hash
@@ -31,6 +32,43 @@ def _tools(crm, outbox, enabled):
 def test_config_paths_are_absolute(cfg):
     assert all(p.is_absolute() for p in cfg["paths"].values())
     assert cfg["paths"]["data_dir"].is_dir()
+    assert cfg["schema_version"] == 1
+    assert len(cfg["config_sha256"]) == 64
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda c: c.pop("schema_version"),
+        lambda c: c.update(schema_version=2),
+        lambda c: c["model"].update(temperature=5),
+        lambda c: c["tools"].update(enabled=["lookup_account", "lookup_account"]),
+        lambda c: c["paths"].update(unexpected="x"),
+    ],
+    ids=["missing-version", "future-version", "bad-temperature", "duplicate-tool", "unknown-key"],
+)
+def test_invalid_config_rejected(cfg, tmp_path, mutate):
+    mutate(raw := _raw_config_with_absolute_paths(cfg))
+    with pytest.raises(ConfigError):
+        load_config(_write_config(tmp_path, raw))
+
+
+def test_copied_config_loads(cfg, tmp_path):
+    # Control for the rejection cases: an unmutated copy must load.
+    assert load_config(_write_config(tmp_path, _raw_config_with_absolute_paths(cfg)))
+
+
+def _raw_config_with_absolute_paths(cfg):
+    raw = yaml.safe_load(open(cfg["config_path"], encoding="utf-8"))
+    raw["paths"] = {k: str(v) for k, v in cfg["paths"].items()}
+    raw["prompt"]["registry"] = str(cfg["prompt"]["registry"])
+    return raw
+
+
+def _write_config(tmp_path, raw):
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    return path
 
 
 def test_prompt_is_versioned(cfg):
