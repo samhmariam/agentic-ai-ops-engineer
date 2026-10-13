@@ -26,7 +26,7 @@ def load_config(config_path: str | Path | None = None) -> dict[str, Any]:
     base = path.parent
     cfg["config_path"] = str(path)
     cfg["paths"] = {key: base / value for key, value in cfg["paths"].items()}
-    cfg["prompt"]["path"] = base / cfg["prompt"]["path"]
+    cfg["prompt"]["registry"] = base / cfg["prompt"]["registry"]
     return cfg
 
 

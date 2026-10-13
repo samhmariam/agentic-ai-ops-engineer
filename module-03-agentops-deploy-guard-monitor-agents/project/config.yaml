@@ -10,8 +10,8 @@ model:
   temperature: 0.0
 
 prompt:
+  registry: prompts/registry.yaml
   version: v1
-  path: prompts/system_prompt_v1.md
 
 # Tools exposed to the agent. v1 mirrors the notebook prototype, including the
 # restricted HR/financial tools and send_email. Later steps gate these with

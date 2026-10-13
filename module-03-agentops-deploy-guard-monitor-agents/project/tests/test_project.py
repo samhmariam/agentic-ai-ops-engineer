@@ -1,5 +1,6 @@
 """Offline tests: config, data access, tools, scoring and reporting. No LLM calls."""
 
+import copy
 import json
 
 import pytest
@@ -7,7 +8,7 @@ import pytest
 from salesops_agent.config import load_config, with_overrides
 from salesops_agent.data import CRMData, normalize_lookup_text
 from salesops_agent.evaluation import EvalCase, load_cases, score_case
-from salesops_agent.prompts import load_system_prompt
+from salesops_agent.prompts import load_system_prompt, prompt_hash
 from salesops_agent.reporting import build_report
 from salesops_agent.runner import RunResult
 from salesops_agent.tools import make_tools
@@ -36,6 +37,37 @@ def test_prompt_is_versioned(cfg):
     prompt = load_system_prompt(cfg)
     assert prompt.version == "v1"
     assert "SalesOps Agent for UdaCenture" in prompt.text
+    assert len(prompt.sha256) == 64
+
+
+def test_prompt_hash_ignores_line_endings():
+    assert prompt_hash("a\nb\n") == prompt_hash("a\r\nb\r\n")
+
+
+def _copy_prompts(cfg, tmp_path):
+    for f in cfg["prompt"]["registry"].parent.iterdir():
+        (tmp_path / f.name).write_bytes(f.read_bytes())
+    return with_prompt(cfg, tmp_path / "registry.yaml")
+
+
+def with_prompt(cfg, registry, version=None):
+    new = copy.deepcopy(cfg)
+    new["prompt"]["registry"] = registry
+    if version:
+        new["prompt"]["version"] = version
+    return new
+
+
+def test_edited_prompt_fails_hash_check(cfg, tmp_path):
+    tmp_cfg = _copy_prompts(cfg, tmp_path)
+    (tmp_path / "system_prompt_v1.md").write_text("You are a different agent.", encoding="utf-8")
+    with pytest.raises(ValueError, match="immutable"):
+        load_system_prompt(tmp_cfg)
+
+
+def test_unknown_prompt_version_fails(cfg, tmp_path):
+    with pytest.raises(ValueError, match="not in"):
+        load_system_prompt(with_prompt(cfg, cfg["prompt"]["registry"], version="v99"))
 
 
 def test_dataset_counts_match_notebook(crm):

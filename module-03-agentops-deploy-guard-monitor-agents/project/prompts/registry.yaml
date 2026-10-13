@@ -1,0 +1,13 @@
+# Prompt registry. Released prompts are immutable: to change behaviour, add a new
+# file and a new entry here, then point config.yaml prompt.version at it.
+# sha256 is computed over the text with normalized line endings and surrounding
+# whitespace stripped (see salesops_agent.prompts.prompt_hash).
+
+prompts:
+  v1:
+    file: system_prompt_v1.md
+    created: "2026-10-13"
+    description: >
+      Verbatim system prompt from the notebook prototype. Permits internal tool use;
+      baseline for evaluation before guardrails.
+    sha256: 84e12a225f999c4e57a24111876c8dcb964f6a778d83774f3a09cb6ce226740c
