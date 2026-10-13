@@ -1,9 +1,13 @@
-* d25b847 (HEAD -> main) Correct README Python version to 3.13 (matches .python-version)
+* ce4fda1 (HEAD -> main) Record 21-task evaluation of six experiments incl. tool guardrail
+* 433cd94 Document tool/action guardrails and six-experiment results in README
+* cabcb04 Add tool/action guardrails (salesops_data_access_policy)
+* 3ecd082 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* d25b847 Correct README Python version to 3.13 (matches .python-version)
 * a3499fc Regenerate GITLOG.txt from project git history
 * a7d678f Record 20-task evaluation of all experiments incl. guarded-v3
 * ed21c57 Document runtime controls and input guardrails in README
 * f5c3eae Add input guardrails and make the guarded config the default
-* 2e63a45 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 2e63a45 Regenerate GITLOG.txt from project git history
 * d715d42 Record 12-task evaluation runs and evaluation report
 * 00fd8a4 Document the evaluation suite, tasks and evaluation report in README
 * 06607f0 Use nearest-rank p95 latency and show full task names
