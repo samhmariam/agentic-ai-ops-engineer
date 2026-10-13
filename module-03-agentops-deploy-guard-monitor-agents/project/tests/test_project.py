@@ -5,6 +5,7 @@ import json
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from salesops_agent.config import ConfigError, load_config, with_overrides
 from salesops_agent.data import CRMData, normalize_lookup_text
@@ -12,7 +13,8 @@ from salesops_agent.evaluation import EvalCase, load_cases, score_case
 from salesops_agent.prompts import load_system_prompt, prompt_hash
 from salesops_agent.reporting import build_report
 from salesops_agent.runner import RunResult
-from salesops_agent.tools import make_tools
+from salesops_agent.schemas import DataValidationError
+from salesops_agent.tools import make_tools, tool_versions
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +28,7 @@ def crm(cfg):
 
 
 def _tools(crm, outbox, enabled):
-    return {fn.__name__: fn for fn in make_tools(crm, outbox, enabled)}
+    return {t.name: t for t in make_tools(crm, outbox, enabled)}
 
 
 def test_config_paths_are_absolute(cfg):
@@ -142,17 +144,60 @@ def test_tools_respect_enabled_list(cfg, crm, tmp_path):
 
 
 def test_pipeline_summary_counts(cfg, crm, tmp_path):
-    summary = _tools(crm, tmp_path / "o.json", ["summarize_pipeline"])["summarize_pipeline"]()
+    summary = _tools(crm, tmp_path / "o.json", ["summarize_pipeline"])["summarize_pipeline"].invoke({})
     assert sum(s["count"] for s in summary.values()) == 182
 
 
 def test_draft_and_send_email_use_configured_outbox(cfg, crm, tmp_path):
     outbox = tmp_path / "outbox.json"
     tools = _tools(crm, outbox, ["draft_email", "send_email"])
-    draft = tools["draft_email"]("Acme Corp", "next steps")
+    draft = tools["draft_email"].invoke({"account_name_or_id": "Acme Corp", "purpose": "next steps"})
     assert draft["to"] == "omar.stone@acmecorp.example.com"
-    tools["send_email"](draft["to"], draft["subject"], draft["body"])
+    tools["send_email"].invoke({k: draft[k] for k in ("to", "subject", "body")})
     assert json.loads(outbox.read_text())[0]["status"] == "sent"
+
+
+def test_every_tool_is_versioned_with_risk_metadata(cfg, crm, tmp_path):
+    tools = make_tools(crm, tmp_path / "o.json", cfg["tools"]["enabled"])
+    versions = tool_versions(tools)
+    assert set(versions) == set(cfg["tools"]["enabled"])
+    assert all(v == "1.0.0" for v in versions.values())
+    by_name = {t.name: t.metadata for t in tools}
+    assert by_name["send_email"]["side_effect"] is True
+    assert by_name["lookup_internal_hr_data"]["classification"] == "restricted"
+    assert by_name["lookup_account"]["classification"] == "crm"
+
+
+@pytest.mark.parametrize(
+    "name, args",
+    [
+        ("lookup_account", {"account_name_or_id": ""}),
+        ("lookup_account", {}),
+        ("send_email", {"to": "not-an-email", "subject": "s", "body": "b"}),
+        ("send_email", {"to": "a@b.com", "subject": "", "body": "b"}),
+    ],
+)
+def test_tool_inputs_are_validated(crm, tmp_path, name, args):
+    outbox = tmp_path / "o.json"
+    tool = _tools(crm, outbox, [name])[name]
+    with pytest.raises(ValidationError):
+        tool.invoke(args)
+    assert not outbox.exists()
+
+
+def test_tool_schema_exposed_to_model(crm, tmp_path):
+    tool = _tools(crm, tmp_path / "o.json", ["list_open_opportunities"])["list_open_opportunities"]
+    assert "Negotiation" in tool.args["stage"]["description"]
+
+
+def test_invalid_data_fails_on_load(cfg, tmp_path):
+    for f in cfg["paths"]["data_dir"].glob("*.json"):
+        (tmp_path / f.name).write_bytes(f.read_bytes())
+    accounts = json.loads((tmp_path / "accounts.json").read_text(encoding="utf-8"))
+    accounts[0]["health_score"] = 250
+    (tmp_path / "accounts.json").write_text(json.dumps(accounts), encoding="utf-8")
+    with pytest.raises(DataValidationError, match=r"accounts.json\[0\]"):
+        CRMData(tmp_path)
 
 
 def test_eval_cases_load(cfg):

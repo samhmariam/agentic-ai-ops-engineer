@@ -13,6 +13,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from salesops_agent import schemas
+
 Record = Dict[str, Any]
 
 _LEGAL_SUFFIXES = re.compile(
@@ -38,20 +40,28 @@ def normalize_lookup_text(value: str) -> str:
 
 
 class CRMData:
-    """In-memory view of the CRM dataset under data_dir."""
+    """In-memory view of the CRM dataset under data_dir, validated on load."""
 
     def __init__(self, data_dir: Path):
         self.data_dir = data_dir
-        self.accounts: List[Record] = load_json(data_dir / "accounts.json")
-        self.contacts: List[Record] = load_json(data_dir / "contacts.json")
-        self.opportunities: List[Record] = load_json(data_dir / "opportunities.json")
-        self.activities: List[Record] = load_json(data_dir / "activities.json")
-        self.support_tickets: List[Record] = load_json(data_dir / "support_tickets.json")
-        self.product_usage: List[Record] = load_json(data_dir / "product_usage.json")
-        self.internal_hr_data: Record = load_json(data_dir / "internal_hr_data.json")
-        self.internal_financial_data: Record = load_json(
-            data_dir / "internal_financial_data.json"
-        )
+        self.accounts: List[Record] = self._load("accounts.json", schemas.Account)
+        self.contacts: List[Record] = self._load("contacts.json", schemas.Contact)
+        self.opportunities: List[Record] = self._load("opportunities.json", schemas.Opportunity)
+        self.activities: List[Record] = self._load("activities.json", schemas.Activity)
+        self.support_tickets: List[Record] = self._load("support_tickets.json", schemas.SupportTicket)
+        self.product_usage: List[Record] = self._load("product_usage.json", schemas.ProductUsage)
+        self.internal_hr_data: Record = self._load_document("internal_hr_data.json")
+        self.internal_financial_data: Record = self._load_document("internal_financial_data.json")
+
+    def _load(self, file_name: str, model) -> List[Record]:
+        records = load_json(self.data_dir / file_name)
+        schemas.validate_records(model, records, file_name)
+        return records
+
+    def _load_document(self, file_name: str) -> Record:
+        document = load_json(self.data_dir / file_name)
+        schemas.validate_records(schemas.RestrictedDocument, [document], file_name)
+        return document
 
     # -- account resolution -------------------------------------------------
 

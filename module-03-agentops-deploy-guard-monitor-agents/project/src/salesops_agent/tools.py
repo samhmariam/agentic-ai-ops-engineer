@@ -1,33 +1,64 @@
 """Agent tools.
 
-`make_tools` builds the tool functions as closures over a CRMData instance and
-returns only those enabled in config.yaml. Docstrings are the tool descriptions the
-model sees, so they are kept identical to the notebook prototype.
+Each tool is declared as a `ToolSpec`: a version, a pydantic input schema from
+schemas.py, and metadata describing its risk (data classification and whether it
+has side effects). `make_tools` turns the specs enabled in config.yaml into
+LangChain StructuredTools, so arguments are validated before a tool runs and the
+version/risk metadata travels with the tool. Descriptions are the text the model
+sees and are kept identical to the notebook prototype.
 """
 
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Literal, Optional, Type
+
+from langchain_core.tools import BaseTool, StructuredTool
+from pydantic import BaseModel
 
 from salesops_agent.data import CRMData, load_json
-
-Tool = Callable[..., Any]
+from salesops_agent.schemas import (
+    AccountQuery,
+    DraftEmailInput,
+    InternalDataQuery,
+    NoArgs,
+    OpportunityFilter,
+    SendEmailInput,
+)
 
 CLOSED_STAGES = {"Closed Won", "Closed Lost"}
 
+Classification = Literal["crm", "restricted"]
 
-def make_tools(crm: CRMData, email_outbox: Path, enabled: List[str]) -> List[Tool]:
+
+@dataclass(frozen=True)
+class ToolSpec:
+    name: str
+    version: str
+    description: str
+    args_schema: Type[BaseModel]
+    classification: Classification
+    side_effect: bool
+    func: Callable[..., Any]
+
+    def metadata(self) -> Dict[str, Any]:
+        return {
+            "version": self.version,
+            "classification": self.classification,
+            "side_effect": self.side_effect,
+        }
+
+
+def build_tool_specs(crm: CRMData, email_outbox: Path) -> Dict[str, ToolSpec]:
     def lookup_account(account_name_or_id: str) -> Dict[str, Any]:
-        """Look up a B2B account by account ID or account name."""
         account = crm.resolve_account(account_name_or_id)
         if not account:
             return {"error": f"No account found for {account_name_or_id}"}
         return account
 
     def lookup_account_context(account_name_or_id: str) -> Dict[str, Any]:
-        """Return account context including contacts, opportunities, activities, tickets, and product usage."""
         account = crm.resolve_account(account_name_or_id)
         if not account:
             return {"error": f"No account found for {account_name_or_id}"}
@@ -42,14 +73,12 @@ def make_tools(crm: CRMData, email_outbox: Path, enabled: List[str]) -> List[Too
         }
 
     def list_open_opportunities(stage: Optional[str] = None) -> List[Dict[str, Any]]:
-        """List open opportunities, optionally filtered by stage."""
         results = [o for o in crm.opportunities if o["stage"] not in CLOSED_STAGES]
         if stage:
             results = [o for o in results if o["stage"].lower() == stage.lower()]
         return results
 
     def summarize_pipeline() -> Dict[str, Any]:
-        """Summarize opportunity count and value by stage."""
         summary: Dict[str, Dict[str, Any]] = {}
         for opp in crm.opportunities:
             bucket = summary.setdefault(opp["stage"], {"count": 0, "amount_usd": 0})
@@ -58,15 +87,12 @@ def make_tools(crm: CRMData, email_outbox: Path, enabled: List[str]) -> List[Too
         return summary
 
     def lookup_internal_hr_data(query: str) -> Dict[str, Any]:
-        """Look up internal HR data. Prototype-only tool. Not production safe."""
         return {"query": query, "data": crm.internal_hr_data}
 
     def lookup_internal_financial_data(query: str) -> Dict[str, Any]:
-        """Look up internal financial data. Prototype-only tool. Not production safe."""
         return {"query": query, "data": crm.internal_financial_data}
 
     def draft_email(account_name_or_id: str, purpose: str) -> Dict[str, Any]:
-        """Draft a follow-up email for an account's primary contact."""
         context = lookup_account_context(account_name_or_id)
         if "error" in context:
             return context
@@ -92,7 +118,6 @@ def make_tools(crm: CRMData, email_outbox: Path, enabled: List[str]) -> List[Too
         }
 
     def send_email(to: str, subject: str, body: str) -> Dict[str, Any]:
-        """Fake-send an email by appending it to a local JSON outbox."""
         outbox = load_json(email_outbox) if email_outbox.exists() else []
         message = {"to": to, "subject": subject, "body": body, "status": "sent"}
         outbox.append(message)
@@ -101,21 +126,53 @@ def make_tools(crm: CRMData, email_outbox: Path, enabled: List[str]) -> List[Too
             json.dump(outbox, f, indent=2)
         return {"status": "sent", "message": message}
 
-    registry: Dict[str, Tool] = {
-        fn.__name__: fn
-        for fn in (
-            lookup_account,
-            lookup_account_context,
-            list_open_opportunities,
-            summarize_pipeline,
-            lookup_internal_hr_data,
-            lookup_internal_financial_data,
-            draft_email,
-            send_email,
-        )
-    }
+    specs = [
+        ToolSpec("lookup_account", "1.0.0",
+                 "Look up a B2B account by account ID or account name.",
+                 AccountQuery, "crm", False, lookup_account),
+        ToolSpec("lookup_account_context", "1.0.0",
+                 "Return account context including contacts, opportunities, activities, tickets, and product usage.",
+                 AccountQuery, "crm", False, lookup_account_context),
+        ToolSpec("list_open_opportunities", "1.0.0",
+                 "List open opportunities, optionally filtered by stage.",
+                 OpportunityFilter, "crm", False, list_open_opportunities),
+        ToolSpec("summarize_pipeline", "1.0.0",
+                 "Summarize opportunity count and value by stage.",
+                 NoArgs, "crm", False, summarize_pipeline),
+        ToolSpec("lookup_internal_hr_data", "1.0.0",
+                 "Look up internal HR data. Prototype-only tool. Not production safe.",
+                 InternalDataQuery, "restricted", False, lookup_internal_hr_data),
+        ToolSpec("lookup_internal_financial_data", "1.0.0",
+                 "Look up internal financial data. Prototype-only tool. Not production safe.",
+                 InternalDataQuery, "restricted", False, lookup_internal_financial_data),
+        ToolSpec("draft_email", "1.0.0",
+                 "Draft a follow-up email for an account's primary contact.",
+                 DraftEmailInput, "crm", False, draft_email),
+        ToolSpec("send_email", "1.0.0",
+                 "Fake-send an email by appending it to a local JSON outbox.",
+                 SendEmailInput, "crm", True, send_email),
+    ]
+    return {spec.name: spec for spec in specs}
 
-    unknown = sorted(set(enabled) - registry.keys())
+
+def to_langchain_tool(spec: ToolSpec) -> BaseTool:
+    return StructuredTool.from_function(
+        func=spec.func,
+        name=spec.name,
+        description=spec.description,
+        args_schema=spec.args_schema,
+        metadata=spec.metadata(),
+    )
+
+
+def make_tools(crm: CRMData, email_outbox: Path, enabled: List[str]) -> List[BaseTool]:
+    """Build the enabled tools, in config order. Unknown names are a config error."""
+    specs = build_tool_specs(crm, email_outbox)
+    unknown = sorted(set(enabled) - specs.keys())
     if unknown:
         raise ValueError(f"Unknown tools in config tools.enabled: {unknown}")
-    return [registry[name] for name in enabled]
+    return [to_langchain_tool(specs[name]) for name in enabled]
+
+
+def tool_versions(tools: List[BaseTool]) -> Dict[str, str]:
+    return {t.name: (t.metadata or {}).get("version", "unknown") for t in tools}
