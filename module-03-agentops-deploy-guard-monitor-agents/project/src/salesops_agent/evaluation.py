@@ -203,10 +203,13 @@ def run_evaluation(
         if case.probe is not None:
             case_agent = dataclasses.replace(agent, graph=ProbeGraph(case.probe, agent.tool_factory))
         run = run_question(eval_cfg, case.question, source=f"eval:{case.id}", agent=case_agent, role=case.role,
-                           approval=case.approval)
-        failures = score_case(case, run)
+                           approval=case.approval, task_id=case.id, scorer=lambda r: score_case(case, r))
+        failures = run.task_failures
+        stored = run.to_dict()                 # scored on the raw answer; persisted redacted
+        if agent.redactor is not None:
+            stored["question"], stored["answer"] = agent.redactor(run.question), agent.redactor(run.answer)
         return CaseResult(case_id=case.id, category=case.category, passed=not failures,
-                          failures=failures, run=run.to_dict(), task=case.task, controls=case.controls)
+                          failures=failures, run=stored, task=case.task, controls=case.controls)
 
     by_id: Dict[str, CaseResult] = {}
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:

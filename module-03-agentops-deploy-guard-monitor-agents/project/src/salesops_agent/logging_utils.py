@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from datetime import datetime, timezone
-from typing import Any
+from pathlib import Path
+from typing import Any, Dict
 
 LOGGER_NAME = "salesops_agent"
 
@@ -47,3 +49,16 @@ def setup_logging(cfg: dict[str, Any]) -> logging.Logger:
 
 def log_event(logger: logging.Logger, event: str, level: int = logging.INFO, **fields: Any) -> None:
     logger.log(level, event, extra={"fields": fields})
+
+
+_RUNS_LOCK = threading.Lock()
+
+
+def write_run_record(cfg: dict[str, Any], record: Dict[str, Any]) -> Path:
+    """Append one run summary as a JSON line to logs/<logging.runs_file> (thread-safe)."""
+    path = cfg["paths"]["logs_dir"] / cfg["logging"]["runs_file"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(record, default=str)
+    with _RUNS_LOCK, path.open("a", encoding="utf-8") as f:
+        f.write(line + "\n")
+    return path

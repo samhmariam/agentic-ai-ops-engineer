@@ -85,7 +85,8 @@ class PathsSection(_Section):
 
 
 class LoggingSection(_Section):
-    file: str
+    file: str                      # event stream: logs/<file>
+    runs_file: str = "runs.jsonl"  # one structured record per run: logs/<runs_file>
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
 

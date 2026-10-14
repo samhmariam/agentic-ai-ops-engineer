@@ -76,7 +76,8 @@ sandbox:
   policy: policies/sandbox_v1.yaml
 
 logging:
-  file: agent.jsonl   # inside paths.logs_dir
+  file: agent.jsonl        # event stream (guardrail, approval, sandbox events), inside paths.logs_dir
+  runs_file: runs.jsonl    # one structured record per agent run
   level: INFO
 
 tracing:

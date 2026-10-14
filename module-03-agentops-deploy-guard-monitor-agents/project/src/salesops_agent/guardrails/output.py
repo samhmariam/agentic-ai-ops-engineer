@@ -31,6 +31,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from salesops_agent.data import CRMData
+from salesops_agent.redaction import crm_amounts, value_pattern, values_at
 
 Action = Literal["allow", "redact", "review", "block"]
 _SEVERITY = {"allow": 0, "redact": 1, "review": 2, "block": 3}
@@ -110,37 +111,6 @@ class OutputDecision:
 
 # -- helpers ----------------------------------------------------------------
 
-def _values_at(doc: Any, path: List[str]) -> Iterable[Any]:
-    """Values at a dot path where `name[]` iterates a list."""
-    if not path:
-        yield doc
-        return
-    head, rest = path[0], path[1:]
-    key = head[:-2] if head.endswith("[]") else head
-    if not isinstance(doc, dict) or key not in doc:
-        return
-    items = doc[key] if head.endswith("[]") and isinstance(doc[key], list) else [doc[key]]
-    for item in items:
-        yield from _values_at(item, rest)
-
-
-def _money_pattern(amount: int) -> str:
-    """Regex matching common renderings of an amount: 2000000, 2,000,000, $2M, $2 million, $850k."""
-    forms = [rf"{amount}", rf"{amount:,}".replace(",", r",")]
-    for divisor, suffix in ((1_000_000, r"(m|mm|million)"), (1_000, r"(k|thousand)")):
-        if amount >= divisor and amount % (divisor // 10) == 0:
-            scaled = f"{amount / divisor:g}".replace(".", r"\.")
-            forms.append(rf"{scaled}(\.0+)?\s?{suffix}\b")
-    return r"(?<![\d.,])(?:\$\s?)?(" + "|".join(forms) + r")(?![\d,]*\d)"
-
-
-def _crm_amounts(crm: CRMData) -> set[int]:
-    amounts: set[int] = set()
-    for record in [*crm.accounts, *crm.opportunities, *crm.product_usage]:
-        amounts.update(v for v in record.values() if isinstance(v, int) and not isinstance(v, bool))
-    return amounts
-
-
 # -- guardrail --------------------------------------------------------------
 
 class OutputGuardrail:
@@ -172,17 +142,16 @@ class OutputGuardrail:
     def _build_redactions(self, section: RedactSection, crm: CRMData) -> List[re.Pattern]:
         patterns = [re.compile(rf"\b{re.escape(name)}\b", re.IGNORECASE) for name in section.field_names]
         docs = {"hr": crm.internal_hr_data, "financial": crm.internal_financial_data}
-        crm_amounts = _crm_amounts(crm)
+        skip = crm_amounts(crm)
         self.skipped_values: List[str] = []
         for src in section.values_from:
-            for value in _values_at(docs[src.source], src.path.split(".")):
-                if src.kind == "money" and isinstance(value, int):
-                    if value in crm_amounts:        # also a legitimate CRM figure: never redact
-                        self.skipped_values.append(f"{src.path}={value}")
-                        continue
-                    patterns.append(re.compile(_money_pattern(value), re.IGNORECASE))
-                elif src.kind == "text" and isinstance(value, str) and value.strip():
-                    patterns.append(re.compile(rf"\b{re.escape(value.strip())}", re.IGNORECASE))
+            for value in values_at(docs[src.source], src.path.split(".")):
+                if src.kind == "money" and isinstance(value, int) and value in skip:
+                    self.skipped_values.append(f"{src.path}={value}")   # also a legitimate CRM figure
+                    continue
+                pattern = value_pattern(value, src.kind, skip)
+                if pattern is not None:
+                    patterns.append(pattern)
         return patterns
 
     def describe(self) -> Dict[str, Any]:

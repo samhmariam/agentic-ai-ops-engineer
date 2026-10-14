@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set
 
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
@@ -16,7 +16,8 @@ from salesops_agent.guardrails import (
 )
 from salesops_agent.prompts import Prompt, load_system_prompt
 from salesops_agent.sandbox import load_sandbox
-from salesops_agent.tools import make_tools, tool_versions
+from salesops_agent.redaction import Redactor
+from salesops_agent.tools import build_tool_specs, make_tools, tool_versions
 from salesops_agent.versions import build_manifest
 
 
@@ -30,6 +31,8 @@ class SalesOpsAgent:
     # Builds any registered tool, wrapped by this agent's tool guardrail and sandbox, so
     # control probes can propose calls exactly as a misbehaving model would.
     tool_factory: Optional[Callable[[str, str], BaseTool]] = None
+    redactor: Optional[Redactor] = None                       # applied to everything logs/traces persist
+    restricted_tools: Set[str] = field(default_factory=set)   # outputs withheld from traces
 
 
 class _Components(NamedTuple):
@@ -40,6 +43,8 @@ class _Components(NamedTuple):
     output_guard: Optional[OutputGuardrail]
     manifest: Dict[str, Any]
     tool_factory: Callable[[str, str], BaseTool]
+    redactor: Redactor
+    restricted_tools: Set[str]
 
 
 def _load_components(cfg: dict[str, Any]) -> _Components:
@@ -65,7 +70,10 @@ def _load_components(cfg: dict[str, Any]) -> _Components:
         return make_tools(crm, cfg["paths"]["email_outbox"], {name: version}, tool_guard,
                           sandbox or load_sandbox(cfg, crm))[0]
 
-    return _Components(prompt, tools, input_guard, tool_guard, output_guard, manifest, tool_factory)
+    restricted = {name for name, versions in build_tool_specs(crm, cfg["paths"]["email_outbox"]).items()
+                  if any(spec.classification == "restricted" for spec in versions.values())}
+    return _Components(prompt, tools, input_guard, tool_guard, output_guard, manifest, tool_factory,
+                       Redactor(crm), restricted)
 
 
 def model_kwargs(cfg: dict[str, Any]) -> Dict[str, Any]:
@@ -101,4 +109,5 @@ def build_agent(cfg: dict[str, Any]) -> SalesOpsAgent:
     model = init_chat_model(**model_kwargs(cfg))
     graph = create_agent(model=model, tools=c.tools, system_prompt=c.prompt.text)
     return SalesOpsAgent(graph=graph, manifest=c.manifest, input_guard=c.input_guard,
-                         tool_guard=c.tool_guard, output_guard=c.output_guard, tool_factory=c.tool_factory)
+                         tool_guard=c.tool_guard, output_guard=c.output_guard, tool_factory=c.tool_factory,
+                         redactor=c.redactor, restricted_tools=c.restricted_tools)

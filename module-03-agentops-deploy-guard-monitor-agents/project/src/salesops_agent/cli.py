@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from pathlib import Path
 
 import click
 from dotenv import load_dotenv
@@ -117,7 +118,9 @@ def ask(question, config_path, as_json, role, approval):
             f"{result.latency_s:.1f}s | "
             f"{result.input_tokens}+{result.output_tokens} tokens | "
             f"tools: {', '.join(result.tools_called) or 'none'}]\n"
-            f"{guard_line}[log: {log_path}]\n[trace: {result.trace_path}]",
+            f"{guard_line}[run log: {cfg['paths']['logs_dir'] / cfg['logging']['runs_file']}]\n"
+            f"[event log: {log_path}]\n[trace: {result.trace_path}]\n"
+            f"[inspect: uv run salesops-agent inspect {result.run_id}]",
             err=True,
         )
 
@@ -258,6 +261,45 @@ def report(config_path):
 
     out = build_report(_load(config_path))
     click.echo(f"Report written to {out}")
+
+
+@app.command()
+@click.option("--failed", is_flag=True, help="Only runs that errored or failed their evaluation task.")
+@click.option("--intervened", is_flag=True, help="Only runs where a guardrail, sandbox or approval intervened.")
+@click.option("--task", "task_id", default=None, help="Only runs of this evaluation task id (e.g. E024).")
+@click.option("--limit", default=20, show_default=True, help="Most recent N matching runs.")
+@config_option
+def runs(failed, intervened, task_id, limit, config_path):
+    """List recent runs from logs/runs.jsonl (one line per run)."""
+    from salesops_agent.inspection import format_run_line, load_runs, select_runs
+
+    cfg = _load(config_path)
+    selected = select_runs(load_runs(cfg["paths"]["logs_dir"] / cfg["logging"]["runs_file"]),
+                           failed=failed, intervened=intervened, task_id=task_id, limit=limit)
+    if not selected:
+        click.echo("No matching runs.")
+    for run in selected:
+        click.echo(format_run_line(run))
+
+
+@app.command()
+@click.argument("run_id")
+@click.option("--json", "as_json", is_flag=True, help="Print the raw (redacted) trace JSON.")
+@config_option
+def inspect(run_id, as_json, config_path):
+    """Show the trace of RUN_ID (prefix allowed): status, input, output, failure reason,
+    and the step-by-step trajectory of model calls, tool calls, guardrails and approvals."""
+    from salesops_agent.inspection import find_run, format_trace, load_runs
+
+    cfg = _load(config_path)
+    record = find_run(load_runs(cfg["paths"]["logs_dir"] / cfg["logging"]["runs_file"]), run_id)
+    trace_path = Path(record["trace_path"]) if record and record.get("trace_path") else \
+        cfg["paths"]["traces_dir"] / f"{run_id}.json"
+    if not trace_path.exists():
+        raise click.ClickException(f"No trace found for run {run_id!r} ({trace_path})")
+    trace = json.loads(trace_path.read_text(encoding="utf-8"))
+    click.echo(json.dumps(trace, indent=2) if as_json else format_trace(trace))
+    click.echo(f"\n[trace: {trace_path}]", err=True)
 
 
 if __name__ == "__main__":

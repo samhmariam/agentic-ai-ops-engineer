@@ -52,7 +52,7 @@ def test_ask_prints_answer_and_writes_log_and_trace(fake_agent, tmp_config, tmp_
     result = invoke("ask", "Summarize the account risk for TechStart Inc.", "--config", str(tmp_config))
     assert result.exit_code == 0, result.output
     assert "Fake answer about TechStart." in result.stdout
-    assert "[trace:" in result.stderr and "[log:" in result.stderr
+    assert "[trace:" in result.stderr and "[run log:" in result.stderr
     assert fake_agent.calls[0]["messages"][0]["content"] == "Summarize the account risk for TechStart Inc."
 
     events = [json.loads(line) for line in (tmp_path / "logs" / "agent.jsonl").read_text().splitlines()]
@@ -64,7 +64,7 @@ def test_ask_prints_answer_and_writes_log_and_trace(fake_agent, tmp_config, tmp_
 
     trace = json.loads(next((tmp_path / "traces").glob("*.json")).read_text())
     assert trace["run_id"] == events[1]["run_id"]
-    assert trace["answer"] == "Fake answer about TechStart."
+    assert trace["final_output"] == "Fake answer about TechStart."
     assert trace["versions"]["experiment"] == "cli-test"
 
 
