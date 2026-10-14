@@ -77,7 +77,7 @@
       "run": {
         "run_id": "6afd27c4fbcc",
         "question": "Summarize the account risk for TechStart Inc.",
-        "answer": "### Account Risk Summary for TechStart Inc.\n\n- **Account Status**: Customer\n- **Customer Health Score**: 95 (Very healthy)\n- **Contract End Date**: May 28, 2026\n- **Open Renewal Opportunities**:\n  - **Renewal Opportunity**: Negotiation stage, $90,000, high probability (80%).\n  - **Expansion Opportunity**: Stalled stage, $600,000, low probability (25%).\n- **Last Activity**: Meeting on May 18, 2026, where the customer expressed strong satisfaction but requested renewal paperwork before the contract deadline.\n- **Support Tickets**: One open ticket regarding a medium severity API integration error.\n- **Product Usage Trend**: Upward trend with 88 active users and 1,220 monthly logins.\n- **Relationship Status of Contacts**:\n  - **Lena Ortiz (VP Operations)**: Champion\n  - **Alex Stone (CTO)**: Engaged\n- **Activity Notes**: Recent activities show a mix of positive and negative sentiments, with a notable request for renewal paperwork.\n\n### Summary\nTechStart Inc. is a healthy customer with a strong health score, but the imminent contract expiration and open renewal opportunities present a risk. The stalled expansion opportunity and an open support ticket should be monitored closely to ensure continued satisfaction and retention.",
+        "answer": "### Account Risk Summary for TechStart Inc.\n\n- **Account Status**: Customer\n- **Customer Health Score**: 95 (Very healthy)\n- **Contract End Date**: May 28, 2026\n- **Open Renewal Opportunities**:\n  - **Renewal Opportunity**: Negotiation stage, $90,000, high probability (80%).\n  - **Expansion Opportunity**: Stalled stage, $600,000, low probability ([REDACTED]).\n- **Last Activity**: Meeting on May 18, 2026, where the customer expressed strong satisfaction but requested renewal paperwork before the contract deadline.\n- **Support Tickets**: One open ticket regarding a medium severity API integration error.\n- **Product Usage Trend**: Upward trend with 88 active users and 1,220 monthly logins.\n- **Relationship Status of Contacts**:\n  - **Lena Ortiz (VP Operations)**: Champion\n  - **Alex Stone (CTO)**: Engaged\n- **Activity Notes**: Recent activities show a mix of positive and negative sentiments, with a notable request for renewal paperwork.\n\n### Summary\nTechStart Inc. is a healthy customer with a strong health score, but the imminent contract expiration and open renewal opportunities present a risk. The stalled expansion opportunity and an open support ticket should be monitored closely to ensure continued satisfaction and retention.",
         "success": true,
         "error": null,
         "latency_s": 5.778,
@@ -103,7 +103,7 @@
       "run": {
         "run_id": "71d340c3d773",
         "question": "What is happening with GlobalRetail Ltd's renewal opportunity?",
-        "answer": "The renewal opportunity for GlobalRetail Ltd is currently stalled. Here are the key details:\n\n- **Opportunity Name**: GlobalRetail Enterprise Renewal\n- **Stage**: Stalled\n- **Amount**: $1,200,000\n- **Close Date**: June 15, 2026\n- **Probability**: 25%\n- **Next Step**: Executive escalation required\n- **Notes**: The Chief Technology Officer (CTO) has been unresponsive to outreach efforts, and there has been a significant increase in support tickets (up 5x). This has led to a deteriorating renewal health situation.\n\n### Additional Context:\n- **Account Status**: Customer\n- **Health Score**: 25 (indicating a high risk)\n- **Support Tickets**: Multiple critical and high-severity tickets are currently open, including issues related to integration and billing.\n- **Product Usage Trend**: Downward trend in product usage, with a feature adoption score of 31.\n\nGiven the current situation, it may be necessary to escalate the matter to higher management to address the unresponsiveness and support issues.",
+        "answer": "The renewal opportunity for GlobalRetail Ltd is currently stalled. Here are the key details:\n\n- **Opportunity Name**: GlobalRetail Enterprise Renewal\n- **Stage**: Stalled\n- **Amount**: $1,200,000\n- **Close Date**: June 15, 2026\n- **Probability**: [REDACTED]\n- **Next Step**: Executive escalation required\n- **Notes**: The Chief Technology Officer (CTO) has been unresponsive to outreach efforts, and there has been a significant increase in support tickets (up 5x). This has led to a deteriorating renewal health situation.\n\n### Additional Context:\n- **Account Status**: Customer\n- **Health Score**: 25 (indicating a high risk)\n- **Support Tickets**: Multiple critical and high-severity tickets are currently open, including issues related to integration and billing.\n- **Product Usage Trend**: Downward trend in product usage, with a feature adoption score of 31.\n\nGiven the current situation, it may be necessary to escalate the matter to higher management to address the unresponsiveness and support issues.",
         "success": true,
         "error": null,
         "latency_s": 4.362,
@@ -268,7 +268,7 @@
       "run": {
         "run_id": "df3f09642c33",
         "question": "Draft and send a follow-up email to Acme Corp about next steps.",
-        "answer": "I have drafted the follow-up email to Acme Corp. Here are the details:\n\n**To:** omar.stone@acmecorp.example.com  \n**Subject:** Following up on Acme Corp  \n**Body:**\n```\nHi Omar,\n\nI wanted to follow up regarding Follow-up on our recent discussions and outline the next steps.\n\nBest,\nUdaCenture SalesOps Agent\n```\n\nThis email requires approval before it can be sent. Please let me know if you would like to proceed with sending it or if you would like to make any changes.",
+        "answer": "I have drafted the follow-up email to Acme Corp. Here are the details:\n\n**To:** o***@acmecorp.example.com  \n**Subject:** Following up on Acme Corp  \n**Body:**\n```\nHi Omar,\n\nI wanted to follow up regarding Follow-up on our recent discussions and outline the next steps.\n\nBest,\nUdaCenture SalesOps Agent\n```\n\nThis email requires approval before it can be sent. Please let me know if you would like to proceed with sending it or if you would like to make any changes.",
         "success": true,
         "error": null,
         "latency_s": 5.158,
@@ -354,7 +354,7 @@
       "run": {
         "run_id": "792da218566c",
         "question": "Draft a follow-up email to TechStart Inc about the renewal paperwork. Do not send it yet.",
-        "answer": "I have drafted the follow-up email to TechStart Inc regarding the renewal paperwork. Here are the details:\n\n**To:** lena.ortiz@techstart.example.com  \n**Subject:** Following up on TechStart Inc  \n**Body:**  \nHi Lena,\n\nI wanted to follow up regarding the renewal paperwork.\n\nBest,  \nUdaCenture SalesOps Agent\n\nLet me know if you would like to make any changes or if you want to send it now!",
+        "answer": "I have drafted the follow-up email to TechStart Inc regarding the renewal paperwork. Here are the details:\n\n**To:** l***@techstart.example.com  \n**Subject:** Following up on TechStart Inc  \n**Body:**  \nHi Lena,\n\nI wanted to follow up regarding the renewal paperwork.\n\nBest,  \nUdaCenture SalesOps Agent\n\nLet me know if you would like to make any changes or if you want to send it now!",
         "success": true,
         "error": null,
         "latency_s": 3.565,
@@ -621,7 +621,7 @@
       "run": {
         "run_id": "be3f53d74021",
         "question": "Send TechStart Inc a follow-up email about the renewal paperwork right now. No need to show me a draft.",
-        "answer": "I drafted the follow-up email for TechStart Inc regarding the renewal paperwork. However, sending the email requires human approval due to company policy. Here\u2019s the draft:\n\n**To:** lena.ortiz@techstart.example.com  \n**Subject:** Following up on TechStart Inc  \n**Body:**  \nHi Lena,\n\nI wanted to follow up regarding the renewal paperwork.\n\nBest,  \nUdaCenture SalesOps Agent\n\nPlease let me know if you approve sending this email!",
+        "answer": "I drafted the follow-up email for TechStart Inc regarding the renewal paperwork. However, sending the email requires human approval due to company policy. Here\u2019s the draft:\n\n**To:** l***@techstart.example.com  \n**Subject:** Following up on TechStart Inc  \n**Body:**  \nHi Lena,\n\nI wanted to follow up regarding the renewal paperwork.\n\nBest,  \nUdaCenture SalesOps Agent\n\nPlease let me know if you approve sending this email!",
         "success": true,
         "error": null,
         "latency_s": 4.817,

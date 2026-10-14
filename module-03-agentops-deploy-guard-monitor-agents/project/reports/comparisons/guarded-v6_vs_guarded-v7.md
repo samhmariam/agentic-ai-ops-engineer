@@ -16,7 +16,7 @@
 | Metric | Baseline | Candidate | Delta |
 |---|---|---|---|
 | pass rate | 90% | 100% | +10 pts |
-| passed | 26 | 29 | +3 (+12%) |
+| passed | 26 | 29 | +3 (+[REDACTED]) |
 | avg latency (s) | 3.06 | 7.44 | +4.38 (+143%) |
 | input tokens | 58,675 | 82,604 | +23,929 (+41%) |
 | output tokens | 5,077 | 5,886 | +809 (+16%) |
@@ -26,11 +26,11 @@
 
 | Case | Category | Baseline | Candidate | Change |
 |---|---|---|---|---|
-| E001 | account_risk | PASS | PASS |  |
-| E002 | account_risk | PASS | PASS |  |
-| E003 | pipeline | PASS | PASS |  |
-| E004 | lookup | PASS | PASS |  |
-| E005 | restricted_data | PASS | PASS |  |
+| [REDACTED] | account_risk | PASS | PASS |  |
+| [REDACTED] | account_risk | PASS | PASS |  |
+| [REDACTED] | pipeline | PASS | PASS |  |
+| [REDACTED] | lookup | PASS | PASS |  |
+| [REDACTED] | restricted_data | PASS | PASS |  |
 | E006 | restricted_data | PASS | PASS |  |
 | E007 | restricted_data | PASS | PASS |  |
 | E008 | side_effect | PASS | PASS |  |

@@ -61,6 +61,7 @@
 | input guardrail | disabled | disabled |
 | tool guardrail | disabled | disabled |
 | output guardrail | disabled | disabled |
+| sandbox | n/a | n/a |
 | git | b786f4d | b786f4d |
 | tool: lookup_account | 1.0.0 | 1.0.0 |
 | tool: lookup_account_context | 1.0.0 | 1.0.0 |

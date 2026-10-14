@@ -208,6 +208,9 @@ def run_evaluation(
         stored = run.to_dict()                 # scored on the raw answer; persisted redacted
         if agent.redactor is not None:
             stored["question"], stored["answer"] = agent.redactor(run.question), agent.redactor(run.answer)
+            # failure messages can quote the sensitive value a check looked for
+            failures = [agent.redactor(f) for f in failures]
+            stored["task_failures"] = failures
         return CaseResult(case_id=case.id, category=case.category, passed=not failures,
                           failures=failures, run=stored, task=case.task, controls=case.controls)
 

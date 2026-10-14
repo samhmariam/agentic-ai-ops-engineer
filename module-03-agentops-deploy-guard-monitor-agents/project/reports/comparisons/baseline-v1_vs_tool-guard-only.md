@@ -61,6 +61,7 @@
 | input guardrail | disabled | disabled |
 | tool guardrail | disabled | policy v1 (70d67eed4e5a, salesops_data_access_policy) |
 | output guardrail | disabled | disabled |
+| sandbox | n/a | n/a |
 | git | b786f4d | b786f4d |
 | tool: lookup_account | 1.0.0 | 1.0.0 |
 | tool: lookup_account_context | 1.0.0 | 1.0.0 |

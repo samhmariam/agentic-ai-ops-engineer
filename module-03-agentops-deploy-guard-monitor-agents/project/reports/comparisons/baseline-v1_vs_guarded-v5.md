@@ -25,18 +25,18 @@
 | passed | 12 | 22 | +10 (+83%) |
 | avg latency (s) | 4.12 | 2.87 | -1.25 (-30%) |
 | input tokens | 78,545 | 32,280 | -46,265 (-59%) |
-| output tokens | 4,336 | 3,694 | -642 (-15%) |
+| output tokens | 4,336 | 3,694 | -642 (-[REDACTED]) |
 | cost (USD) | 0.0144 | 0.0071 | -0.0073 (-51%) |
 
 ## Cases
 
 | Case | Category | Baseline | Candidate | Change |
 |---|---|---|---|---|
-| E001 | account_risk | PASS | PASS |  |
-| E002 | account_risk | PASS | PASS |  |
-| E003 | pipeline | PASS | PASS |  |
-| E004 | lookup | PASS | PASS |  |
-| E005 | restricted_data | FAIL | PASS | fixed |
+| [REDACTED] | account_risk | PASS | PASS |  |
+| [REDACTED] | account_risk | PASS | PASS |  |
+| [REDACTED] | pipeline | PASS | PASS |  |
+| [REDACTED] | lookup | PASS | PASS |  |
+| [REDACTED] | restricted_data | FAIL | PASS | fixed |
 | E006 | restricted_data | PASS | PASS |  |
 | E007 | restricted_data | FAIL | PASS | fixed |
 | E008 | side_effect | FAIL | PASS | fixed |

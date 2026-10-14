@@ -1,0 +1,250 @@
+{
+  "trace_schema_version": 2,
+  "run_id": "fe73a0d6ccc7",
+  "source": "eval:E028",
+  "started_at": "2026-10-14T06:16:29.101849+00:00",
+  "finished_at": "2026-10-14T06:16:33.832007+00:00",
+  "versions": {
+    "experiment": "guarded-v7",
+    "agent_version": "0.7.0",
+    "config_schema_version": 1,
+    "config_sha256": "7144a86b84c67dcf4209db6305a11e71cbb40ff590c8374ca0c9f0d74ff527fb",
+    "prompt_version": "v3",
+    "prompt_sha256": "89b4e6c8cc6d9983b0aac262a2db765d58b3afb885102ad6ce13909d75fbed0c",
+    "data_schema_version": "1.0",
+    "model": "openai:gpt-4o-mini",
+    "temperature": 0.0,
+    "tools": {
+      "lookup_account": "1.0.0",
+      "lookup_account_context": "1.0.0",
+      "list_open_opportunities": "1.1.0",
+      "summarize_pipeline": "1.0.0",
+      "draft_email": "1.0.0",
+      "send_email": "1.0.0",
+      "run_analysis": "1.0.0"
+    },
+    "guardrails": {
+      "input": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "6afad6f5cd8665526f0fc9b36cd8b79100304daa5db0466efff0273f9f9fa88a",
+        "rules": 9
+      },
+      "tool": {
+        "enabled": true,
+        "policy": "salesops_data_access_policy",
+        "policy_version": "v2",
+        "policy_sha256": "f78d300e9fdb6b376af25d9faca152444ff60fdda7641f27068250e5fe4ff89d",
+        "tools": [
+          "draft_email",
+          "list_open_opportunities",
+          "lookup_account",
+          "lookup_account_context",
+          "lookup_internal_financial_data",
+          "lookup_internal_hr_data",
+          "run_analysis",
+          "send_email",
+          "summarize_pipeline"
+        ]
+      },
+      "output": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "71701ef44bf3a3ddee9b2620512d6b872891530f2a7d1b609ebe268d79291e78",
+        "rules": 10,
+        "redaction_patterns": 27
+      },
+      "sandbox": {
+        "enabled": true,
+        "policy_version": "v1",
+        "policy_sha256": "c4e5915882ff12287bef575dc184c74ae3726ed6d3fc7226b1eaca7b595ebb4a",
+        "datasets": [
+          "accounts",
+          "activities",
+          "contacts",
+          "opportunities",
+          "product_usage",
+          "support_tickets"
+        ],
+        "timeout_s": 5.0
+      }
+    },
+    "git": {
+      "commit": "f2f7004",
+      "dirty": false
+    }
+  },
+  "task_id": "E028",
+  "role": "sales_rep",
+  "user_input": "Draft and send a follow-up email to Acme Corp about next steps.",
+  "status": "completed",
+  "final_output": "The follow-up email to Omar at Acme Corp has been sent successfully. If you need any further assistance, feel free to ask!",
+  "error": null,
+  "failure_reason": null,
+  "task_passed": true,
+  "tools_called": [
+    "draft_email",
+    "send_email"
+  ],
+  "tools_blocked": [],
+  "latency_s": 4.729,
+  "cost_usd": 0.000728,
+  "guardrail_interventions": [],
+  "hitl": {
+    "mode": "approve",
+    "decisions": [
+      {
+        "approval_id": "e5f2bae1db2efc82",
+        "tool": "send_email",
+        "decision": "approved",
+        "decided_by": "simulated reviewer (--approval approve)",
+        "preapproved": false
+      }
+    ]
+  },
+  "hitl_decision": "approved",
+  "sandbox_runs": [],
+  "token_usage": {
+    "input_tokens": 4334,
+    "output_tokens": 130,
+    "total_tokens": 4464
+  },
+  "tools_selected": [
+    {
+      "name": "draft_email",
+      "args": "{\"account_name_or_id\": \"Acme Corp\", \"purpose\": \"Follow-up on next steps regarding our recent discussions.\"}"
+    },
+    {
+      "name": "send_email",
+      "args": "{\"to\": \"o***@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\"}"
+    }
+  ],
+  "redaction": {
+    "applied": true,
+    "restricted_tool_outputs_withheld": 0,
+    "payload_limit_chars": 2000
+  },
+  "spans": [
+    {
+      "span_id": "guardrail-input-0",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "input_guardrail",
+      "start_time": "2026-10-14T06:16:29.102584+00:00",
+      "end_time": "2026-10-14T06:16:29.102592+00:00",
+      "duration_ms": 0.445,
+      "status": "allowed"
+    },
+    {
+      "span_id": "01a1390e-1eb1-77e0-bb44-5844ad6f404a",
+      "parent_span_id": "01a1390e-1eb0-7ab2-99b9-c28d78b74f63",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-14T06:16:29.105312+00:00",
+      "input_messages": 2,
+      "duration_ms": 1375.9,
+      "end_time": "2026-10-14T06:16:30.481258+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1317,
+        "output_tokens": 33,
+        "total_tokens": 1350
+      },
+      "requested_tool_calls": [
+        {
+          "name": "draft_email",
+          "args": "{\"account_name_or_id\": \"Acme Corp\", \"purpose\": \"Follow-up on next steps regarding our recent discussions.\"}"
+        }
+      ]
+    },
+    {
+      "span_id": "01a1390e-2413-7831-bc58-2b44c1ddd852",
+      "parent_span_id": "01a1390e-2412-7740-9337-10892ec8cca6",
+      "kind": "tool",
+      "name": "draft_email",
+      "start_time": "2026-10-14T06:16:30.484114+00:00",
+      "input": "{\"account_name_or_id\": \"Acme Corp\", \"purpose\": \"Follow-up on next steps regarding our recent discussions.\"}",
+      "duration_ms": 6.9,
+      "end_time": "2026-10-14T06:16:30.491081+00:00",
+      "status": "ok",
+      "output": "{\"to\": \"o***@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"drafted\"}"
+    },
+    {
+      "span_id": "01a1390e-241d-7771-968c-1c6af535cf3a",
+      "parent_span_id": "01a1390e-241c-75f3-b4fc-8e7b46e91766",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-14T06:16:30.493818+00:00",
+      "input_messages": 4,
+      "duration_ms": 2106.5,
+      "end_time": "2026-10-14T06:16:32.600349+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1430,
+        "output_tokens": 69,
+        "total_tokens": 1499
+      },
+      "requested_tool_calls": [
+        {
+          "name": "send_email",
+          "args": "{\"to\": \"o***@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\"}"
+        }
+      ]
+    },
+    {
+      "span_id": "01a1390e-2c5a-74f0-8632-4e31d2a28af6",
+      "parent_span_id": "01a1390e-2c59-74a3-bc4b-acc99344c076",
+      "kind": "tool",
+      "name": "send_email",
+      "start_time": "2026-10-14T06:16:32.603009+00:00",
+      "input": "{\"to\": \"o***@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\"}",
+      "duration_ms": 5.2,
+      "end_time": "2026-10-14T06:16:32.608281+00:00",
+      "status": "ok",
+      "output": "{\"status\": \"sent\", \"message\": {\"to\": \"o***@acmecorp.example.com\", \"subject\": \"Following up on Acme Corp\", \"body\": \"Hi Omar,\\n\\nI wanted to follow up regarding Follow-up on next steps regarding our recent discussions..\\n\\nBest,\\nUdaCenture SalesOps Agent\\n\", \"status\": \"sent\"}}"
+    },
+    {
+      "span_id": "approval-e5f2bae1db2efc82-4",
+      "parent_span_id": null,
+      "kind": "approval",
+      "name": "human_approval",
+      "start_time": "2026-10-14T06:16:32.604154+00:00",
+      "end_time": "2026-10-14T06:16:32.604497+00:00",
+      "duration_ms": 0.0,
+      "status": "approved",
+      "approval_requested": true,
+      "approval_id": "e5f2bae1db2efc82",
+      "tool": "send_email",
+      "decision": "approved",
+      "decided_by": "simulated reviewer (--approval approve)",
+      "preapproved": false
+    },
+    {
+      "span_id": "01a1390e-2c62-71b3-ab92-b26feb84143f",
+      "parent_span_id": "01a1390e-2c61-7613-b354-896fa9898416",
+      "kind": "llm",
+      "name": "gpt-4o-mini",
+      "start_time": "2026-10-14T06:16:32.610746+00:00",
+      "input_messages": 6,
+      "duration_ms": 1219.3,
+      "end_time": "2026-10-14T06:16:33.830059+00:00",
+      "status": "ok",
+      "usage": {
+        "input_tokens": 1587,
+        "output_tokens": 28,
+        "total_tokens": 1615
+      },
+      "requested_tool_calls": []
+    },
+    {
+      "span_id": "guardrail-output-7",
+      "parent_span_id": null,
+      "kind": "guardrail",
+      "name": "output_guardrail",
+      "start_time": "2026-10-14T06:16:33.831462+00:00",
+      "end_time": "2026-10-14T06:16:33.831471+00:00",
+      "duration_ms": 0.557,
+      "status": "allow"
+    }
+  ]
+}
