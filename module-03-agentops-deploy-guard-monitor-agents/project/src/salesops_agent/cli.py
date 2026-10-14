@@ -302,5 +302,50 @@ def inspect(run_id, as_json, config_path):
     click.echo(f"\n[trace: {trace_path}]", err=True)
 
 
+
+def _monitoring_options(f):
+    f = click.option("--output", default=None, help="Report path (default: reports/monitoring_report.md).")(f)
+    f = click.option("--source", type=click.Choice(["all", "eval", "cli"]), default="all", show_default=True,
+                     help="Only evaluation runs, only CLI (ask) runs, or both.")(f)
+    f = click.option("--experiment", "experiments", multiple=True,
+                     help="Only runs of these experiments (repeatable), e.g. guarded-v7.")(f)
+    f = click.option("--since", default=None, help="Only runs at or after this ISO timestamp, e.g. 2026-10-14.")(f)
+    return config_option(f)
+
+
+def _write_monitoring(config_path, since, experiments, source, output):
+    from salesops_agent.monitoring import write_monitoring_report
+
+    cfg = _load(config_path)
+    runs_log = cfg["paths"]["logs_dir"] / cfg["logging"]["runs_file"]
+    out = Path(output) if output else cfg["paths"]["reports_dir"] / "monitoring_report.md"
+    md, js, m = write_monitoring_report(runs_log, out, since=since, experiments=list(experiments) or None,
+                                        source=source)
+    o = m["outcomes"]
+    click.echo(f"{m['total_runs']} runs | success {o['success_rate']:.1%} | failure {o['failure_rate']:.1%} | "
+               f"avg latency {m['latency_s']['average']:.2f}s | total cost ${m['cost']['total_usd']:.4f} | "
+               f"guardrail blocks {m['guardrails']['blocks']} | HITL approved {m['hitl']['approved']} / "
+               f"rejected {m['hitl']['rejected']}")
+    click.echo(f"Report: {md}\nMetrics: {js}")
+
+
+@app.command("monitor")
+@_monitoring_options
+def monitor_cmd(config_path, since, experiments, source, output):
+    """Aggregate logs/runs.jsonl into reports/monitoring_report.md (+ .json)."""
+    _write_monitoring(config_path, since, experiments, source, output)
+
+
+@click.command()
+@_monitoring_options
+def generate_monitoring_report(config_path, since, experiments, source, output):
+    """Aggregate logs/runs.jsonl into reports/monitoring_report.md (+ .json).
+
+    Summarizes total runs, success/failure rates, latency, estimated cost, tool call
+    counts, guardrail blocks, HITL approvals/rejections and common failure reasons.
+    """
+    load_dotenv(PROJECT_ROOT / ".env")
+    _write_monitoring(config_path, since, experiments, source, output)
+
 if __name__ == "__main__":
     app()

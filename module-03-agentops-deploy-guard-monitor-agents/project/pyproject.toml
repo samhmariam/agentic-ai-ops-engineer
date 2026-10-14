@@ -24,6 +24,7 @@ dependencies = [
 salesops-agent = "salesops_agent.cli:app"
 salesops = "salesops_agent.cli:app"   # short alias
 evaluate = "salesops_agent.cli:evaluate"
+generate-monitoring-report = "salesops_agent.cli:generate_monitoring_report"
 
 [dependency-groups]
 dev = [
