@@ -92,3 +92,21 @@ def test_evaluation_report_contains_the_evidence_section(probe_run):
     assert "output block: hr.executive_compensation" in md
     assert "sandbox refused (rejected)" in md and "sandbox ok" in md
     assert "approval rejected: send_email" in md
+
+
+def test_probes_run_without_an_api_key(monkeypatch, tmp_path):
+    from click.testing import CliRunner
+
+    from salesops_agent import cli
+
+    cfg = with_overrides(load_config(), logs_dir=tmp_path / "logs", traces_dir=tmp_path / "traces",
+                         reports_dir=tmp_path / "reports")
+    monkeypatch.setattr(cli, "_load", lambda path: cfg)
+    monkeypatch.setattr(cli, "load_dotenv", lambda *a, **k: None)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    result = CliRunner().invoke(cli.evaluate, ["--probes"])
+    assert result.exit_code == 0, result.output
+    assert "11/11 passed" in result.output
+    # a live task still requires a real key
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    assert CliRunner().invoke(cli.evaluate, ["--case", "E001"]).exit_code == 1

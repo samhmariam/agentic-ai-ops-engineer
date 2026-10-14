@@ -37,6 +37,14 @@ def find_run(runs: List[Dict[str, Any]], run_id: str) -> Optional[Dict[str, Any]
     return matches[-1] if matches else None
 
 
+def _tool_summary(tools: List[str]) -> str:
+    """lookup_account x107 instead of repeating the name 107 times."""
+    counts: Dict[str, int] = {}
+    for name in tools:
+        counts[name] = counts.get(name, 0) + 1
+    return ",".join(f"{n}x{c}" if c > 1 else n for n, c in counts.items()) or "-"
+
+
 def format_run_line(run: Dict[str, Any]) -> str:
     interventions = ", ".join(
         f"{i['stage']}:{i.get('reason') or i.get('rule') or i['action']}" for i in run.get("guardrail_interventions", [])
@@ -45,7 +53,7 @@ def format_run_line(run: Dict[str, Any]) -> str:
     verdict = {True: " PASS", False: " FAIL"}.get(run.get("task_passed"), "")
     return (f"{run['run_id']}  {run['timestamp'][:19]}  {run['experiment']:<16}{task}{verdict}  "
             f"{run['status']:<27} {run['latency_s']:6.2f}s  ${run['cost_usd']:.5f}  "
-            f"tools={','.join(run['tools_called']) or '-'}"
+            f"tools={_tool_summary(run['tools_called'])}"
             + (f"  hitl={run['hitl_decision']}" if run.get("hitl_decision") else "")
             + (f"  [{interventions}]" if interventions else ""))
 

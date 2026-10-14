@@ -169,6 +169,9 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2, probes=Fa
         line = f"{mark}  {result.case_id}  {result.task[:56]:<56}  {run['latency_s']:6.2f}s  ${run['cost_usd']:.5f}"
         click.echo(line + (f"  -> {'; '.join(result.failures)}" if result.failures else ""))
 
+    if probes and not case_ids and not os.getenv("OPENAI_API_KEY"):
+        # Probe-only runs never call the model, but the client still needs a key to be constructed.
+        os.environ["OPENAI_API_KEY"] = "probe-run-makes-no-model-calls"
     _require_api_key()
     below = []
     for config_path in config_paths or (None,):
