@@ -1,7 +1,8 @@
 """Monitoring report: aggregate many agent / evaluation runs from logs/runs.jsonl.
 
-`uv run generate-monitoring-report` writes reports/monitoring_report.md (for people)
-and reports/monitoring_report.json (the same metrics, for tools/CI).
+`uv run generate-monitoring-report` writes reports/monitoring_report.md (for people),
+reports/monitoring_report.json (the same metrics, for tools/CI) and
+reports/monitoring_report.csv (one aggregated metric per row: section, metric, value).
 
 Definitions used throughout:
   - failed run    status "error", or an evaluation task that did not pass
@@ -383,4 +384,58 @@ def write_monitoring_report(runs_log: Path, output: Path, since: Optional[str] =
     output.write_text(render_markdown(metrics), encoding="utf-8")
     json_path = output.with_suffix(".json")
     json_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    write_metrics_csv(metrics, output.with_suffix(".csv"))
     return output, json_path, metrics
+
+
+def metric_rows(m: Dict[str, Any]) -> List[Tuple[str, str, Any]]:
+    """Aggregated metrics as (section, metric, value) rows: one metric per row, no per-run data."""
+    o, lat, cost, g, h = m["outcomes"], m["latency_s"], m["cost"], m["guardrails"], m["hitl"]
+    rows: List[Tuple[str, str, Any]] = [
+        ("summary", "total_runs", m["total_runs"]),
+        *[("summary", f"runs_{src}", n) for src, n in m["runs_by_source"].items()],
+        ("summary", "success_rate", o["success_rate"]),
+        ("summary", "failure_rate", o["failure_rate"]),
+        ("summary", "succeeded_runs", o["succeeded"]),
+        ("summary", "failed_runs", o["failed"]),
+        ("summary", "error_runs", o["errors"]),
+        ("summary", "eval_pass_rate", o["eval_pass_rate"]),
+        ("latency", "average_s", lat["average"]),
+        ("latency", "p50_s", lat["p50"]),
+        ("latency", "p95_s", lat["p95"]),
+        ("latency", "max_s", lat["max"]),
+        ("latency", "runs_over_30s", lat["slow_runs_over_30s"]),
+        ("cost", "total_estimated_usd", cost["total_usd"]),
+        ("cost", "average_per_run_usd", cost["average_per_run_usd"]),
+        ("cost", "input_tokens", cost["input_tokens"]),
+        ("cost", "output_tokens", cost["output_tokens"]),
+        ("guardrails", "blocks", g["blocks"]),
+        ("guardrails", "total_interventions", g["total_interventions"]),
+        ("guardrails", "runs_with_intervention", g["runs_with_intervention"]),
+        *[("guardrails", f"interventions_{stage}", n) for stage, n in g["by_stage"].items()],
+        ("hitl", "approval_requests", h["approval_requests"]),
+        ("hitl", "approvals", h["approved"]),
+        ("hitl", "rejections", h["rejected"]),
+        ("hitl", "pending", h["pending"]),
+        ("hitl", "approval_rate", h["approval_rate"]),
+        *[("tool_calls_executed", tool, n) for tool, n in m["tools"]["calls_executed"].items()],
+        *[("tool_calls_blocked", f"{tool}:{reason}", n)
+          for tool, reasons in m["tools"]["calls_blocked"].items() for reason, n in reasons.items()],
+        *[("failure_reasons", fr["reason"], fr["count"]) for fr in m["failure_reasons"]],
+        *[("status", status, n) for status, n in m["status_counts"].items()],
+    ]
+    for e in m["by_experiment"]:
+        for key in ("runs", "success_rate", "avg_latency_s", "p95_latency_s", "total_cost_usd", "interventions",
+                    "hitl_approved", "hitl_rejected"):
+            rows.append((f"experiment:{e['experiment']}", key, e[key]))
+    return rows
+
+
+def write_metrics_csv(m: Dict[str, Any], path: Path) -> Path:
+    import csv
+
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["section", "metric", "value"])
+        writer.writerows(metric_rows(m))
+    return path

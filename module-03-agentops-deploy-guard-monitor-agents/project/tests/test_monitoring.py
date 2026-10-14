@@ -121,3 +121,23 @@ def test_generate_monitoring_report_command(tmp_path, monkeypatch):
     assert "4 runs | success 50.0%" in result.output
     report = (tmp_path / "reports" / "monitoring_report.md").read_text(encoding="utf-8")
     assert "source=eval" in report and (tmp_path / "reports" / "monitoring_report.json").exists()
+
+
+def test_csv_holds_aggregated_metrics_not_runs(tmp_path):
+    import csv
+
+    runs_log = tmp_path / "runs.jsonl"
+    runs_log.write_text("".join(json.dumps(r) + "\n" for r in RUNS), encoding="utf-8")
+    md, _, _ = write_monitoring_report(runs_log, tmp_path / "monitoring_report.md")
+    with md.with_suffix(".csv").open(encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    got = {(r["section"], r["metric"]): r["value"] for r in rows}
+    for key in [("summary", "total_runs"), ("summary", "success_rate"), ("summary", "failure_rate"),
+                ("latency", "average_s"), ("cost", "total_estimated_usd"), ("cost", "average_per_run_usd"),
+                ("guardrails", "blocks"), ("hitl", "approvals"), ("hitl", "rejections")]:
+        assert key in got, key
+    assert got[("summary", "total_runs")] == "10" and got[("summary", "failure_rate")] == "0.3"
+    assert got[("hitl", "rejections")] == "1" and got[("tool_calls_executed", "draft_email")] == "2"
+    assert got[("failure_reasons", "missing expected pattern: '199,?436'")] == "2"
+    assert got[("experiment:guarded-v6", "runs")] == "2"
+    assert not any(r["run_id"] in str(rows) for r in RUNS)          # aggregates only, no per-run rows

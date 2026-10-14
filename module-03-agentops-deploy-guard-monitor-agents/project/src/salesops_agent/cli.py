@@ -343,20 +343,20 @@ def _write_monitoring(config_path, since, experiments, source, output):
                f"avg latency {m['latency_s']['average']:.2f}s | total cost ${m['cost']['total_usd']:.4f} | "
                f"guardrail blocks {m['guardrails']['blocks']} | HITL approved {m['hitl']['approved']} / "
                f"rejected {m['hitl']['rejected']}")
-    click.echo(f"Report: {md}\nMetrics: {js}")
+    click.echo(f"Report: {md}\nMetrics: {js}\nCSV: {md.with_suffix('.csv')}")
 
 
 @app.command("monitor")
 @_monitoring_options
 def monitor_cmd(config_path, since, experiments, source, output):
-    """Aggregate logs/runs.jsonl into reports/monitoring_report.md (+ .json)."""
+    """Aggregate logs/runs.jsonl into reports/monitoring_report.md (+ .json, .csv)."""
     _write_monitoring(config_path, since, experiments, source, output)
 
 
 @click.command()
 @_monitoring_options
 def generate_monitoring_report(config_path, since, experiments, source, output):
-    """Aggregate logs/runs.jsonl into reports/monitoring_report.md (+ .json).
+    """Aggregate logs/runs.jsonl into reports/monitoring_report.md (+ .json, .csv).
 
     Summarizes total runs, success/failure rates, latency, estimated cost, tool call
     counts, guardrail blocks, HITL approvals/rejections and common failure reasons.

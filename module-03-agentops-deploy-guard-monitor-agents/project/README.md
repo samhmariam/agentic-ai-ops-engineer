@@ -41,7 +41,7 @@ The [Prototype Review](#prototype-review) documents the gaps.
 | `baseline-v1` (the prototype) | 18/40 | leaks restricted data, sends email unapproved, skips analysis |
 | **`guarded-v7`** (the default) | **40/40** | every runtime-control scenario evidenced; no false positives on legitimate near-miss questions |
 
-The offline test suite has 297 tests, needs no API key and runs in about 45 s.
+The offline test suite has 299 tests, needs no API key and runs in about 45 s.
 
 **Who it is for.**
 
@@ -63,7 +63,7 @@ cd module-03-agentops-deploy-guard-monitor-agents/project   # this folder has it
 cp .env.example .env              # set OPENAI_API_KEY, and OPENAI_BASE_URL if you use a proxy
 uv sync                           # creates .venv from uv.lock (Python 3.13); installs the CLI commands
 
-uv run pytest                     # 297 offline tests, no API key needed (~45 s)
+uv run pytest                     # 299 offline tests, no API key needed (~45 s)
 uv run salesops-agent versions    # shows the prompt, policy, tool and config versions in use
 uv run salesops-agent ask "Summarize the account risk for TechStart Inc."
 ```
@@ -109,7 +109,7 @@ uv run salesops-agent compare baseline-v1 guarded-v7 --fail-on-regression   # di
 | Command | Output |
 |---|---|
 | `uv run evaluate` | `reports/evaluation_report.{md,csv,json}`: per-task results and the Runtime Control Evidence table |
-| `uv run generate-monitoring-report` | `reports/monitoring_report.{md,json}`: aggregate metrics over all logged runs (`--since`, `--experiment`, `--source`) |
+| `uv run generate-monitoring-report` | `reports/monitoring_report.{md,csv,json}`: aggregate metrics over all logged runs (`--since`, `--experiment`, `--source`) |
 | `uv run salesops-agent compare A B` | `reports/compare_A_vs_B_<ts>.md`: version differences, metric deltas, fixed and regressed tasks |
 | `uv run salesops-agent report` | `reports/report_<experiment>_<ts>.md`: one experiment's latest evaluation plus its run telemetry |
 
@@ -730,6 +730,7 @@ The command prints a one-line summary and the report paths:
 
 - **`reports/monitoring_report.md`:** the human-readable report.
 - **`reports/monitoring_report.json`:** the same metrics as JSON, for CI checks or dashboards.
+- **`reports/monitoring_report.csv`:** the same aggregated metrics, one per row (`section,metric,value`), for spreadsheets.
 - **`--output`:** writes the report somewhere else.
 
 The input is `logs/runs.jsonl` (see [Logging and Tracing](#logging-and-tracing)), which is local and gitignored. The committed report covers the default config (`guarded-v7`, 40 evaluation tasks plus CLI runs), the prototype config (`baseline-v1`, 40 tasks) and one `guarded-v6` failure, for 83 runs on 2026-10-14.
@@ -1162,7 +1163,7 @@ Every agent run writes a trace file (`traces/<run_id>.json`) and log lines (`log
 | Path | Contents |
 |---|---|
 | `reports/evaluation_report.{md,csv,json}` | Latest `uv run evaluate` run of the default config |
-| `reports/monitoring_report.{md,json}` | Monitoring report over the logged runs (see [Monitoring Report](#monitoring-report)) |
+| `reports/monitoring_report.{md,csv,json}` | Monitoring report over the logged runs (see [Monitoring Report](#monitoring-report)) |
 | `reports/results/<experiment>.json` | Latest full eval result per experiment (the results table below). Compare two of them with `salesops-agent compare reports/results/a.json reports/results/b.json`. |
 | `reports/comparisons/<a>_vs_<b>.md` | The experiment comparisons cited in this README |
 | `traces/examples/` | Ten redacted traces: a normal run, an input-guardrail block, a tool-guardrail block, an output-guardrail block and redaction, a sandbox analysis and a sandbox refusal, HITL approved and rejected sends, and a failed evaluation run |
