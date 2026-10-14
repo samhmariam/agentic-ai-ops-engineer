@@ -222,3 +222,15 @@ def test_model_timeout_and_retries_are_configured():
 
     kwargs = model_kwargs(load_config())
     assert kwargs["timeout"] == 30 and kwargs["max_retries"] == 2
+
+
+def test_evaluate_probes_flag_selects_only_control_probes(fake_eval_agent, tmp_config, monkeypatch):
+    from salesops_agent import evaluation
+
+    seen = {}
+    real = evaluation.run_evaluation
+    monkeypatch.setattr(evaluation, "run_evaluation",
+                        lambda cfg, ids, **kw: seen.setdefault("ids", ids) and real(cfg, ["E012"], **kw))
+    result = run_evaluate("--config", str(tmp_config), "--probes")
+    assert result.exit_code == 0, result.output
+    assert seen["ids"] and all(i.startswith("P") for i in seen["ids"]) and len(seen["ids"]) == 11

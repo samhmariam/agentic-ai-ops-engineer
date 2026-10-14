@@ -138,6 +138,10 @@ def versions(as_json, config_path):
 
 def _eval_options(f):
     f = click.option(
+        "--probes", is_flag=True,
+        help="Run only the control probes (P-tasks): deterministic runtime-control evidence, no model calls.",
+    )(f)
+    f = click.option(
         "--workers", type=click.IntRange(1, 16), default=2, show_default=True,
         help="Tasks evaluated concurrently (1 = sequential). The course proxy throttles above ~2.",
     )(f)
@@ -152,7 +156,7 @@ def _eval_options(f):
     return click.option("--case", "case_ids", multiple=True, help="Run only these task IDs (repeatable).")(f)
 
 
-def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2):
+def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2, probes=False):
     """Shared body of `salesops-agent eval` and the standalone `evaluate` command."""
     from salesops_agent.evaluation import run_evaluation
 
@@ -170,7 +174,11 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2):
         click.echo(f"\n== {name}: {cfg['experiment']['description']}")
         click.echo(f"{'':4}  {'ID':<4}  {'Task':<56}  {'Latency':>7}  {'Est. cost'}")
         started = time.perf_counter()
-        out = run_evaluation(cfg, list(case_ids) or None, on_result=show, workers=workers)
+        selected = list(case_ids)
+        if probes:
+            from salesops_agent.evaluation import load_cases
+            selected += [c.id for c in load_cases(cfg["paths"]["eval_cases"]) if c.probe]
+        out = run_evaluation(cfg, selected or None, on_result=show, workers=workers)
         wall = time.perf_counter() - started
         s, t = out.summary, out.summary["totals"]
         click.echo(
@@ -188,25 +196,25 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2):
 
 @app.command("eval")
 @_eval_options
-def eval_cmd(case_ids, config_paths, min_pass_rate, workers):
+def eval_cmd(case_ids, config_paths, min_pass_rate, workers, probes):
     """Run the evaluation suite for one or more experiment configs.
 
     Prints success/failure, latency, estimated cost and failure reason per task, and
     writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
     """
-    _run_evaluations(case_ids, config_paths, min_pass_rate, workers)
+    _run_evaluations(case_ids, config_paths, min_pass_rate, workers, probes)
 
 
 @click.command()
 @_eval_options
-def evaluate(case_ids, config_paths, min_pass_rate, workers):
+def evaluate(case_ids, config_paths, min_pass_rate, workers, probes):
     """Run the SalesOps evaluation suite (same as `salesops-agent eval`).
 
     Prints success/failure, latency, estimated cost and failure reason per task, and
     writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
     """
     load_dotenv(PROJECT_ROOT / ".env")
-    _run_evaluations(case_ids, config_paths, min_pass_rate, workers)
+    _run_evaluations(case_ids, config_paths, min_pass_rate, workers, probes)
 
 
 @app.command()

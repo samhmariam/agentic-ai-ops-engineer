@@ -221,6 +221,9 @@ def _evaluation_markdown(summary: Dict[str, Any], rows: List[Dict[str, Any]]) ->
         f"Experiment **{summary['experiment']}**, run `{summary['timestamp']}`, "
         f"dataset `{ds['file']}` ({ds['cases']} tasks, sha256 `{ds['sha256'][:12]}`).",
         "",
+        *([f"> **Subset run:** {summary['total']} of {ds['cases']} tasks ({', '.join(ds['subset'])}). "
+           "Run `uv run evaluate` without `--case`/`--probes` for the full report.", ""]
+          if ds.get("subset") else []),
         "## Summary",
         "",
         "| Metric | Value |",
