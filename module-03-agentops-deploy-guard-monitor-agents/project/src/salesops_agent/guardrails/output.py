@@ -31,7 +31,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from salesops_agent.data import CRMData
-from salesops_agent.redaction import crm_amounts, value_pattern, values_at
+from salesops_agent.redaction import crm_amounts, longest_first, value_pattern, values_at
 
 Action = Literal["allow", "redact", "review", "block"]
 _SEVERITY = {"allow": 0, "redact": 1, "review": 2, "block": 3}
@@ -155,7 +155,7 @@ class OutputGuardrail:
                 pattern = value_pattern(value, src.kind, skip)
                 if pattern is not None:
                     patterns.append(pattern)
-        return patterns
+        return longest_first(patterns)   # overlapping values: longest first
 
     def describe(self) -> Dict[str, Any]:
         return {"enabled": True, "policy_version": self.policy.version, "policy_sha256": self.sha256,

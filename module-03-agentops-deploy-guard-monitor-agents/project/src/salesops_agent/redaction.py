@@ -86,6 +86,14 @@ def value_pattern(value: Any, kind: str, skip_amounts: set[int]) -> re.Pattern |
     return None
 
 
+def longest_first(patterns: List[re.Pattern]) -> List[re.Pattern]:
+    """Apply longer values first. Values can contain each other (one HR note is
+    "Pending termination warning. Restricted HR information.", another just
+    "Restricted HR information."); redacting the shorter one first would break the
+    longer match and leave the rest of it in plain text."""
+    return sorted(patterns, key=lambda p: len(p.pattern), reverse=True)
+
+
 class Redactor:
     def __init__(self, crm: CRMData):
         docs = {"hr": crm.internal_hr_data, "financial": crm.internal_financial_data}
@@ -96,6 +104,7 @@ class Redactor:
                 pattern = value_pattern(value, kind, skip)
                 if pattern is not None:
                     self.patterns.append(pattern)
+        self.patterns = longest_first(self.patterns)
 
     def text(self, value: Any) -> Tuple[str, int]:
         """Redacted string form of value, and how many spans were redacted."""

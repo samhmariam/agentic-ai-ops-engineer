@@ -22,7 +22,7 @@ TRACE_FIELDS = {
     "hitl", "hitl_decision", "final_output", "error", "failure_reason", "status", "spans", "redaction",
 }
 LEAKS = ["850000", "850,000", "2000000", "2,000,000", "$2M", "Executive compensation data", "active negotiation",
-         "omar.stone@"]
+         "omar.stone@", "Pending termination warning", "Restricted HR information"]
 EMAIL = {"to": "omar.stone@acmecorp.example.com", "subject": "Following up", "body": "Hi Omar, following up."}
 
 
@@ -199,3 +199,24 @@ def test_every_block_has_explicit_status_and_reason_in_the_run_log(default_env):
     assert stages["input"]["status"] == "blocked" and stages["input"]["reason"] == "prompt_injection"
     assert stages["tool"]["status"] == "blocked" and stages["tool"]["reason"] == "out_of_scope_account"
     assert stages["output"]["status"] == "blocked" and "executive_compensation" in stages["output"]["reason"]
+
+
+def test_overlapping_sensitive_values_are_fully_redacted():
+    """One HR note contains another ("Pending termination warning. Restricted HR information."
+    vs "Restricted HR information."); every value from the internal files must disappear."""
+    import json as _json
+
+    from salesops_agent.redaction import SENSITIVE_VALUES, values_at
+
+    c = _load_components(load_config())
+    cfg = load_config()
+    docs = {"hr": json.loads((cfg["paths"]["data_dir"] / "internal_hr_data.json").read_text(encoding="utf-8")),
+            "financial": json.loads((cfg["paths"]["data_dir"] / "internal_financial_data.json").read_text(encoding="utf-8"))}
+    redacted = c.redactor(_json.dumps(docs))
+    for source, path, kind in SENSITIVE_VALUES:
+        for value in values_at(docs[source], path.split(".")):
+            if kind == "text":
+                assert str(value) not in redacted, value
+    assert "Pending termination warning" not in redacted
+    out = c.output_guard.check("Note on file: Pending termination warning. Restricted HR information.")
+    assert "Pending termination warning" not in out.response
