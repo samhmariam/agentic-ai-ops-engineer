@@ -1,6 +1,9 @@
-* b9d4191 (HEAD -> main) README: document uniform guardrail status/reason fields; test count 297
+* e8a85cc (HEAD -> main) Monitoring report: add CSV output of aggregated metrics
+* 0e190a3 Redact overlapping sensitive values longest-first
+* 9340ab4 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* b9d4191 README: document uniform guardrail status/reason fields; test count 297
 * a5b2689 Give input and output guardrail decisions an explicit status and reason
-* 79cb10b (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 79cb10b Regenerate GITLOG.txt from project git history
 * 9b86b2f Record guarded-v7 evaluation with regression report; document coverage
 * d76398f Report regressions in every evaluation report
 * 49de9d4 Regenerate GITLOG.txt from project git history
