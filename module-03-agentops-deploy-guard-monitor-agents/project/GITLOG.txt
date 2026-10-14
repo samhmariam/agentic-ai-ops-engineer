@@ -1,6 +1,8 @@
-* c10422e (HEAD -> main) Document monitoring report; commit generated report; restore eval report
+* fdb3bff (HEAD -> main) Complete README for production readiness (Step 8)
+* 90e5148 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* c10422e Document monitoring report; commit generated report; restore eval report
 * 7f221de Add monitoring report over logged runs (Step 7)
-* ed0f8d0 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* ed0f8d0 Regenerate GITLOG.txt from project git history
 * 2737744 Document logging and tracing; refresh redacted example artifacts
 * f2f7004 Structured run log (logs/runs.jsonl) and redacted trace artifacts (Step 6)
 * c283bce Regenerate GITLOG.txt from project git history
