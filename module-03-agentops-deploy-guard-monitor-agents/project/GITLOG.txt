@@ -1,6 +1,9 @@
-* 2737744 (HEAD -> main) Document logging and tracing; refresh redacted example artifacts
+* c10422e (HEAD -> main) Document monitoring report; commit generated report; restore eval report
+* 7f221de Add monitoring report over logged runs (Step 7)
+* ed0f8d0 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 2737744 Document logging and tracing; refresh redacted example artifacts
 * f2f7004 Structured run log (logs/runs.jsonl) and redacted trace artifacts (Step 6)
-* c283bce (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* c283bce Regenerate GITLOG.txt from project git history
 * 79efdc9 Document runtime control evidence; record 40-task guarded-v7 run
 * 2bff924 Add runtime control evidence to the evaluation suite and report (5.6)
 * cbc97b3 Regenerate GITLOG.txt from project git history
