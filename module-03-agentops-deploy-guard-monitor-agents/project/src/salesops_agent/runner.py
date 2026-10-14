@@ -48,6 +48,7 @@ class RunResult:
     role: Optional[str] = None
     approval_mode: Optional[str] = None
     approvals: List[Dict[str, Any]] = field(default_factory=list)      # HITL requests and decisions
+    sandbox_runs: List[Dict[str, Any]] = field(default_factory=list)   # run_analysis outcomes
     output_guardrail: Optional[Dict[str, Any]] = None  # output decision when it changed the answer
 
     @property
@@ -154,6 +155,7 @@ def run_question(
             output_guardrail=output_decision,
             approval_mode=approval,
             approvals=approval_records,
+            sandbox_runs=list(ctx.sandbox_runs),
         ))
 
     result = RunResult(
@@ -174,6 +176,7 @@ def run_question(
         output_guardrail=output_decision,
         approval_mode=approval,
         approvals=approval_records,
+        sandbox_runs=list(ctx.sandbox_runs),
     )
     manifest = agent.manifest
     log_event(logger, "run_completed", source=source, experiment=manifest["experiment"],

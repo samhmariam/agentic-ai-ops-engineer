@@ -136,6 +136,7 @@ class RunContext:
     approvals_log: Optional[Path] = None                    # audit file for approval requests/decisions
     on_approval: Optional[Callable[[Dict[str, Any]], None]] = None   # trace recorder hook
     approval_records: List[Any] = field(default_factory=list)
+    sandbox_runs: List[Dict[str, Any]] = field(default_factory=list)   # status of each run_analysis execution
     referenced_accounts: Optional[Set[str]] = None          # computed lazily from `request`
     logger: Optional[logging.Logger] = None
     on_block: Optional[Callable[[Dict[str, Any]], None]] = None   # e.g. trace recorder hook
@@ -155,6 +156,11 @@ def tool_run_context(ctx: RunContext) -> Iterator[RunContext]:
         yield ctx
     finally:
         _CURRENT.reset(token)
+
+
+def current_context() -> Optional[RunContext]:
+    """The RunContext of the agent run executing on this thread, if any."""
+    return _CURRENT.get()
 
 
 def current_run_id() -> Optional[str]:

@@ -22,7 +22,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from salesops_agent.data import CRMData
-from salesops_agent.guardrails.tool import current_run_id
+from salesops_agent.guardrails.tool import current_context, current_run_id
 from salesops_agent.logging_utils import LOGGER_NAME, log_event
 from salesops_agent.sandbox.validator import SandboxRejected, validate
 
@@ -134,6 +134,10 @@ class Sandbox:
                   level=logging.INFO if outcome["status"] == "ok" else logging.WARNING, run_id=current_run_id(),
                   status=outcome["status"], error_type=outcome.get("error_type"),
                   duration_ms=outcome["duration_ms"], code_chars=len(code))
+        ctx = current_context()
+        if ctx is not None:
+            with ctx.lock:
+                ctx.sandbox_runs.append({"status": outcome["status"], "error_type": outcome.get("error_type")})
         return outcome
 
     def _run(self, code: str) -> Dict[str, Any]:

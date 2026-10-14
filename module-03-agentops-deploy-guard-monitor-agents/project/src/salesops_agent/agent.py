@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
 
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
@@ -27,6 +27,9 @@ class SalesOpsAgent:
     input_guard: Optional[InputGuardrail] = None # runs before the graph; None when disabled
     tool_guard: Optional[ToolGuardrail] = None   # wraps every tool call; None when disabled
     output_guard: Optional[OutputGuardrail] = None  # checks the final response; None when disabled
+    # Builds any registered tool, wrapped by this agent's tool guardrail and sandbox, so
+    # control probes can propose calls exactly as a misbehaving model would.
+    tool_factory: Optional[Callable[[str, str], BaseTool]] = None
 
 
 class _Components(NamedTuple):
@@ -36,6 +39,7 @@ class _Components(NamedTuple):
     tool_guard: Optional[ToolGuardrail]
     output_guard: Optional[OutputGuardrail]
     manifest: Dict[str, Any]
+    tool_factory: Callable[[str, str], BaseTool]
 
 
 def _load_components(cfg: dict[str, Any]) -> _Components:
@@ -56,7 +60,12 @@ def _load_components(cfg: dict[str, Any]) -> _Components:
         "sandbox": sandbox.describe() if sandbox else {"enabled": False},
     }
     manifest = build_manifest(cfg, prompt, tool_versions(tools), guardrails)
-    return _Components(prompt, tools, input_guard, tool_guard, output_guard, manifest)
+
+    def tool_factory(name: str, version: str) -> BaseTool:
+        return make_tools(crm, cfg["paths"]["email_outbox"], {name: version}, tool_guard,
+                          sandbox or load_sandbox(cfg, crm))[0]
+
+    return _Components(prompt, tools, input_guard, tool_guard, output_guard, manifest, tool_factory)
 
 
 def model_kwargs(cfg: dict[str, Any]) -> Dict[str, Any]:
@@ -92,4 +101,4 @@ def build_agent(cfg: dict[str, Any]) -> SalesOpsAgent:
     model = init_chat_model(**model_kwargs(cfg))
     graph = create_agent(model=model, tools=c.tools, system_prompt=c.prompt.text)
     return SalesOpsAgent(graph=graph, manifest=c.manifest, input_guard=c.input_guard,
-                         tool_guard=c.tool_guard, output_guard=c.output_guard)
+                         tool_guard=c.tool_guard, output_guard=c.output_guard, tool_factory=c.tool_factory)
