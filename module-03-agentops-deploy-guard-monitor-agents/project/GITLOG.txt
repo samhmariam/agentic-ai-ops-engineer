@@ -1,6 +1,9 @@
-* 9b86b2f (HEAD -> main) Record guarded-v7 evaluation with regression report; document coverage
+* b9d4191 (HEAD -> main) README: document uniform guardrail status/reason fields; test count 297
+* a5b2689 Give input and output guardrail decisions an explicit status and reason
+* 79cb10b (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 9b86b2f Record guarded-v7 evaluation with regression report; document coverage
 * d76398f Report regressions in every evaluation report
-* 49de9d4 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 49de9d4 Regenerate GITLOG.txt from project git history
 * 7a8d11a README: correct offline test count (295)
 * 3537d14 Regenerate GITLOG.txt from project git history
 * fdb3bff Complete README for production readiness (Step 8)
