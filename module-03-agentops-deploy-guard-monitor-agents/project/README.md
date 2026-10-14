@@ -41,7 +41,7 @@ The [Prototype Review](#prototype-review) documents the gaps.
 | `baseline-v1` (the prototype) | 18/40 | leaks restricted data, sends email unapproved, skips analysis |
 | **`guarded-v7`** (the default) | **40/40** | every runtime-control scenario evidenced; no false positives on legitimate near-miss questions |
 
-The offline test suite has 295 tests, needs no API key and runs in about 45 s.
+The offline test suite has 296 tests, needs no API key and runs in about 45 s.
 
 **Who it is for.**
 
@@ -63,7 +63,7 @@ cd module-03-agentops-deploy-guard-monitor-agents/project   # this folder has it
 cp .env.example .env              # set OPENAI_API_KEY, and OPENAI_BASE_URL if you use a proxy
 uv sync                           # creates .venv from uv.lock (Python 3.13); installs the CLI commands
 
-uv run pytest                     # 295 offline tests, no API key needed (~45 s)
+uv run pytest                     # 296 offline tests, no API key needed (~45 s)
 uv run salesops-agent versions    # shows the prompt, policy, tool and config versions in use
 uv run salesops-agent ask "Summarize the account risk for TechStart Inc."
 ```
@@ -99,6 +99,7 @@ uv run evaluate --probes                         # control probes only: no model
 uv run evaluate --case E005 --case E028          # selected tasks
 uv run evaluate --config configs/baseline-v1.yaml --config config.yaml   # several experiments
 uv run evaluate --min-pass-rate 1.0              # CI gate: exit 1 below the threshold
+uv run evaluate --fail-on-regression             # CI gate: exit 1 if a previously passing task fails
 uv run salesops-agent experiments                # list experiment configs
 uv run salesops-agent compare baseline-v1 guarded-v7 --fail-on-regression   # diff two results
 ```
@@ -754,6 +755,25 @@ The input is `logs/runs.jsonl` (see [Logging and Tracing](#logging-and-tracing))
 
 ## Evaluation Suite
 
+An automated suite of **40 tasks**: 29 run the live agent, and 11 are deterministic control probes. It runs with **one command** and reports success, latency, estimated cost, failure reason and **regressions** for every task.
+
+### Coverage
+
+| Required scenario | Tasks |
+|---|---|
+| Normal SalesOps questions | E001–E004, E011, E012, E018–E020 |
+| Account-risk reasoning | E001, E002 (risk summary from health, renewal, tickets, usage, contacts) |
+| Pipeline / opportunity reasoning | E003, E009, E010, E024 |
+| Restricted-input blocking by the input guardrail | E013–E017 (plus E005–E007) |
+| Forbidden tool-call blocking | P01 `lookup_internal_hr_data("CEO bonus")`, P02 `lookup_internal_financial_data("CONFIDENTIAL_M_AND_A")`, P03 out-of-scope account, E021 |
+| Sensitive-output blocking or redaction | P04 (block), P05 (redact), E022 |
+| Sandbox-allowed analysis | E023, E025, P06 |
+| Sandbox-denied unsafe execution | E026, E027, P07 (Python-internals escape), P08 (file read), P09 (HR data) |
+| Approved email sending | E028 (`approval: approve`) |
+| Rejected email sending | E029 and P11 (`approval: reject`), plus E008, E021 and P10 (no approval: not sent) |
+
+### Running it
+
 Run the whole suite with one command:
 
 ```bash
@@ -761,6 +781,7 @@ uv run evaluate                                   # default config (guarded-v7)
 uv run evaluate --config configs/candidate-v2.yaml
 uv run evaluate --case E005 --case E008           # a subset
 uv run evaluate --min-pass-rate 1.0               # exit 1 if any task fails (CI gate)
+uv run evaluate --fail-on-regression              # exit 1 if a task that passed in the previous run fails now
 uv run evaluate --probes                          # control probes only (no model calls, ~3 s)
 uv run evaluate --workers 1                       # sequential (default 2; the course proxy throttles above ~2)
 ```
@@ -818,9 +839,19 @@ Every run writes the **evaluation report** for the latest run in three formats:
 
 | File | Contents |
 |---|---|
-| `reports/evaluation_report.md` | Summary (pass rate, total/avg/p95 latency, tokens, cost, blocks), a per-task table, the **Runtime Control Evidence** table, failure details, versions |
-| `reports/evaluation_report.csv` | One row per task: `task_id, task, category, status, latency_s, input_tokens, output_tokens, cost_usd, tools_called, guardrail, controls, failure_reason` |
-| `reports/evaluation_report.json` | Summary, totals, version manifest, dataset fingerprint and per-task rows |
+| `reports/evaluation_report.md` | Summary (pass rate, total/avg/p95 latency, tokens, **estimated cost**, blocks); **Regression vs previous run**; a per-task table (**result**, vs previous, **latency**, **estimated cost**, guardrail, **failure reason**); the **Runtime Control Evidence** table; failure details; versions |
+| `reports/evaluation_report.csv` | One row per task: `task_id, task, category, status, latency_s, input_tokens, output_tokens, cost_usd, tools_called, guardrail, controls, vs_previous, failure_reason` |
+| `reports/evaluation_report.json` | Summary, totals, `regression`, version manifest, dataset fingerprint and per-task rows (same fields as the CSV) |
+
+**Regression reporting.** Every evaluation compares itself with the most recent earlier run of the **same experiment on the same dataset and task selection**. A different task set is never compared, so there are no false regressions. The comparison reports:
+
+- tasks that **regressed** (passed before, fail now) and tasks that were **fixed**;
+- deltas in pass rate, total cost and average latency;
+- every versioned component that changed in between: prompt, tools, policies, config, model or code commit. A regression can then be traced to a specific change, or recognised as run-to-run model variance when only the code commit changed.
+
+The console prints a one-line summary. `--fail-on-regression` makes it a CI gate. To compare different experiments, use `salesops-agent compare` (see [Evaluating Versions](#evaluating-versions)).
+
+The committed report is the default config on commit `d76398f`: **40/40 passed, no regressions** against the previous run (`f2f7004`), at $0.0139 total estimated cost.
 
 The full result is also kept as `reports/eval_<experiment>_<ts>.json` for history and `compare`. Latency is the wall-clock time of the whole agent run, including tool calls. Cost is estimated from token usage and the per-model prices under `pricing` in config.
 

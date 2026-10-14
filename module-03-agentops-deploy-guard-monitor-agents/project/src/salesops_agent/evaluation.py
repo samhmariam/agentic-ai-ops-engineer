@@ -277,7 +277,7 @@ def regression_vs_previous(summary: Dict[str, Any], reports_dir: Path) -> Dict[s
         "cost_delta_usd": round(ct["cost_usd"] - bt["cost_usd"], 6),
         "avg_latency_delta_s": round(ct["latency_s_avg"] - bt["latency_s_avg"], 3),
         "version_changes": [{"component": k, "previous": b, "current": c}
-                            for k, b, c in comp.version_rows if b != c and k != "git"],
+                            for k, b, c in comp.version_rows if b != c and k != "experiment"],
     }
 
 

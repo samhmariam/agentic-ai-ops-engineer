@@ -256,7 +256,7 @@ def test_evaluation_report_includes_regression_vs_previous_run(fake_eval_agent, 
     md = (reports / "evaluation_report.md").read_text(encoding="utf-8")
     assert "## Regression vs previous run" in md and "**1 regressed** (E012)" in md
     assert "| E012 |" in md and "REGRESSED" in md
-    assert "No versioned component changed since the previous run" in md
+    assert "Prompt, tools, policies, config and model are unchanged" in md
     rows = {r["task_id"]: r for r in csv.DictReader(open(reports / "evaluation_report.csv", encoding="utf-8"))}
     assert rows["E012"]["vs_previous"] == "REGRESSED" and rows["E004"]["vs_previous"] == "unchanged"
     data = json.loads((reports / "evaluation_report.json").read_text(encoding="utf-8"))

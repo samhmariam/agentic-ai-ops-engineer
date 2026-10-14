@@ -303,12 +303,17 @@ def _regression_section(reg: Optional[Dict[str, Any]]) -> List[str]:
         f"| Average latency | {reg['avg_latency_delta_s']:+.2f} s |",
         "",
     ]
-    if reg["version_changes"]:
+    changes = reg["version_changes"]
+    behavioural = [v for v in changes if v["component"] != "git"]
+    if changes:
         lines += ["Versions changed since the previous run:", "", "| Component | Previous | Current |", "|---|---|---|"]
-        lines += [f"| {v['component']} | {v['previous']} | {v['current']} |" for v in reg["version_changes"]]
-    else:
-        lines.append("No versioned component changed since the previous run (same prompt, tools, policies, config "
-                     "and model), so any difference is run-to-run model variance.")
+        lines += [f"| {'code (git commit)' if v['component'] == 'git' else v['component']} | {v['previous']} | "
+                  f"{v['current']} |" for v in changes]
+        lines.append("")
+    if not behavioural:
+        lines.append("Prompt, tools, policies, config and model are unchanged"
+                     + (" (only the code commit differs)" if changes else "")
+                     + ", so differences in results are most likely run-to-run model variance.")
     lines.append("")
     return lines
 
