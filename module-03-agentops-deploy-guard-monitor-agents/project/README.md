@@ -41,7 +41,7 @@ The [Prototype Review](#prototype-review) documents the gaps.
 | `baseline-v1` (the prototype) | 18/40 | leaks restricted data, sends email unapproved, skips analysis |
 | **`guarded-v7`** (the default) | **40/40** | every runtime-control scenario evidenced; no false positives on legitimate near-miss questions |
 
-The offline test suite has 296 tests, needs no API key and runs in about 45 s.
+The offline test suite has 297 tests, needs no API key and runs in about 45 s.
 
 **Who it is for.**
 
@@ -63,7 +63,7 @@ cd module-03-agentops-deploy-guard-monitor-agents/project   # this folder has it
 cp .env.example .env              # set OPENAI_API_KEY, and OPENAI_BASE_URL if you use a proxy
 uv sync                           # creates .venv from uv.lock (Python 3.13); installs the CLI commands
 
-uv run pytest                     # 296 offline tests, no API key needed (~45 s)
+uv run pytest                     # 297 offline tests, no API key needed (~45 s)
 uv run salesops-agent versions    # shows the prompt, policy, tool and config versions in use
 uv run salesops-agent ask "Summarize the account risk for TechStart Inc."
 ```
@@ -286,6 +286,16 @@ Safety comes from layered **runtime controls that run in code around the model**
 | Output guardrails | Implemented (below) |
 | Sandboxed code execution | Implemented: see [Sandboxed Execution](#sandboxed-execution) |
 | Human-in-the-loop approval | Implemented: see [Human-in-the-Loop Workflow](#human-in-the-loop-workflow) |
+
+**Uniform decision record.** Every guardrail decision is returned and logged with the same explicit fields: `status` (`blocked`, `rejected`, `refused`, `redacted`, `withheld_for_review` or `allowed`), `reason` (the category or block reason) and the `rule` that fired. These fields appear in the run result (`ask --json`), in `guardrail_interventions` in `logs/runs.jsonl`, and in the trace. Example run-log entries:
+
+```json
+{"stage": "input",   "status": "blocked",  "reason": "executive_compensation",   "rule": "hr.executive_compensation"}
+{"stage": "tool",    "status": "blocked",  "reason": "restricted_internal_data", "tool": "lookup_internal_hr_data"}
+{"stage": "tool",    "status": "rejected", "reason": "approval_rejected",        "tool": "send_email"}
+{"stage": "sandbox", "status": "refused",  "reason": "rejected"}
+{"stage": "output",  "status": "blocked",  "reason": "executive_compensation, hr_restricted"}
+```
 
 ### Input guardrails
 
