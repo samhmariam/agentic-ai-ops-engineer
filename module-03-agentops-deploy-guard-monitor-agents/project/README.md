@@ -1034,6 +1034,16 @@ On the current 40-task suite (commit `7f221de`), the prototype `baseline-v1` pas
 
 Everything below is still needed before deploying this system in a real environment. Each item says what to build and why.
 
+Optional stand-out upgrades that can be built and demonstrated inside this project are planned separately in [FUTURE_WORK.md](FUTURE_WORK.md). They include:
+
+- SQLite state with user/session/thread IDs and memory isolation.
+- Replayable runs.
+- Docker packaging and a Docker-backed sandbox.
+- A GitHub Actions evaluation workflow.
+- Langfuse observability.
+- A Streamlit approval UI.
+- An HTML monitoring report.
+
 ### 1. Stronger authentication and authorization
 
 - **Authenticate users:** use the company identity provider (OIDC/SAML SSO) and derive roles from IdP groups instead of `--role`. The data access policy then evaluates the *authenticated* role.
