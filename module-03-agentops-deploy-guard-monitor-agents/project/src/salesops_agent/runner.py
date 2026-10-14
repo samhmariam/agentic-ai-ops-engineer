@@ -222,20 +222,22 @@ def run_summary(result: RunResult, redact: Callable[[Any], str]) -> Dict[str, An
     """Fields shared by the run log line and the trace. Free text is redacted."""
     interventions: List[Dict[str, Any]] = []
     if result.guardrail:
-        interventions.append({"stage": "input", "action": "block", "rule": result.guardrail["rule_id"],
+        interventions.append({"stage": "input", "action": "block", "status": "blocked",
+                              "reason": result.guardrail["category"], "rule": result.guardrail["rule_id"],
                               "category": result.guardrail["category"]})
     for b in result.tools_blocked:
         action = "rejected" if b["reason"] == "approval_rejected" else "block"
-        interventions.append({"stage": "tool", "action": action, "tool": b["tool"],
-                              "reason": b["reason"], "rule": b["rule"]})
+        interventions.append({"stage": "tool", "action": action, "status": "rejected" if action == "rejected" else "blocked",
+                              "tool": b["tool"], "reason": b["reason"], "rule": b["rule"]})
     for s in result.sandbox_runs:
         if s["status"] != "ok":
-            interventions.append({"stage": "sandbox", "action": "refuse", "reason": s["error_type"]})
+            interventions.append({"stage": "sandbox", "action": "refuse", "status": "refused",
+                                  "reason": s["error_type"]})
     if result.output_guardrail:
         o = result.output_guardrail
-        interventions.append({"stage": "output", "action": o["action"], "rules": o["rule_ids"],
-                              "categories": o["categories"], "redactions": o["redactions"],
-                              "review_id": o["review_id"]})
+        interventions.append({"stage": "output", "action": o["action"], "status": o["status"],
+                              "reason": o["reason"], "rules": o["rule_ids"], "categories": o["categories"],
+                              "redactions": o["redactions"], "review_id": o["review_id"]})
     decisions = [a["decision"] for a in result.approvals]
     if "rejected" in decisions:
         hitl_decision = "rejected"

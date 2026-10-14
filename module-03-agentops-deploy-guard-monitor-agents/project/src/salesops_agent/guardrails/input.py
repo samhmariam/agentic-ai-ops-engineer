@@ -89,7 +89,8 @@ class GuardDecision:
     response: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        """Decision with an explicit status and reason (same shape as tool/output blocks)."""
+        return {"status": "allowed" if self.allowed else "blocked", "reason": self.category, **asdict(self)}
 
 
 ALLOW = GuardDecision(allowed=True)

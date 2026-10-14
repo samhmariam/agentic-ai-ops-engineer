@@ -106,7 +106,10 @@ class OutputDecision:
         """Decision metadata for logs/traces (no response text)."""
         data = asdict(self)
         data.pop("response")
-        return {"stage": "output", "allowed": self.action in ("allow", "redact"), **data}
+        status = {"allow": "allowed", "redact": "redacted", "review": "withheld_for_review",
+                  "block": "blocked"}[self.action]
+        return {"stage": "output", "status": status, "reason": ", ".join(self.categories) or None,
+                "allowed": self.action in ("allow", "redact"), **data}
 
 
 # -- helpers ----------------------------------------------------------------
