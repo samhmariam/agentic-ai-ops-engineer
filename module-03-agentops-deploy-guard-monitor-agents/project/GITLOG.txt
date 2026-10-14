@@ -1,4 +1,6 @@
-* fdb3bff (HEAD -> main) Complete README for production readiness (Step 8)
+* 7a8d11a (HEAD -> main) README: correct offline test count (295)
+* 3537d14 Regenerate GITLOG.txt from project git history
+* fdb3bff Complete README for production readiness (Step 8)
 * 90e5148 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
 * c10422e Document monitoring report; commit generated report; restore eval report
 * 7f221de Add monitoring report over logged runs (Step 7)
