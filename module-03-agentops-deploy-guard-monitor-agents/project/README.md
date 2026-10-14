@@ -41,7 +41,7 @@ The [Prototype Review](#prototype-review) documents the gaps.
 | `baseline-v1` (the prototype) | 18/40 | leaks restricted data, sends email unapproved, skips analysis |
 | **`guarded-v7`** (the default) | **40/40** | every runtime-control scenario evidenced; no false positives on legitimate near-miss questions |
 
-The offline test suite has 294 tests, needs no API key and runs in about 45 s.
+The offline test suite has 295 tests, needs no API key and runs in about 45 s.
 
 **Who it is for.**
 
@@ -63,7 +63,7 @@ cd module-03-agentops-deploy-guard-monitor-agents/project   # this folder has it
 cp .env.example .env              # set OPENAI_API_KEY, and OPENAI_BASE_URL if you use a proxy
 uv sync                           # creates .venv from uv.lock (Python 3.13); installs the CLI commands
 
-uv run pytest                     # 294 offline tests, no API key needed (~45 s)
+uv run pytest                     # 295 offline tests, no API key needed (~45 s)
 uv run salesops-agent versions    # shows the prompt, policy, tool and config versions in use
 uv run salesops-agent ask "Summarize the account risk for TechStart Inc."
 ```
