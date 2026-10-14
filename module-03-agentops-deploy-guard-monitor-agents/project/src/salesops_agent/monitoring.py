@@ -78,6 +78,33 @@ def normalize_failure(reason: str) -> str:
     return reason[:160]
 
 
+# What each kind of failure means, for the report's reader (prefix match on the reason).
+FAILURE_MEANINGS = [
+    ("contains forbidden text", "the answer disclosed something it must not (possible leak)"),
+    ("matches forbidden pattern", "the answer contained a forbidden pattern (e.g. an unsafe email claim)"),
+    ("forbidden tool called", "a tool that must not run for this task did run"),
+    ("expected tool not called", "the agent skipped the tool the task needs"),
+    ("missing expected text", "the answer lacks a required fact"),
+    ("missing expected pattern", "the answer lacks a required value or format"),
+    ("none of the expected phrases", "the answer lacks the required wording"),
+    ("expected a guardrail to block", "the input guardrail let a restricted request through"),
+    ("blocked by guardrail (false positive)", "the input guardrail over-blocked a legitimate request"),
+    ("expected the tool guardrail to refuse", "the tool guardrail did not refuse a forbidden call"),
+    ("expected output guardrail action", "the output guardrail did not act as expected"),
+    ("expected an approval request decided", "the approval flow did not run as expected"),
+    ("run failed", "the run raised an error"),
+]
+
+
+def failure_meaning(reason: str) -> str:
+    for prefix, meaning in FAILURE_MEANINGS:
+        if reason.startswith(prefix):
+            return meaning
+    if re.match(r"^[A-Za-z_][\w.]*(Error|Exception|Timeout):", reason):
+        return "runtime error (exception or API failure)"
+    return ""
+
+
 def compute_metrics(runs: List[Dict[str, Any]], filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     total = len(runs)
     failed = [r for r in runs if is_failed(r)]
@@ -187,7 +214,8 @@ def compute_metrics(runs: List[Dict[str, Any]], filters: Optional[Dict[str, Any]
             "pending": decisions.get("pending", 0),
             "approval_rate": _rate(decisions.get("approved", 0), requests),
         },
-        "failure_reasons": [{"reason": k, "count": n, "examples": failure_examples[k]}
+        "failure_reasons": [{"reason": k, "meaning": failure_meaning(k), "count": n,
+                             "examples": failure_examples[k]}
                             for k, n in failure_counter.most_common(TOP_N)],
         "by_experiment": by_experiment,
     }
@@ -204,8 +232,9 @@ def observations(m: Dict[str, Any]) -> List[str]:
     if o["failed"]:
         top = m["failure_reasons"][0] if m["failure_reasons"] else None
         notes.append(f"{o['failed']} of {m['total_runs']} runs failed ({o['failure_rate']:.0%})"
-                     + (f"; the most common reason is \"{top['reason']}\" ({top['count']}x, e.g. "
-                        f"{', '.join(top['examples'][:3])})." if top else "."))
+                     + (f"; the most common reason is \"{top['reason']}\""
+                        + (f" ({top['meaning']})" if top.get("meaning") else "")
+                        + f", {top['count']}x, e.g. {', '.join(top['examples'][:3])}." if top else "."))
     else:
         notes.append(f"All {m['total_runs']} runs succeeded.")
     if o["errors"]:
@@ -289,8 +318,9 @@ def render_markdown(m: Dict[str, Any]) -> str:
         "",
     ]
     if m["failure_reasons"]:
-        lines += ["| Reason | Count | Examples (task or run id) |", "|---|---|---|"]
-        lines += [f"| {_md(fr['reason'])} | {fr['count']} | {', '.join(fr['examples'])} |" for fr in m["failure_reasons"]]
+        lines += ["| Reason | Meaning | Count | Examples (task or run id) |", "|---|---|---|---|"]
+        lines += [f"| {_md(fr['reason'])} | {fr.get('meaning', '')} | {fr['count']} | {', '.join(fr['examples'])} |"
+                  for fr in m["failure_reasons"]]
     else:
         lines.append("No failed runs.")
     lines += [

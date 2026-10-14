@@ -103,6 +103,7 @@ src/salesops_agent/
   tracing.py             LangChain callback -> redacted traces/<run_id>.json
   redaction.py           redaction applied to everything logs and traces persist
   inspection.py          `salesops-agent runs` / `inspect`: read run records and traces back
+  monitoring.py          monitoring report: aggregate logs/runs.jsonl (`uv run generate-monitoring-report`)
   evaluation.py          eval harness (`uv run evaluate`) -> evaluation_report.* + eval_<experiment>_<ts>.json
   comparison.py          diff two eval results -> reports/compare_<a>_vs_<b>_<ts>.md
   reporting.py           per-experiment Markdown report from logs + latest eval
@@ -594,6 +595,63 @@ A suggested workflow:
 3. **Check the versions** in its trace (`versions`) against `salesops-agent versions`.
 4. **Reproduce it** with `uv run evaluate --case <task_id>` or `ask "<input>" --config <experiment config>`.
 
+## Monitoring Report
+
+The monitoring report aggregates **many runs**, from both CLI `ask` and evaluation tasks, into operational metrics. It reads the structured run log, so it covers every run on this machine, not just the latest evaluation. It is fully local; no external observability service is needed.
+
+### How to generate it
+
+```bash
+uv run generate-monitoring-report                       # all runs in logs/runs.jsonl
+uv run generate-monitoring-report --since 2026-10-14    # runs at or after a timestamp
+uv run generate-monitoring-report --experiment guarded-v7 --experiment baseline-v1
+uv run generate-monitoring-report --source eval         # only evaluation runs (or: cli)
+uv run salesops-agent monitor                           # same command, via the main CLI
+```
+
+The command prints a one-line summary and the report paths:
+
+```
+83 runs | success 72.3% | failure 27.7% | avg latency 5.33s | total cost $0.0431 | guardrail blocks 30 | HITL approved 1 / rejected 3
+```
+
+### Where it is saved
+
+- **`reports/monitoring_report.md`:** the human-readable report.
+- **`reports/monitoring_report.json`:** the same metrics as JSON, for CI checks or dashboards.
+- **`--output`:** writes the report somewhere else.
+
+The input is `logs/runs.jsonl` (see [Logging and Tracing](#logging-and-tracing)), which is local and gitignored. The committed report covers the default config (`guarded-v7`, 40 evaluation tasks plus CLI runs), the prototype config (`baseline-v1`, 40 tasks) and one `guarded-v6` failure, for 83 runs on 2026-10-14.
+
+### Metrics included
+
+| Section | Metrics |
+|---|---|
+| Summary | total runs (CLI vs eval), **success rate**, **failure rate** (and errors), evaluation pass rate, **average latency** (with p50 / p95 / max), **estimated total cost** and **average cost per run** (with token totals), **tool call** totals, **guardrail blocks**, **HITL approvals** and **rejections** (plus pending) |
+| Interpretation | Generated observations: failure share and top cause, latency outliers, where the controls intervened, approval outcomes, runs that cost nothing, and experiments below 90% success |
+| Run outcomes | Runs per final status: completed, blocked by input guardrail, output blocked or withheld, redacted, error |
+| Common failure reasons | Failed checks and errors grouped, ranked by count, each with a plain-language meaning and example task ids |
+| Tool calls | Per tool: executed, selected by the model, blocked by reason (e.g. `send_email`: `approval_rejected` 3) |
+| Guardrail interventions | Counts per stage (input / tool / sandbox / output) and the most frequent rules |
+| Human-in-the-loop | Approval requests, approved, rejected, pending, approval rate |
+| By experiment | Runs, success rate, average and p95 latency, cost, interventions and HITL outcomes per config |
+
+### How to interpret the results
+
+- **Failure means a wrong outcome, not a block.** A run fails if it ended in an error or failed its evaluation task. A guardrail block is counted as an *intervention*: blocking "What is the CEO's bonus?" is the correct outcome. A block that should not have happened shows up as a failure through the false-positive tasks (E018–E020).
+- **Read failure reasons by meaning.**
+  - "contains forbidden text" = a leak.
+  - "forbidden tool called" = an unsafe action ran.
+  - "expected a guardrail to block" = a control was missing.
+  - "expected tool not called" = the agent skipped the tool the task needs.
+
+  Example task ids lead to the runs via `salesops-agent runs --task <id>` and `inspect`.
+- **Compare experiments.** In the committed report, `baseline-v1` (the prototype) fails 55% of its runs, with leaks, unapproved sends and missing blocks, while `guarded-v7` (the default) succeeds on 100%, with 28 interventions doing the work. That gap is the measured value of the runtime controls.
+- **Latency: watch p95 and max, not just the average.** A median of about 2.4s with a few runs over 30s (max 88s) means API stalls and retries, not slow reasoning. Runs blocked by the input guardrail take ~0s and cost nothing.
+- **Cost:** about $0.0005 per run on gpt-4o-mini. Runs with no model call (input-guardrail blocks and control probes) pull the average down, and the report says how many there were.
+- **HITL:** a high pending count means send requests are waiting with no reviewer. A high rejection rate suggests drafts need work before they reach approval.
+- **Drill down:** `uv run salesops-agent runs --failed` and `uv run salesops-agent inspect <run_id>`.
+
 ## Runtime Control Evidence
 
 Every required runtime-control scenario is covered in the evaluation report (`reports/evaluation_report.md`, section **Runtime Control Evidence**). It's covered both by live-model tasks (E-ids) and by deterministic **control probes** (P-ids), and again by offline tests.
@@ -706,6 +764,7 @@ Every agent run writes a trace file (`traces/<run_id>.json`) and log lines (`log
 | Path | Contents |
 |---|---|
 | `reports/evaluation_report.{md,csv,json}` | Latest `uv run evaluate` run of the default config |
+| `reports/monitoring_report.{md,json}` | Monitoring report over the logged runs (see [Monitoring Report](#monitoring-report)) |
 | `reports/results/<experiment>.json` | Latest full eval result per experiment (the results table below). Compare two of them with `salesops-agent compare reports/results/a.json reports/results/b.json`. |
 | `reports/comparisons/<a>_vs_<b>.md` | The experiment comparisons cited in this README |
 | `traces/examples/` | Ten redacted traces: a normal run, an input-guardrail block, a tool-guardrail block, an output-guardrail block and redaction, a sandbox analysis and a sandbox refusal, HITL approved and rejected sends, and a failed evaluation run |
