@@ -1,6 +1,9 @@
-* 15980d6 (HEAD -> main) Document human-in-the-loop workflow; record guarded-v7 evaluation
+* 79efdc9 (HEAD -> main) Document runtime control evidence; record 40-task guarded-v7 run
+* 2bff924 Add runtime control evidence to the evaluation suite and report (5.6)
+* cbc97b3 (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 15980d6 Document human-in-the-loop workflow; record guarded-v7 evaluation
 * 1c040a2 Add human-in-the-loop approval gate for high-risk actions (5.5)
-* 462b94e (origin/main, origin/HEAD) Regenerate GITLOG.txt from project git history
+* 462b94e Regenerate GITLOG.txt from project git history
 * 2d7eb6f Document sandboxed execution; record guarded-v6 evaluation
 * 96c4b3a Add sandboxed run_analysis tool (runtime control 5.4)
 * 3f468e1 Regenerate GITLOG.txt from project git history
