@@ -166,12 +166,24 @@ EVIDENCE_SCENARIOS = [
 ]
 CSV_COLUMNS = [
     "task_id", "task", "category", "status", "latency_s", "input_tokens",
-    "output_tokens", "cost_usd", "tools_called", "guardrail", "controls", "failure_reason",
+    "output_tokens", "cost_usd", "tools_called", "guardrail", "controls", "vs_previous", "failure_reason",
 ]
+
+
+def _change(regression: Dict[str, Any], case_id: str, passed: bool) -> str:
+    """Per-task change against the previous comparable run."""
+    before = (regression or {}).get("previous_status", {}).get(case_id)
+    if before is None:
+        return "new" if (regression or {}).get("baseline") else ""
+    now = "PASS" if passed else "FAIL"
+    if before == now:
+        return "unchanged"
+    return "fixed" if now == "PASS" else "REGRESSED"
 
 
 def _task_rows(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
     rows = []
+    regression = summary.get("regression") or {}
     for r in summary["results"]:
         run = r["run"]
         rows.append({
@@ -186,6 +198,7 @@ def _task_rows(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
             "tools_called": " ".join(run["tools_called"]),
             "guardrail": _blocked_by(run),
             "controls": " ".join(r.get("controls") or []),
+            "vs_previous": _change(regression, r["case_id"], r["passed"]),
             "failure_reason": "; ".join(r["failures"]),
         })
     return rows
@@ -238,12 +251,13 @@ def _evaluation_markdown(summary: Dict[str, Any], rows: List[Dict[str, Any]]) ->
         f"| Tokens (input + output) | {t['input_tokens']:,} + {t['output_tokens']:,} |",
         f"| Estimated cost (USD) | {t['cost_usd']:.4f} |",
         "",
+        *_regression_section(summary.get("regression")),
         "## Tasks",
         "",
-        "| ID | Task | Category | Result | Latency (s) | Est. cost (USD) | Guardrail | Failure reason |",
-        "|---|---|---|---|---|---|---|---|",
+        "| ID | Task | Category | Result | vs previous | Latency (s) | Est. cost (USD) | Guardrail | Failure reason |",
+        "|---|---|---|---|---|---|---|---|---|",
         *[
-            f"| {row['task_id']} | {_md_cell(row['task'])} | {row['category']} | {row['status']} | "
+            f"| {row['task_id']} | {_md_cell(row['task'])} | {row['category']} | {row['status']} | {row['vs_previous']} | "
             f"{row['latency_s']:.2f} | {row['cost_usd']:.6f} | {row['guardrail']} | {_md_cell(row['failure_reason'])} |"
             for row in rows
         ],
@@ -265,6 +279,38 @@ def _evaluation_markdown(summary: Dict[str, Any], rows: List[Dict[str, Any]]) ->
         "",
     ]
     return "\n".join(lines)
+
+
+def _regression_section(reg: Optional[Dict[str, Any]]) -> List[str]:
+    lines = ["## Regression vs previous run", ""]
+    if not reg:
+        return lines + ["Not computed for this result.", ""]
+    base = reg.get("baseline")
+    if not base:
+        return lines + [f"No comparison: {reg.get('note', 'no previous run')}. This run is the new baseline.", ""]
+    verdict = (f"**{len(reg['regressed'])} regressed** ({', '.join(reg['regressed'])})" if reg["regressed"]
+               else "**No regressions**")
+    lines += [
+        f"Compared with the previous run of this experiment on the same dataset: `{base['timestamp']}` "
+        f"(commit `{base['git_commit']}`, {base['passed']}/{base['total']} passed).",
+        "",
+        f"{verdict}; {len(reg['fixed'])} fixed" + (f" ({', '.join(reg['fixed'])})" if reg["fixed"] else "") + ".",
+        "",
+        "| Metric | Change vs previous |",
+        "|---|---|",
+        f"| Pass rate | {reg['pass_rate_delta'] * 100:+.1f} pts |",
+        f"| Total estimated cost | {reg['cost_delta_usd']:+.6f} USD |",
+        f"| Average latency | {reg['avg_latency_delta_s']:+.2f} s |",
+        "",
+    ]
+    if reg["version_changes"]:
+        lines += ["Versions changed since the previous run:", "", "| Component | Previous | Current |", "|---|---|---|"]
+        lines += [f"| {v['component']} | {v['previous']} | {v['current']} |" for v in reg["version_changes"]]
+    else:
+        lines.append("No versioned component changed since the previous run (same prompt, tools, policies, config "
+                     "and model), so any difference is run-to-run model variance.")
+    lines.append("")
+    return lines
 
 
 def _evidence_section(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> List[str]:

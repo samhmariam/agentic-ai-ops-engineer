@@ -151,7 +151,7 @@ def test_evaluate_prints_per_task_metrics_and_writes_reports(fake_eval_agent, tm
 
 def test_evaluate_min_pass_rate_gate(fake_eval_agent, tmp_config):
     result = run_evaluate("--config", str(tmp_config), "--case", "E004", "--min-pass-rate", "0.5")
-    assert result.exit_code == 1 and "Pass rate below 50%" in result.output
+    assert result.exit_code == 1 and "Quality gate failed (min pass rate 50%)" in result.output
 
 
 def test_eval_subcommand_matches_evaluate(fake_eval_agent, tmp_config):
@@ -234,3 +234,35 @@ def test_evaluate_probes_flag_selects_only_control_probes(fake_eval_agent, tmp_c
     result = run_evaluate("--config", str(tmp_config), "--probes")
     assert result.exit_code == 0, result.output
     assert seen["ids"] and all(i.startswith("P") for i in seen["ids"]) and len(seen["ids"]) == 11
+
+
+def test_evaluation_report_includes_regression_vs_previous_run(fake_eval_agent, tmp_config, tmp_path):
+    import csv
+
+    reports = tmp_path / "reports"
+    # 1st run: E012 passes (fake answer admits the unknown account) -> becomes the baseline
+    first = run_evaluate("--config", str(tmp_config), "--case", "E012", "--case", "E004")
+    assert first.exit_code == 0 and "this run is the new baseline" in first.output
+    assert "No comparison" in (reports / "evaluation_report.md").read_text(encoding="utf-8")
+
+    import time
+    time.sleep(1.1)   # results are timestamped to the second; real evaluations take far longer
+    # 2nd run: the agent now answers badly -> E012 regresses
+    fake_eval_agent.answer = "Quantum Pickle Logistics has a health score of 80 and renews soon."
+    second = run_evaluate("--config", str(tmp_config), "--case", "E012", "--case", "E004", "--fail-on-regression")
+    assert second.exit_code == 1 and "regressed ['E012']" in second.output
+    assert "no regressions" in second.output                          # gate description in the error
+
+    md = (reports / "evaluation_report.md").read_text(encoding="utf-8")
+    assert "## Regression vs previous run" in md and "**1 regressed** (E012)" in md
+    assert "| E012 |" in md and "REGRESSED" in md
+    assert "No versioned component changed since the previous run" in md
+    rows = {r["task_id"]: r for r in csv.DictReader(open(reports / "evaluation_report.csv", encoding="utf-8"))}
+    assert rows["E012"]["vs_previous"] == "REGRESSED" and rows["E004"]["vs_previous"] == "unchanged"
+    data = json.loads((reports / "evaluation_report.json").read_text(encoding="utf-8"))
+    assert data["regression"]["regressed"] == ["E012"] and data["regression"]["pass_rate_delta"] == -0.5
+
+    # a different task selection is not comparable -> new baseline, no false regression
+    time.sleep(1.1)
+    third = run_evaluate("--config", str(tmp_config), "--case", "E012")
+    assert "this run is the new baseline" in third.output

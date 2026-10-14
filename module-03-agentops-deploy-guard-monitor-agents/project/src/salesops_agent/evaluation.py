@@ -239,9 +239,46 @@ def run_evaluation(
         "results": [asdict(r) for r in results],
     }
     reports_dir = cfg["paths"]["reports_dir"]
+    summary["regression"] = regression_vs_previous(summary, reports_dir)
     out = reports_dir / f"eval_{experiment}_{stamp}.json"
     out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return EvaluationOutput(out, write_evaluation_report(summary, reports_dir), summary)
+
+
+def regression_vs_previous(summary: Dict[str, Any], reports_dir: Path) -> Dict[str, Any]:
+    """Compare this run with the most recent earlier run of the same experiment on the
+    same eval dataset (same file hash and task selection). Regressions are tasks that
+    passed before and fail now; fixes are the reverse."""
+    from salesops_agent.comparison import compare
+    from salesops_agent.reporting import experiment_of, load_eval_results
+
+    ds = summary["eval_dataset"]
+    previous = [
+        ev for _, ev in load_eval_results(reports_dir)
+        if experiment_of(ev) == summary["experiment"] and ev["timestamp"] < summary["timestamp"]
+        and (ev.get("eval_dataset") or {}).get("sha256") == ds["sha256"]
+        and (ev.get("eval_dataset") or {}).get("subset") == ds["subset"]
+    ]
+    if not previous:
+        return {"baseline": None,
+                "note": "no earlier run of this experiment on the same dataset and task selection"}
+    base = previous[-1]
+    comp = compare(base, summary)
+    prev_status = {r["case_id"]: r["passed"] for r in base["results"]}
+    bt, ct = base.get("totals") or totals([r["run"] for r in base["results"]]), summary["totals"]
+    return {
+        "baseline": {"timestamp": base["timestamp"],
+                     "git_commit": ((base.get("versions") or {}).get("git") or {}).get("commit"),
+                     "passed": base["passed"], "total": base["total"]},
+        "fixed": comp.fixes,
+        "regressed": comp.regressions,
+        "previous_status": {cid: ("PASS" if ok else "FAIL") for cid, ok in prev_status.items()},
+        "pass_rate_delta": round(summary["pass_rate"] - base["pass_rate"], 4),
+        "cost_delta_usd": round(ct["cost_usd"] - bt["cost_usd"], 6),
+        "avg_latency_delta_s": round(ct["latency_s_avg"] - bt["latency_s_avg"], 3),
+        "version_changes": [{"component": k, "previous": b, "current": c}
+                            for k, b, c in comp.version_rows if b != c and k != "git"],
+    }
 
 
 def totals(runs: List[dict]) -> dict[str, Any]:

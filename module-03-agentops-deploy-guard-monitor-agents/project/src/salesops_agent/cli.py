@@ -141,6 +141,10 @@ def versions(as_json, config_path):
 
 def _eval_options(f):
     f = click.option(
+        "--fail-on-regression", is_flag=True,
+        help="Exit 1 if any task that passed in the previous comparable run fails now.",
+    )(f)
+    f = click.option(
         "--probes", is_flag=True,
         help="Run only the control probes (P-tasks): deterministic runtime-control evidence, no model calls.",
     )(f)
@@ -159,7 +163,7 @@ def _eval_options(f):
     return click.option("--case", "case_ids", multiple=True, help="Run only these task IDs (repeatable).")(f)
 
 
-def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2, probes=False):
+def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2, probes=False, fail_on_regression=False):
     """Shared body of `salesops-agent eval` and the standalone `evaluate` command."""
     from salesops_agent.evaluation import run_evaluation
 
@@ -194,33 +198,43 @@ def _run_evaluations(case_ids, config_paths, min_pass_rate, workers=2, probes=Fa
         )
         click.echo(f"Report: {', '.join(str(p) for p in out.report_paths)}")
         click.echo(f"Result: {out.result_path}")
+        reg = s.get("regression") or {}
+        if reg.get("baseline"):
+            click.echo(f"Regression vs {reg['baseline']['timestamp']} ({reg['baseline']['passed']}/"
+                       f"{reg['baseline']['total']}): {len(reg['regressed'])} regressed {reg['regressed']}, "
+                       f"{len(reg['fixed'])} fixed {reg['fixed']}, cost {reg['cost_delta_usd']:+.4f} USD")
+        else:
+            click.echo(f"Regression: {reg.get('note', 'not computed')} (this run is the new baseline)")
         if s["pass_rate"] < min_pass_rate:
             below.append(f"{name} {s['pass_rate']:.0%}")
+        if fail_on_regression and reg.get("regressed"):
+            below.append(f"{name} regressed {reg['regressed']}")
     if below:
-        raise click.ClickException(f"Pass rate below {min_pass_rate:.0%}: {', '.join(below)}")
+        raise click.ClickException(f"Quality gate failed (min pass rate {min_pass_rate:.0%}"
+                                   f"{', no regressions' if fail_on_regression else ''}): {', '.join(below)}")
 
 
 @app.command("eval")
 @_eval_options
-def eval_cmd(case_ids, config_paths, min_pass_rate, workers, probes):
+def eval_cmd(case_ids, config_paths, min_pass_rate, workers, probes, fail_on_regression):
     """Run the evaluation suite for one or more experiment configs.
 
     Prints success/failure, latency, estimated cost and failure reason per task, and
     writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
     """
-    _run_evaluations(case_ids, config_paths, min_pass_rate, workers, probes)
+    _run_evaluations(case_ids, config_paths, min_pass_rate, workers, probes, fail_on_regression)
 
 
 @click.command()
 @_eval_options
-def evaluate(case_ids, config_paths, min_pass_rate, workers, probes):
+def evaluate(case_ids, config_paths, min_pass_rate, workers, probes, fail_on_regression):
     """Run the SalesOps evaluation suite (same as `salesops-agent eval`).
 
     Prints success/failure, latency, estimated cost and failure reason per task, and
     writes reports/evaluation_report.{md,csv,json} plus reports/eval_<experiment>_<ts>.json.
     """
     load_dotenv(PROJECT_ROOT / ".env")
-    _run_evaluations(case_ids, config_paths, min_pass_rate, workers, probes)
+    _run_evaluations(case_ids, config_paths, min_pass_rate, workers, probes, fail_on_regression)
 
 
 @app.command()
